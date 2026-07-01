@@ -5,11 +5,13 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 .next/
+.next-dev/
 out/
 dist/
 
 # Java build and IDE files
 target/
+bin/
 *.class
 *.jar
 *.war
