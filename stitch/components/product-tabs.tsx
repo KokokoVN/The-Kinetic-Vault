@@ -8,14 +8,14 @@ import { AddToCartButton } from "@/components/add-to-cart-button";
 type ProductTabsProps = {
   newProducts: UiProduct[];
   hotProducts: UiProduct[];
-  saleProducts: (UiProduct & { originalPrice?: number; badges?: string[] })[];
+  saleProducts: UiProduct[];
   isLoggedIn: boolean;
 };
 
 export function ProductTabs({ newProducts, hotProducts, saleProducts, isLoggedIn }: ProductTabsProps) {
   const [activeTab, setActiveTab] = useState<"new" | "hot" | "sale">("new");
 
-  let currentProducts: (UiProduct & { originalPrice?: number; badges?: string[] })[] = [];
+  let currentProducts: UiProduct[] = [];
   if (activeTab === "new") {
     currentProducts = newProducts.map((p) => ({ ...p, badges: ["MỚI"] }));
   } else if (activeTab === "hot") {

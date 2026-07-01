@@ -47,6 +47,8 @@ export type UiProduct = {
   description: string;
   viewCount: number;
   salesCount: number;
+  originalPrice?: string;
+  badges?: string[];
 };
 
 export type ProductSearchResult = {
