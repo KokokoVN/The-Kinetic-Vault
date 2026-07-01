@@ -116,13 +116,14 @@ function resolveBackendImageUrl(raw: string | null | undefined): string {
   if (/^https?:\/\//i.test(v) || v.startsWith("data:")) {
     return v;
   }
-  // Giữ nguyên relative URL (ví dụ: /api/catalog/admin/products/images/file/...)
-  // Next.js (thông qua rewrites) sẽ tự proxy request về API_SERVER_ORIGIN.
-  // Nhờ đó hình ảnh sẽ tải ổn định trên bất kỳ thiết bị nào (cùng IP LAN).
+  const base = getResolvedApiRoot();
   if (v.startsWith("/")) {
-    return v;
+    if (v.startsWith("/api/")) {
+       return base.replace(/\/api$/, "") + v;
+    }
+    return base + v;
   }
-  return `/api/catalog/admin/products/images/file/${v}`;
+  return base + `/catalog/admin/products/images/file/${v}`;
 }
 
 /** URL hiển thị ảnh catalog (file upload hoặc URL tuyệt đối). */
