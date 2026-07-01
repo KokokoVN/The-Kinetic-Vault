@@ -1,0 +1,97 @@
+================================================================================
+CHAY HA TANG (MYSQL + REDIS) BANG DOCKER — E-COMMERCE MICROSERVICES
+================================================================================
+
+Ban dang dung Docker: chi can Docker Desktop (Windows) chay, KHONG can cai MySQL/Redis
+tren Windows rieng. Cac Spring Boot service van chay tren may (mvn / IDE), ket noi
+localhost:3306 va localhost:6379 toi container.
+
+--------------------------------------------------------------------------------
+TRUOC KHI CHAY
+--------------------------------------------------------------------------------
+  - Mo Docker Desktop, doi trang thai "Running".
+  - JDK 8+, Maven (de chay Eureka + microservice tren host).
+
+Mat khau MySQL trong code: root / root (trung docker-compose.yml).
+Port: MySQL 3306, Redis 6379 — neu bi trung port, doi trong docker-compose.yml
+VA doi spring.redis.host / spring.datasource (neu can).
+
+--------------------------------------------------------------------------------
+BUOC 1 — Khoi dong MySQL + Redis (luon lam buoc nay truoc khi chay service)
+--------------------------------------------------------------------------------
+Tu thu muc GOC project (noi co file docker-compose.yml):
+
+  docker compose up -d
+
+Kiem tra container:
+
+  docker compose ps
+
+Xem log neu loi:
+
+  docker compose logs -f mysql
+  docker compose logs -f redis
+
+Dung ha tang (khi khong code nua):
+
+  docker compose down
+
+(Xoa luon du lieu MySQL trong volume: docker compose down -v — can than, mat DB.)
+
+Lan dau MySQL khoi dong, script docker/mysql/init/01-create-databases.sql tao san
+8 database: users, product_catalog, orders, payments, notifications, shipping,
+activity_log, product_recommendations.
+
+Neu MySQL chay tren may (khong Docker), chay tay file SQL:
+  docs/sql/TAO_DATABASE_MYSQL.sql
+(trong Workbench: mo file -> Execute; hoac: mysql -u root -p < docs/sql/TAO_DATABASE_MYSQL.sql)
+
+Bang bang Hibernate se tao khi ban chay tung service lan dau (ddl-auto=update).
+
+--------------------------------------------------------------------------------
+BUOC 2 — Eureka Server (bat tren may, TRUOC cac service khac)
+--------------------------------------------------------------------------------
+  cd eureka-server
+  mvn spring-boot:run
+
+  http://localhost:8761
+
+--------------------------------------------------------------------------------
+BUOC 3 — Cac microservice (nhieu terminal hoac IDE)
+--------------------------------------------------------------------------------
+Sau khi Eureka len, lan luot (hoac song song sau vai giay):
+
+  user-service                    : 8811
+  product-catalog-service           : 8810
+  order-service                     : 8813   (can Redis trong Docker)
+  payment-service                   : 8814
+  notification-service              : 8815
+  shipping-service                  : 8816
+  activity-log-service              : 8817
+  product-recommendation-service    : 8812
+
+  mvn spring-boot:run
+
+--------------------------------------------------------------------------------
+BUOC 4 — API Gateway (sau khi cac service da dang ky Eureka)
+--------------------------------------------------------------------------------
+  cd api-gateway
+  mvn spring-boot:run
+
+  http://localhost:8900/api/...
+
+--------------------------------------------------------------------------------
+GOI Y NEU KHONG DUNG DOCKER (hiem)
+--------------------------------------------------------------------------------
+Cai MySQL 8 + Redis tren may, tao 8 database nhu tren, sua username/password trong
+cac file application.properties (spring.datasource.*, spring.redis.*).
+
+--------------------------------------------------------------------------------
+LOI THUONG GAP
+--------------------------------------------------------------------------------
+- Error 2003 / Connection refused MySQL: chua "docker compose up -d", hoac Docker
+  chua chay.
+- Redis connection refused: container redis chua len — docker compose ps.
+- Port 3306 da bi chiem: tat MySQL cai tren Windows, hoac doi port trong compose.
+
+Het.

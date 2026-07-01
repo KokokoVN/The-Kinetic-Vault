@@ -1,0 +1,7 @@
+{
+  "channel": "EMAIL",
+  "recipient": "nguyendinhkiet12092005@gmail.com",
+  "subject": "Test SMTP - notification-service",
+  "body": "Hello! Neu ban nhan duoc mail nay thi cau hinh Gmail SMTP da thanh cong."
+}
+

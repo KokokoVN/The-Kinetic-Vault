@@ -1,0 +1,51 @@
+# Node dependencies and builds
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.next/
+out/
+dist/
+
+# Java build and IDE files
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# Databases & local logs
+*.db
+*.sqlite
+*.log
+catalog-run.log
+
+# VS Code & IntelliJ IDEA
+.vscode/
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# OS & Temporary/trash files
+.DS_Store
+Thumbs.db
+desktop.ini
+ọ.txt
+o.js
+test.txt
+cartjar.txt
+
+# Spreadsheet files & reports
+*.xlsx
+*.xls
+*.csv

@@ -1,0 +1,73 @@
+================================================================================
+CHAY API TRONG TERMINAL CUA CURSOR (KHONG MO CUA SO NGOAI)
+================================================================================
+
+Luu y:
+  - Mot tab terminal chi chay DUOC MOT "mvn spring-boot:run" (no se chiem dong lenh).
+  - Khong can mo PowerShell / CMD ngoai Cursor: trong Cursor bam dau "+" tren panel
+    Terminal de them TAB moi — van la "cai nay", chi khac tab.
+
+Truoc khi chay: MySQL + Redis da bat; da tao 8 database.
+
+Duong dan goc (sua neu ban dat project cho khac):
+  E:\e-commerce-microservices-master\e-commerce-microservices-master
+
+--------------------------------------------------------------------------------
+THU TU: TAB 1 -> TAB 2 -> ... (moi block copy vao MOT tab rieng)
+--------------------------------------------------------------------------------
+
+--- TAB 1 — Eureka (chay truoc, doi ~30 giay den khi log co "Started ...Eureka") ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\eureka-server
+mvn spring-boot:run
+
+--- TAB 2 — user-service ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\user-service
+mvn spring-boot:run
+
+--- TAB 3 — product-catalog ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\product-catalog-service
+mvn spring-boot:run
+
+--- TAB 4 — product-recommendation ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\product-recommendation-service
+mvn spring-boot:run
+
+--- TAB 5 — order-service (can Redis) ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\order-service
+mvn spring-boot:run
+
+--- TAB 6 — payment-service ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\payment-service
+mvn spring-boot:run
+
+--- TAB 7 — notification-service ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\notification-service
+mvn spring-boot:run
+
+--- TAB 8 — shipping-service ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\shipping-service
+mvn spring-boot:run
+
+--- TAB 9 — activity-log-service ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\activity-log-service
+mvn spring-boot:run
+
+--- TAB 10 — api-gateway (chay SAU khi cac service tren da len, doi vai giay) ---
+cd /d E:\e-commerce-microservices-master\e-commerce-microservices-master\api-gateway
+mvn spring-boot:run
+
+--------------------------------------------------------------------------------
+KIEM TRA
+--------------------------------------------------------------------------------
+  Eureka:  http://localhost:8761
+  Gateway: http://localhost:8900/api/catalog/products  (GET, khong can token neu public)
+
+--------------------------------------------------------------------------------
+CHI CAN TEST NHANH (4 TAB)
+--------------------------------------------------------------------------------
+  Tab1: eureka-server
+  Tab2: user-service
+  Tab3: product-catalog-service
+  Tab4: api-gateway
+
+Het.

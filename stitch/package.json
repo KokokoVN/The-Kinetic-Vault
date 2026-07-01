@@ -1,0 +1,41 @@
+{
+  "name": "stitch-admin-nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run clean:dev-cache && next dev",
+    "clean:next": "node -e \"const fs=require('fs');fs.rmSync('.next',{recursive:true,force:true})\"",
+    "clean:next-dev": "node -e \"const fs=require('fs');fs.rmSync('.next-dev',{recursive:true,force:true})\"",
+    "clean:dev-cache": "node -e \"const fs=require('fs');fs.rmSync('.next-dev',{recursive:true,force:true});fs.rmSync('node_modules/.cache/next',{recursive:true,force:true})\"",
+    "backend": "call ..\\scripts\\chay-tat-ca-service.bat",
+    "backend:nodocker": "call ..\\scripts\\chay-tat-ca-service.bat nodocker",
+    "backend:lite": "call ..\\scripts\\chay-toi-thieu.bat",
+    "backend:lite:nodocker": "call ..\\scripts\\chay-toi-thieu.bat nodocker",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "browser-image-compression": "^2.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.21.0",
+    "mysql2": "^3.22.5",
+    "next": "15.2.4",
+    "next-themes": "^0.4.6",
+    "nextjs-toploader": "^3.9.17",
+    "qrcode.react": "^4.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "sonner": "^2.0.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "@types/react": "19.0.10",
+    "@types/react-dom": "19.0.4",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.5.3",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.8.2"
+  }
+}

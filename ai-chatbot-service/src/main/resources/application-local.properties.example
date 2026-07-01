@@ -1,0 +1,16 @@
+# Sao chép thành application-local.properties. Chạy: mvn spring-boot:run -Dspring-boot.run.profiles=local
+#
+# --- Miễn phí: Ollama (khuyên dùng) — không cần file này; chạy: npm run dev:chatbot:ollama (từ thư mục gốc repo) ---
+#
+# --- Trả phí / credit: OpenAI ---
+# openai.api.key=sk-...
+#
+# --- Miễn phí: Groq (key free) ---
+# openai.api.url=https://api.groq.com/openai/v1/chat/completions
+# openai.model=llama-3.1-8b-instant
+# openai.api.key=gsk_...
+#
+# --- Miễn phí: Ollama (máy bạn, không cần key) ---
+# openai.api.require-key=false
+# openai.api.url=http://127.0.0.1:11434/v1/chat/completions
+# openai.model=llama3.2

@@ -1,0 +1,24 @@
+{
+  "name": "e-commerce-microservices",
+  "private": true,
+  "description": "Goc repo: chay frontend/backend bang npm (Windows + CMD).",
+  "scripts": {
+    "dev": "npm run dev --prefix stitch",
+    "dev:frontend": "npm run dev --prefix stitch",
+    "dev:backend": "call scripts\\chay-tat-ca-service.bat",
+    "backend": "call scripts\\chay-tat-ca-service.bat",
+    "backend:nodocker": "call scripts\\chay-tat-ca-service.bat nodocker",
+    "dev:backend:lite": "call scripts\\chay-toi-thieu.bat",
+    "backend:lite": "call scripts\\chay-toi-thieu.bat",
+    "backend:lite:nodocker": "call scripts\\chay-toi-thieu.bat nodocker",
+    "dev:backend:lite:inline": "concurrently -n Eureka,User,Catalog,Inventory,Activity,Gateway -c blue,magenta,green,red,yellow,cyan \"mvn -f eureka-server/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f user-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f product-catalog-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f inventory-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f activity-log-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 56 >nul & mvn -f api-gateway/pom.xml spring-boot:run\"",
+    "dev:backend:all:inline": "concurrently -n Eureka,User,Catalog,Inventory,Activity,Cart,Order,Sale,Payment,Notify,Rec,Review,Telegram,AiChat,Gateway -c blue,magenta,green,red,yellow,blue,magenta,green,red,yellow,cyan,white,gray,magenta,cyan \"mvn -f eureka-server/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f user-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f product-catalog-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f inventory-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f activity-log-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f cart-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f order-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f sale-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f payment-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f notification-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f product-recommendation-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f review-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f telegram-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 31 >nul & mvn -f ai-chatbot-service/pom.xml spring-boot:run\" \"cmd /c ping 127.0.0.1 -n 56 >nul & mvn -f api-gateway/pom.xml spring-boot:run\"",
+    "dev:chatbot:ollama": "mvn -f ai-chatbot-service/pom.xml spring-boot:run -Dspring-boot.run.profiles=ollama"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "mysql2": "^3.22.5"
+  }
+}

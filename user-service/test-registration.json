@@ -1,0 +1,11 @@
+{
+  "userName": "testuser_20260430_01",
+  "userPassword": "Testpass123",
+  "email": "testuser_20260430_01@example.com",
+  "userDetails": {
+    "firstName": "Test",
+    "lastName": "User",
+    "gender": null
+  }
+}
+
