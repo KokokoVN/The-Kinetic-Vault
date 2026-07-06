@@ -1,0 +1,107 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Danh sach Chuc nang Chi tiet</title></head>
+<body style='font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.5;'>
+
+<h2 style='color: #2c3e50;'>4.4. Đánh giá chi tiết Giao diện và Luồng thao tác Người dùng</h2>
+<p>Để đảm bảo tính chuyên nghiệp và dễ sử dụng, hệ thống <b>The Kinetic Vault</b> áp dụng triết lý thiết kế UI/UX hiện đại (Minimalism kết hợp Interactive UI). Hệ thống phân tách rõ rệt 2 luồng chức năng với các phân hệ đồ sộ như sau:</p>
+
+<h3 style='color: #2980b9;'>4.4.1. Phân hệ Giao diện dành cho Khách hàng (Storefront)</h3>
+
+<p><b>a. Giao diện Trang chủ (Home Page)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Nơi thu hút và định hướng khách hàng ngay khi truy cập vào nền tảng.</li>
+    <li><b>Thành phần chính:</b> 
+        <ul>
+            <li><i>Header & Mega Menu:</i> Cung cấp thanh tìm kiếm toàn văn (Full-text search), giỏ hàng mini (Mini-cart) cập nhật số lượng realtime, và menu đa cấp hiển thị cây Danh mục sản phẩm (Categories).</li>
+            <li><i>Hero Banner (Carousel):</i> Khu vực quảng cáo động, tự động chuyển slide, tập trung vào các chiến dịch khuyến mãi lớn (Ví dụ: Black Friday).</li>
+            <li><i>Khu vực Flash Sale:</i> Tích hợp đồng hồ đếm ngược (Countdown Timer) trực quan. Sản phẩm tại đây hiển thị mức giá cũ bị gạch chéo và giá khuyến mãi.</li>
+            <li><i>Product Showcases:</i> Các dải sản phẩm "Mới ra mắt", "Bán chạy nhất" (Top Sales) được thiết kế dạng thẻ (Card) gọn gàng, hiển thị nhãn (Badge) % giảm giá.</li>
+        </ul>
+    </li>
+    <li><b>Luồng thao tác:</b> Khách hàng có thể bấm trực tiếp nút "Thêm vào giỏ" ngay trên thẻ sản phẩm ở Trang chủ mà không cần phải vào trang chi tiết, giúp tăng tốc độ chốt đơn.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn 1-2 ảnh chụp màn hình Trang chủ Web từ trên xuống dưới)</p>
+
+<p><b>b. Giao diện Chi tiết Sản phẩm (Product Detail Page)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cung cấp thông số kỹ thuật, hình ảnh thực tế và tạo niềm tin mua hàng.</li>
+    <li><b>Thành phần chính:</b>
+        <ul>
+            <li><i>Thư viện Media (Image Gallery):</i> Hỗ trợ phóng to ảnh (Zoom), xem nhiều góc độ của sản phẩm.</li>
+            <li><i>Bộ chọn Biến thể (SKU Selector):</i> Khi khách hàng click chọn Màu sắc hoặc Dung lượng khác nhau, hệ thống tự động gọi API (fetch) để cập nhật lại Giá tiền tương ứng và Số lượng Tồn kho thực tế (Từ Inventory Service). Báo lỗi "Hết hàng" (Out of Stock) nếu số lượng = 0.</li>
+            <li><i>Tab Thông tin:</i> Chứa bài viết mô tả sản phẩm chuẩn SEO (Rich Text HTML) và Bảng cấu hình thông số kỹ thuật chi tiết.</li>
+            <li><i>Hệ thống Đánh giá (Review Section):</i> Hiển thị điểm số trung bình (Ví dụ: 4.8/5 sao), cho phép khách hàng đăng tải hình ảnh thực tế đính kèm cùng bình luận chữ.</li>
+        </ul>
+    </li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Trang Chi tiết SP và Khu vực Tab Đánh giá)</p>
+
+<p><b>c. Giao diện Giỏ hàng & Thanh toán (Cart & Checkout Flow)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Tối ưu hóa phễu thanh toán, giảm tỷ lệ bỏ giỏ hàng (Cart Abandonment Rate).</li>
+    <li><b>Thành phần chính:</b>
+        <ul>
+            <li><i>Giỏ hàng (Cart):</i> Lưu trữ In-memory qua Redis. Khách hàng bấm nút "+" hoặc "-" để thay đổi số lượng, hệ thống sẽ tính lại tổng tiền ngay lập tức (Real-time Calculation) mà không cần tải lại trang.</li>
+            <li><i>Áp dụng Voucher:</i> Ô nhập mã giảm giá. Hệ thống sẽ validate kiểm tra điều kiện (Ví dụ: Đơn tối thiểu 500k) và báo lỗi trực quan chữ đỏ nếu mã hết hạn hoặc không đủ điều kiện.</li>
+            <li><i>Cổng thanh toán đa dạng:</i> Hỗ trợ Thanh toán khi nhận hàng (COD) và Chuyển khoản qua mã QR (Tích hợp API SePay). Đối với mã QR, hệ thống tự động sinh mã VietQR chứa sẵn số tiền và Nội dung chuyển khoản.</li>
+        </ul>
+    </li>
+    <li><b>Luồng thao tác:</b> Sau khi quét mã QR và ngân hàng báo thành công, màn hình tự động chuyển sang trang "Cảm ơn bạn đã đặt hàng" (Thank you page) chỉ trong 2-3 giây nhờ cơ chế Webhook.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Trang Giỏ hàng có ô nhập Voucher và form Quét mã QR Thanh toán)</p>
+
+<p><b>d. Trợ lý ảo thông minh (AI Chatbot Assistant)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Chăm sóc khách hàng 24/7 tự động.</li>
+    <li><b>Tính năng:</b> Một Widget dạng bong bóng nổi ở góc màn hình. Cung cấp tính năng Chatbot trả lời kịch bản tự động, tư vấn chính sách đổi trả, hoặc gọi ý sản phẩm theo từ khóa khách gõ.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Khung Chatbot đang mở)</p>
+
+<p><b>e. Quản lý Tài khoản & Đơn hàng (My Profile & Order Tracking)</b></p>
+<ul>
+    <li><b>Giao diện Lịch sử đơn hàng:</b> Liệt kê dạng danh sách (List View). Các đơn hàng được chia theo Tab trạng thái (Chờ xác nhận, Đang chuẩn bị hàng, Đang giao, Đã hoàn thành). Cung cấp nút "Hủy đơn hàng" nếu đơn mới ở trạng thái Chờ xác nhận.</li>
+    <li><b>Bảo mật (Auth):</b> Tích hợp Form đăng nhập, đăng ký chuẩn bảo mật. Quá trình "Quên mật khẩu" yêu cầu nhập mã OTP (Thời hạn 5 phút) được hệ thống tự động gửi thẳng vào Email của khách hàng (Thông qua Notification Service).</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Tab Quản lý Đơn hàng cá nhân và Form nhập mã OTP Email)</p>
+
+<hr>
+
+<h3 style='color: #2980b9;'>4.4.2. Phân hệ Giao diện Quản trị viên (Admin Workspace)</h3>
+<p>Khu vực Back-office được thiết kế dạng Sidebar Layout, sử dụng bộ component UI chuẩn doanh nghiệp, tích hợp Datatables phân trang, tìm kiếm và bộ lọc đa chiều (Filters) ở tất cả các chức năng.</p>
+
+<p><b>a. Bảng điều khiển Trung tâm (Dashboard Analytics)</b></p>
+<ul>
+    <li><b>Thành phần:</b> Cung cấp hệ thống Biểu đồ (Biểu đồ đường - Line chart, Biểu đồ tròn - Pie chart) trực quan hóa Doanh thu theo ngày/tháng. Các khối thống kê nhanh (Quick Stats) về Số đơn hàng chờ duyệt, Số lượng khách đăng ký mới. Nguồn dữ liệu được tổng hợp từ nhiều Microservices khác nhau về chung một màn hình.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Trang Dashboard có Biểu đồ)</p>
+
+<p><b>b. Giao diện Quản lý Danh mục & Hàng hóa (Catalog Management)</b></p>
+<ul>
+    <li><b>Danh sách Sản phẩm:</b> Hiển thị dạng bảng (Table) kết hợp hình thu nhỏ (Thumbnail). Chức năng tìm kiếm theo Tên, SKU hoặc Lọc theo Danh mục. Cột "Trạng thái" cho phép bật/tắt hiển thị sản phẩm chỉ bằng 1 nút gạt (Toggle Switch).</li>
+    <li><b>Form Cập nhật Sản phẩm:</b> Sử dụng giao diện WYSIWYG Editor cho phép Admin soạn thảo bài viết mô tả chuẩn HTML. Giao diện Quản lý Biến thể (Variants) cực kỳ linh hoạt, cho phép thêm đồng thời hàng chục SKU (Đỏ-128GB, Xanh-256GB...) và cập nhật giá bán khác nhau cho từng SKU trong cùng một màn hình.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Form Thêm/Sửa Sản phẩm phần nhập nhiều cấu hình/màu sắc)</p>
+
+<p><b>c. Giao diện Xử lý Đơn hàng & Tồn kho (Order & Inventory Desk)</b></p>
+<ul>
+    <li><b>Quản lý Đơn hàng:</b> Giao diện xét duyệt hóa đơn. Admin có thể xem chi tiết thông tin người nhận, ghi chú giao hàng. Thanh tiến trình (Progress Bar) cho phép Admin click để đẩy trạng thái từ "Chờ Duyệt" sang "Đang Giao Hàng". Ngay khi đổi trạng thái, hệ thống ngầm bắn Email thông báo cho khách.</li>
+    <li><b>Quản lý Kho (Inventory):</b> Bảng theo dõi số lượng tồn. Tích hợp cảnh báo rực đỏ cho các mặt hàng sắp cạn kho (Stock dưới 10 cái). Chức năng tạo phiếu Nhập/Xuất kho lưu vết lịch sử (Audit Log).</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Trang Danh sách Đơn hàng của Admin & Trang Tồn Kho)</p>
+
+<p><b>d. Giao diện Quản lý Chiến lược Marketing (Sales & Promotions)</b></p>
+<ul>
+    <li><b>Thiết lập Voucher:</b> Form tạo mã giảm giá nâng cao. Admin có quyền chọn Loại giảm giá (Cố định 50k hay Giảm theo % tối đa 100k), Số lượng mã phát hành, Điều kiện áp dụng (Đơn tối thiểu 1 triệu) và thời hạn chạy chiến dịch.</li>
+    <li><b>Quản lý Banner:</b> Cho phép tải lên (Upload) hình ảnh mới, thay đổi vị trí xuất hiện của Banner trên trang chủ bằng thao tác Kéo-Thả (Drag & Drop) hoặc nhập số thứ tự ưu tiên.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Form tạo Mã Giảm giá nâng cao)</p>
+
+<p><b>e. Chăm sóc Khách hàng & Cấu hình Telegram (Customer & System Care)</b></p>
+<ul>
+    <li><b>Kiểm duyệt Bình luận:</b> Danh sách toàn bộ đánh giá của khách trên Web. Admin có quyền ẩn (Hide) các bình luận spam, thô tục và sử dụng khung Chat để trả lời (Reply) dưới tư cách "Quản trị viên" giúp tăng uy tín cho cửa hàng.</li>
+    <li><b>Telegram Bot Notification:</b> Giao diện đặc thù cho phép nhập <code>Chat ID</code> và <code>Bot Token</code>. Sau khi kết nối, hệ thống sẽ trở thành một cánh tay nối dài, tự động báo động bằng tin nhắn Telegram về điện thoại của Ban Giám đốc mỗi khi có người Đặt hàng thành công hoặc hệ thống gặp sự cố.</li>
+</ul>
+<p style='color: gray; font-style: italic;'>> (Chèn ảnh Màn hình Telegram Bot báo đơn hàng nhảy về điện thoại)</p>
+
+</body>
+</html>

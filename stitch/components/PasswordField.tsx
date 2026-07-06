@@ -16,7 +16,7 @@ export function PasswordField({ name = "password" }: Props) {
       </span>
       <input
         name={name}
-        className="w-full rounded-xl border-2 border-outline-variant/20 bg-surface-container-lowest py-4 pl-12 pr-12 outline-none transition-all focus:border-secondary"
+        className="w-full rounded-xl border-2 border-outline-variant/20 bg-surface-container-lowest dark:bg-slate-900 py-4 pl-12 pr-12 outline-none transition-all focus:border-secondary"
         placeholder="••••••••"
         type={visible ? "text" : "password"}
         required

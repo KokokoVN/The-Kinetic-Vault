@@ -54,7 +54,7 @@ export function CartListAutoFilterForm({ q, pageSize }: Props) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
       <div className="min-w-[200px] flex-1">
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="cart-q">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400" htmlFor="cart-q">
           Tìm kiếm
         </label>
         <input
@@ -67,11 +67,11 @@ export function CartListAutoFilterForm({ q, pageSize }: Props) {
             scheduleSearch(v);
           }}
           placeholder="User, email, UID, mã giỏ, tên sản phẩm…"
-          className="w-full rounded-xl border border-outline-variant/20 bg-white px-4 py-2.5 text-sm outline-none ring-primary/0 transition focus:ring-2"
+          className="w-full rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur-md px-4 py-2.5 text-sm outline-none ring-purple-500/0 transition focus:ring-2"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="cart-pageSize">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400" htmlFor="cart-pageSize">
           Số giỏ / trang
         </label>
         <select
@@ -83,14 +83,14 @@ export function CartListAutoFilterForm({ q, pageSize }: Props) {
             setLocalPageSize(next);
             pushNow({ pageSize: next });
           }}
-          className="rounded-xl border border-outline-variant/20 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+          className="rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur-md px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="50">50</option>
         </select>
       </div>
-      <p className="text-xs text-on-surface-variant md:pb-1">Tự lọc sau khi dừng nhập khoảng 0.35s.</p>
+      <p className="text-xs text-slate-400 md:pb-1">Tự lọc sau khi dừng nhập khoảng 0.35s.</p>
     </div>
   );
 }

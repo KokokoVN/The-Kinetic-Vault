@@ -337,24 +337,29 @@ export function CartPageClient() {
         </div>
       ) : null}
 
-      <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans">
-        {/* Minimalist Page Header */}
-        <div className="relative border-b border-black/5 dark:border-white/5 bg-white dark:bg-[#0a0a0a] px-6 py-20">
+      <div className="min-h-screen bg-gradient-to-br from-[#f8f9ff] via-[#fdfdff] to-[#f0f4ff] dark:from-[#050510] dark:via-[#0a0a1a] dark:to-[#050510] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans relative overflow-hidden">
+        {/* Abstract background elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl pointer-events-none" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl pointer-events-none" />
+
+        {/* Premium Page Header */}
+        <div className="relative border-b border-white/20 dark:border-white/5 bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 shadow-2xl shadow-indigo-900/20 px-6 py-20">
           <div className="mx-auto max-w-screen-xl flex flex-col items-center text-center">
-            <h1 className="font-headline text-4xl font-light tracking-tight sm:text-5xl lg:text-6xl text-black dark:text-white">
-              Giỏ hàng
+            <h1 className="font-headline text-4xl font-black tracking-tight text-white sm:text-5xl">
+              Giỏ Hàng
             </h1>
-            <p className="mt-6 text-sm sm:text-base font-normal text-slate-500 dark:text-slate-400 max-w-md uppercase tracking-[0.2em]">
-              {loading ? "Đang tải..." : items.length === 0 ? "Chưa có sản phẩm" : `${totalItems} sản phẩm`}
+            <p className="mt-4 sm:mt-6 text-xs sm:text-sm font-bold text-indigo-200/60 dark:text-indigo-200/60 max-w-md uppercase tracking-[0.2em]">
+              {loading ? "Đang đồng bộ..." : items.length === 0 ? "Chưa có sản phẩm" : `${totalItems} sản phẩm đã chọn`}
             </p>
           </div>
         </div>
 
-        <div className="mx-auto max-w-screen-xl px-4 py-16 lg:flex lg:gap-16 lg:items-start sm:px-6">
+        <div className="mx-auto max-w-screen-xl px-4 py-16 lg:flex lg:gap-16 lg:items-start sm:px-6 relative z-10">
           {/* Left — Cart Items */}
           <section className="flex-grow min-w-0">
             {error && (
-              <div className="mb-10 flex items-center gap-3 rounded-none border-l-2 border-red-500 bg-red-50 dark:bg-red-900/10 px-6 py-4 text-sm font-medium text-red-800 dark:text-red-300">
+              <div className="mb-8 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-md px-5 py-4 sm:px-6 text-sm font-medium text-red-800 dark:text-red-300 shadow-xl shadow-red-500/5">
                 <span className="material-symbols-outlined text-red-500">error</span>
                 {error}
               </div>
@@ -362,27 +367,28 @@ export function CartPageClient() {
 
             {/* Select All header */}
             {!loading && items.length > 0 && (
-              <div className="mb-8 flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-4">
-                <label className="group flex items-center gap-4 cursor-pointer select-none">
+              <div className="mb-6 flex items-center justify-between border-b border-indigo-500/10 pb-4">
+                <label className="group flex items-center gap-3 sm:gap-4 cursor-pointer select-none">
                   <div className="relative flex items-center justify-center">
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleSelectAll}
-                      className="peer h-5 w-5 appearance-none rounded-sm border border-black/20 dark:border-white/20 transition-all checked:border-black dark:checked:border-white checked:bg-black dark:checked:bg-white hover:border-black/50 dark:hover:border-white/50 cursor-pointer"
+                      className="peer h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md border-2 border-slate-300 dark:border-slate-600 transition-all checked:border-indigo-500 dark:checked:border-indigo-400 checked:bg-indigo-500 dark:checked:bg-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-300 cursor-pointer shadow-sm"
                     />
-                    <span className="material-symbols-outlined absolute text-white dark:text-black opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
+                    <span className="material-symbols-outlined absolute text-white opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
                       check
                     </span>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-hover:text-black dark:group-hover:text-white transition-colors">Chọn tất cả</span>
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Chọn tất cả</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => void clearCart()}
                   disabled={loading || items.length === 0 || busyKey != null}
-                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition hover:text-black dark:hover:text-white disabled:opacity-30"
+                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition hover:text-red-500 dark:hover:text-red-400 disabled:opacity-30 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10"
                 >
+                  <span className="material-symbols-outlined text-[16px]">delete</span>
                   Xóa tất cả
                 </button>
               </div>
@@ -390,13 +396,13 @@ export function CartPageClient() {
 
             {/* Loading skeleton */}
             {loading && (
-              <div className="space-y-8">
+              <div className="space-y-4 sm:space-y-6">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center gap-8 border-b border-black/5 dark:border-white/5 pb-8">
-                    <div className="h-32 w-24 bg-slate-100 dark:bg-slate-800 animate-pulse flex-shrink-0 rounded-sm" />
+                  <div key={i} className="flex flex-row items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-4 sm:p-6 border border-white/50 dark:border-slate-800/50 shadow-xl shadow-indigo-900/5">
+                    <div className="h-20 w-20 sm:h-32 sm:w-32 bg-slate-200 dark:bg-slate-800 animate-pulse flex-shrink-0 rounded-xl sm:rounded-2xl" />
                     <div className="flex-1 space-y-4 w-full">
-                      <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800 animate-pulse" />
-                      <div className="h-8 w-3/4 bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                      <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                      <div className="h-8 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
                     </div>
                   </div>
                 ))}
@@ -405,21 +411,25 @@ export function CartPageClient() {
 
             {/* Empty state */}
             {!loading && items.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-32 text-center">
-                <h2 className="font-headline text-2xl font-light text-black dark:text-white tracking-wide">Giỏ hàng của bạn đang trống</h2>
-                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 max-w-sm">Tiếp tục mua sắm để khám phá những bộ sưu tập mới nhất.</p>
+              <div className="flex flex-col items-center justify-center py-20 sm:py-32 px-4 text-center rounded-2xl sm:rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 shadow-2xl shadow-indigo-900/5">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6">
+                  <span className="material-symbols-outlined text-4xl sm:text-5xl text-indigo-300 dark:text-indigo-500/50">shopping_cart</span>
+                </div>
+                <h2 className="font-headline text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Chưa có sản phẩm nào</h2>
+                <p className="mt-4 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm">Hàng ngàn sản phẩm công nghệ đang chờ bạn khám phá. Hãy lấp đầy giỏ hàng nhé!</p>
                 <Link
                   href="/products"
-                  className="mt-10 inline-flex items-center justify-center bg-black dark:bg-white px-10 py-4 text-xs font-bold uppercase tracking-widest text-white dark:text-black transition-transform hover:scale-105 active:scale-95"
+                  className="mt-8 sm:mt-10 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-bold tracking-wider text-white transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-500/30 rounded-xl sm:rounded-2xl"
                 >
                   Khám phá ngay
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
               </div>
             )}
 
             {/* Cart Items list */}
             {!loading && items.length > 0 && (
-              <div className="space-y-0">
+              <div className="space-y-4 sm:space-y-6">
                 {items.map((it, idx) => {
                   const key = lineKey(it, idx);
                   const unavailable = isUnavailableItem(it);
@@ -439,15 +449,15 @@ export function CartPageClient() {
                     <div
                       key={`cart-row-${idx}-${rowKey(it)}`}
                       className={[
-                        "group relative flex flex-col sm:flex-row gap-6 sm:gap-10 border-b border-black/5 dark:border-white/5 py-8 transition-all duration-500",
-                        unavailable ? "opacity-40 grayscale" : "",
+                        "group relative flex flex-row gap-3 sm:gap-6 rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all duration-300 items-stretch",
+                        unavailable ? "bg-slate-50/50 dark:bg-slate-900/30 opacity-60 grayscale" : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 shadow-lg shadow-indigo-900/5 hover:shadow-xl hover:shadow-indigo-500/10",
                       ].join(" ")}
                     >
-                      {/* Left: Checkbox & Image */}
-                      <div className="flex items-center gap-6 sm:items-start">
+                      {/* Checkbox (Center on mobile, top on desktop) */}
+                      <div className="flex items-center sm:items-start pt-0 sm:pt-4">
                         <div className="flex-shrink-0 sm:mt-12">
                           {unavailable ? (
-                            <div className="flex h-5 w-5 items-center justify-center">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
                               <span className="material-symbols-outlined text-[14px] text-red-500">block</span>
                             </div>
                           ) : (
@@ -456,47 +466,53 @@ export function CartPageClient() {
                                 type="checkbox"
                                 checked={checked}
                                 onChange={(e) => setSelectedKeys((prev) => ({ ...prev, [key]: e.target.checked }))}
-                                className="peer h-5 w-5 appearance-none rounded-sm border border-black/20 dark:border-white/20 transition-all checked:border-black dark:checked:border-white checked:bg-black dark:checked:bg-white hover:border-black/50 dark:hover:border-white/50 cursor-pointer"
+                                className="peer h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md border-2 border-slate-300 dark:border-slate-600 transition-all checked:border-indigo-500 dark:checked:border-indigo-400 checked:bg-indigo-500 dark:checked:bg-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-300 cursor-pointer shadow-sm"
                                 aria-label={`Chọn ${itemTitle(it)}`}
                               />
-                              <span className="material-symbols-outlined absolute text-white dark:text-black opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
+                              <span className="material-symbols-outlined absolute text-white opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
                                 check
                               </span>
                             </div>
                           )}
                         </div>
 
-                        <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden bg-slate-50 dark:bg-slate-900 sm:h-40 sm:w-32">
-                          {thumbUrl ? (
+                      {/* Image */}
+                      <div className="relative h-20 w-20 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                        {thumbUrl ? (
                             <img
                               src={thumbUrl}
                               alt={itemTitle(it)}
-                              className="h-full w-full object-cover object-center transition-transform duration-1000 group-hover:scale-105"
+                              className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
                               loading="lazy"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <span className="material-symbols-outlined text-4xl text-slate-200 dark:text-slate-700">image</span>
+                              <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-700">image</span>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Right: Info, Price, Actions */}
-                      <div className="flex flex-1 flex-col justify-between min-w-0">
+                      {/* Info & Price & Actions */}
+                      <div className="flex flex-1 flex-col justify-between min-w-0 py-0.5 sm:py-1">
                         {/* Info & Delete */}
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 pt-2">
-                            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">{itemSubtitle(it)}</p>
-                            <Link href={it.productId ? `/products/${it.productId}` : "#"} className="block truncate font-headline text-lg font-light text-black dark:text-white transition-colors hover:opacity-70 sm:text-2xl">
+                        <div className="flex items-start justify-between gap-2 sm:gap-4">
+                          <div className="min-w-0">
+                            {itemSubtitle(it) && (
+                              <span className="inline-block mb-1 sm:mb-2 rounded-md bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-800/50">
+                                {itemSubtitle(it)}
+                              </span>
+                            )}
+                            <Link href={it.productId ? `/product/${it.productId}` : "#"} className="block truncate font-headline text-sm sm:text-lg lg:text-xl font-bold text-slate-800 dark:text-slate-100 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">
                               {itemTitle(it)}
                             </Link>
                             
                             {/* Stock warning */}
                             {unavailable ? (
-                              <p className="mt-3 text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-widest">Hết hàng</p>
+                              <p className="mt-3 flex items-center gap-1 text-xs font-bold text-red-500 uppercase tracking-widest"><span className="material-symbols-outlined text-[14px]">error</span>Hết hàng</p>
                             ) : it.variantId == null && stock != null ? (
-                              <p className={`mt-3 text-xs font-medium uppercase tracking-widest ${stock <= 5 ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
+                              <p className={`mt-3 flex items-center gap-1 text-xs font-bold uppercase tracking-widest ${stock <= 5 ? "text-amber-500" : "text-emerald-500"}`}>
+                                <span className="material-symbols-outlined text-[14px]">{stock <= 5 ? "warning" : "check_circle"}</span>
                                 {stock <= 5 ? `Chỉ còn ${stock}` : `Còn hàng`}
                               </p>
                             ) : null}
@@ -505,59 +521,52 @@ export function CartPageClient() {
                             type="button"
                             disabled={disabled}
                             onClick={() => void removeItem(it, key)}
-                            className="flex-shrink-0 text-slate-300 dark:text-slate-600 transition hover:text-black dark:hover:text-white disabled:opacity-40 p-2"
+                            className="flex-shrink-0 flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all disabled:opacity-40"
                             aria-label="Xóa sản phẩm"
                           >
-                            <span className="material-symbols-outlined text-[20px] font-light">close</span>
+                            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">delete</span>
                           </button>
                         </div>
 
-                        {/* Price & Quantity Row */}
-                        <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
+                        {/* Price & Quantity */}
+                        <div className="mt-auto pt-2 sm:pt-4 flex items-end justify-between gap-2">
                           <div className="flex-shrink-0">
                             {isSale && (
-                              <p className="text-[11px] font-medium text-slate-400 line-through mb-1">
+                              <p className="text-[10px] sm:text-[12px] font-bold text-slate-400 line-through mb-0.5">
                                 {asMoneyVnd(originalPrice)}
                               </p>
                             )}
-                            <p className="font-headline text-lg font-normal text-black dark:text-white sm:text-xl">
+                            <p className="font-headline text-sm sm:text-lg lg:text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                               {asMoneyVnd(effectivePrice)}
                             </p>
                           </div>
                           
-                          <div className="flex flex-col items-end gap-3">
-                            <div className="flex items-center gap-4 border-b border-black/20 dark:border-white/20 pb-1">
-                              <button
-                                type="button"
-                                disabled={disabled || unavailable || q <= 1}
-                                onClick={() => void updateQty(it, q - 1, key)}
-                                className="text-slate-400 transition-colors hover:text-black dark:hover:text-white disabled:opacity-30"
-                                aria-label="Giảm"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">remove</span>
-                              </button>
-                              <span className="w-6 text-center text-sm font-normal text-black dark:text-white select-none">{q}</span>
-                              <button
-                                type="button"
-                                disabled={disabled || unavailable || atStockLimit}
-                                onClick={() => void updateQty(it, q + 1, key)}
-                                className="text-slate-400 transition-colors hover:text-black dark:hover:text-white disabled:opacity-30"
-                                aria-label="Tăng"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">add</span>
-                              </button>
-                            </div>
-                            <div className="text-right text-xs font-normal text-slate-500 uppercase tracking-widest">
-                              Tổng: <span className="text-black dark:text-white font-medium">{asMoneyVnd(it.subTotal)}</span>
-                            </div>
+                          <div className="flex items-center gap-1 sm:gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-1">
+                            <button
+                              type="button"
+                              disabled={disabled || unavailable || q <= 1}
+                              onClick={() => void updateQty(it, q - 1, key)}
+                              className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-md bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-50 shadow-sm border border-slate-200/50 dark:border-slate-600"
+                            >
+                              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">remove</span>
+                            </button>
+                            <span className="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 select-none">{q}</span>
+                            <button
+                              type="button"
+                              disabled={disabled || unavailable || atStockLimit}
+                              onClick={() => void updateQty(it, q + 1, key)}
+                              className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-md bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-50 shadow-sm border border-slate-200/50 dark:border-slate-600"
+                            >
+                              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">add</span>
+                            </button>
                           </div>
                         </div>
                       </div>
 
                       {/* Busy spinner overlay */}
                       {disabled && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-[#050505]/50 backdrop-blur-sm">
-                          <div className="h-4 w-4 animate-spin rounded-full border border-black dark:border-white border-t-transparent" />
+                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-[2px]">
+                          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent shadow-lg" />
                         </div>
                       )}
                     </div>
@@ -568,9 +577,9 @@ export function CartPageClient() {
 
             {/* Continue shopping link */}
             {!loading && items.length > 0 && (
-              <div className="mt-12">
-                <Link href="/products" className="group flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-black dark:text-white transition hover:opacity-70 w-max">
-                  <span className="material-symbols-outlined text-[16px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+              <div className="mt-8 sm:mt-12 flex justify-center sm:justify-start">
+                <Link href="/products" className="group flex items-center gap-3 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-800">
+                  <span className="material-symbols-outlined text-[16px] sm:text-[18px] transition-transform group-hover:-translate-x-1">arrow_back</span>
                   Tiếp tục mua sắm
                 </Link>
               </div>
@@ -578,37 +587,44 @@ export function CartPageClient() {
           </section>
 
           {/* Right — Order Summary */}
-          <aside className="mt-16 w-full flex-shrink-0 lg:mt-0 lg:w-[380px]">
-            <div className="sticky top-24 bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/5 p-8">
-              <h2 className="font-headline text-lg font-light text-black dark:text-white uppercase tracking-[0.15em] mb-8">
+          <aside className="mt-8 lg:mt-0 w-full flex-shrink-0 lg:w-[380px] xl:w-[420px]">
+            <div className="sticky top-24 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 p-6 sm:p-8 shadow-2xl shadow-indigo-900/10">
+              {/* Decorative element */}
+              <div className="absolute -top-4 -right-4 h-24 w-24 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl rounded-full pointer-events-none" />
+              
+              <h2 className="flex items-center gap-3 font-headline text-lg sm:text-xl font-black text-slate-800 dark:text-white uppercase tracking-wider mb-6 sm:mb-8 relative z-10">
+                <span className="material-symbols-outlined text-indigo-500">receipt_long</span>
                 Tóm tắt đơn hàng
               </h2>
 
-              <div className="space-y-6 text-sm font-light">
-                <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
-                  <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs">Tổng sản phẩm</span>
-                  <span className="text-black dark:text-white font-medium">{totalItems.toLocaleString("vi-VN")}</span>
+              <div className="space-y-5 text-sm font-medium relative z-10">
+                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                  <span className="text-slate-500 dark:text-slate-400">Tổng sản phẩm</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{totalItems.toLocaleString("vi-VN")}</span>
                 </div>
-                <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
-                  <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs">Đã chọn</span>
-                  <span className="text-black dark:text-white font-medium">{selectedItemsCount.toLocaleString("vi-VN")}</span>
+                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                  <span className="text-slate-500 dark:text-slate-400">Đã chọn</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full">{selectedItemsCount.toLocaleString("vi-VN")}</span>
                 </div>
-                <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
-                  <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs">Vận chuyển</span>
-                  <span className="text-black dark:text-white font-medium">Miễn phí</span>
+                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                  <span className="text-slate-500 dark:text-slate-400">Phí vận chuyển</span>
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span className="material-symbols-outlined text-[16px]">local_shipping</span>
+                    Miễn phí
+                  </span>
                 </div>
                 {savingsTotal > 0 && (
-                  <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/5">
-                    <span className="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs">Tiết kiệm</span>
-                    <span className="text-black dark:text-white font-medium">-{asMoneyVnd(savingsTotal)}</span>
+                  <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                    <span className="text-slate-500 dark:text-slate-400">Tiết kiệm được</span>
+                    <span className="text-rose-500 font-black px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20">-{asMoneyVnd(savingsTotal)}</span>
                   </div>
                 )}
               </div>
 
-              <div className="mt-8 pt-8 border-t border-black dark:border-white">
-                <div className="flex items-end justify-between mb-8">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tạm tính</p>
-                  <p className="font-headline text-3xl font-light text-black dark:text-white">{asMoneyVnd(selectedTotal)}</p>
+              <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t-2 border-indigo-500/20 relative z-10">
+                <div className="flex items-end justify-between mb-6 sm:mb-8">
+                  <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tạm tính</p>
+                  <p className="font-headline text-2xl sm:text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{asMoneyVnd(selectedTotal)}</p>
                 </div>
 
                 <div className="space-y-4">
@@ -616,9 +632,13 @@ export function CartPageClient() {
                     type="button"
                     disabled={!canProceedCheckout}
                     onClick={proceedToCheckout}
-                    className="w-full bg-black dark:bg-white px-6 py-5 text-xs font-bold uppercase tracking-widest text-white dark:text-black transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
+                    className="group relative w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 sm:py-5 text-xs sm:text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-[1.02] active:scale-95 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
                   >
-                    Thanh toán
+                    <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform group-hover:translate-y-0" />
+                    <span className="relative flex items-center justify-center gap-2">
+                      Thanh toán ngay
+                      <span className="material-symbols-outlined text-[16px] sm:text-[18px]">arrow_forward</span>
+                    </span>
                   </button>
                   
                   {items.length > 0 && (
@@ -626,9 +646,9 @@ export function CartPageClient() {
                       type="button"
                       onClick={() => void clearCart()}
                       disabled={loading || busyKey != null}
-                      className="w-full px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition-colors hover:text-black dark:hover:text-white disabled:opacity-30"
+                      className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 disabled:opacity-40"
                     >
-                      Xóa giỏ hàng
+                      Xóa toàn bộ giỏ hàng
                     </button>
                   )}
                 </div>

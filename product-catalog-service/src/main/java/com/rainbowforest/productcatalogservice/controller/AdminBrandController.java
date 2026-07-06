@@ -24,7 +24,14 @@ import java.util.UUID;
 @RequestMapping("/admin/brands")
 public class AdminBrandController {
 
-    private static final Path BRAND_UPLOAD_DIR = Paths.get("uploads", "brand-logos");
+    private static Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final Path BRAND_UPLOAD_DIR = getRootUploadPath("brand-logos");
     private final BrandService brandService;
     private final BrandRepository brandRepository;
 

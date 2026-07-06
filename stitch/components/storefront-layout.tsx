@@ -149,20 +149,15 @@ export async function StorefrontLayout({
           
           {/* Logo Section */}
           <div className="flex flex-1 items-center gap-2">
-            <Link href="/" className="group relative flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-indigo-500/50">
-                <span className="material-symbols-outlined text-[24px]">view_in_ar</span>
+            <Link href="/" className="group relative flex shrink-0 items-center gap-2 sm:gap-3">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-indigo-500/50">
+                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">view_in_ar</span>
               </div>
-              <div>
-                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">The Kinetic Vault</h1>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Premium</p>
+              <div className="flex flex-col">
+                <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white whitespace-nowrap">The Kinetic Vault</h1>
+                <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Premium</p>
               </div>
             </Link>
-            
-            {/* Mobile Theme Toggle */}
-            <div className="ml-auto sm:hidden">
-              <ThemeToggle />
-            </div>
           </div>
 
           {/* Desktop Navigation */}
@@ -186,22 +181,20 @@ export async function StorefrontLayout({
               <HeaderDateTime />
             </div>
 
-            <div className="hidden sm:block">
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
 
             {isLoggedIn ? (
               <>
-                <Link href="/notifications" className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                  <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">notifications</span>
+                <Link href="/notifications" className="group relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                  <span className="material-symbols-outlined text-[18px] sm:text-[20px] transition-transform group-hover:scale-110">notifications</span>
                   {counts.notifications > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full border-2 border-white bg-rose-500 text-[10px] font-bold text-white dark:border-slate-950">
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 animate-pulse items-center justify-center rounded-full border-2 border-white bg-rose-500 text-[9px] sm:text-[10px] font-bold text-white dark:border-slate-950">
                       {badge(counts.notifications)}
                     </span>
                   )}
                 </Link>
 
-                <Link href="/cart" className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                <Link href="/cart" className="hidden sm:flex group relative h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                   <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">shopping_cart</span>
                   {counts.cart > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-indigo-600 text-[10px] font-bold text-white dark:border-slate-950">
@@ -219,11 +212,13 @@ export async function StorefrontLayout({
                   </Link>
                 </div>
                 
-                <LogoutButton 
-                  variant="header" 
-                  redirectTo="/" 
-                  className="flex h-10 items-center justify-center rounded-full bg-rose-50 px-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20" 
-                />
+                <div className="hidden sm:block">
+                  <LogoutButton 
+                    variant="header" 
+                    redirectTo="/" 
+                    className="flex h-10 items-center justify-center rounded-full bg-rose-50 px-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20" 
+                  />
+                </div>
               </>
             ) : (
               <>

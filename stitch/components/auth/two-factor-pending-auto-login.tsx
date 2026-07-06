@@ -38,7 +38,7 @@ function OtpBoxes({ value, onChange, length = 6 }: { value: string[]; onChange: 
               nextEl?.focus();
             }
           }}
-          className="h-12 w-10 sm:h-14 sm:w-12 flex-none rounded-2xl border-2 border-slate-200 bg-white text-center text-xl font-black tracking-[0.1em] text-indigo-700 outline-none transition-all focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20"
+          className="h-12 w-10 sm:h-14 sm:w-12 flex-none rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-center text-xl font-black tracking-[0.1em] text-indigo-700 dark:text-indigo-400 outline-none transition-all focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/20"
         />
       ))}
     </div>
@@ -193,12 +193,12 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
 
   return (
     <div className="mt-2 space-y-6">
-      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 p-1.5 shadow-inner">
+      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 dark:bg-slate-800 p-1.5 shadow-inner">
         <button
           type="button"
           onClick={() => { setMode("app"); setStatusText(""); setFailed(false); }}
           className={`relative z-10 flex-1 rounded-xl py-3 text-sm font-extrabold transition-all duration-300 ${
-            mode === "app" ? "text-white" : "text-slate-600 hover:text-slate-900"
+            mode === "app" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Ứng dụng 2FA
@@ -207,7 +207,7 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
           type="button"
           onClick={() => { setMode("email"); setStatusText(""); setFailed(false); }}
           className={`relative z-10 flex-1 rounded-xl py-3 text-sm font-extrabold transition-all duration-300 ${
-            mode === "email" ? "text-white" : "text-slate-600 hover:text-slate-900"
+            mode === "email" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Mã qua Email
@@ -222,7 +222,7 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
       {mode === "app" && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="text-center mb-6">
-            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 mb-4 block">Nhập mã 6 số từ Google Authenticator / Authy</label>
+            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4 block">Nhập mã 6 số từ Google Authenticator / Authy</label>
             <OtpBoxes value={otpApp} onChange={setOtpApp} length={6} />
           </div>
 
@@ -244,7 +244,7 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
       {mode === "email" && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="text-center mb-6">
-            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 mb-4 block">Nhập mã OTP 8 số (Đã gửi vào Email)</label>
+            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4 block">Nhập mã OTP 8 số (Đã gửi vào Email)</label>
             <OtpBoxes value={otpEmail} onChange={setOtpEmail} length={8} />
           </div>
 
@@ -266,7 +266,7 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
               type="button"
               onClick={handleResendEmail}
               disabled={loading || cooldown > 0}
-              className="rounded-[1.25rem] px-4 py-3 text-sm font-extrabold text-blue-600 transition-all hover:text-indigo-800 hover:underline disabled:opacity-50 disabled:no-underline text-center"
+              className="rounded-[1.25rem] px-4 py-3 text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline disabled:opacity-50 disabled:no-underline text-center"
             >
               {cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : "Gửi lại mã OTP"}
             </button>

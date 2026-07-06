@@ -10,6 +10,15 @@ public class SimilarRecommendationResponse {
     private BigDecimal price;
     private BigDecimal priceDelta;
     private String reason;
+    private String primaryImageUrl;
+
+    public String getPrimaryImageUrl() {
+        return primaryImageUrl;
+    }
+
+    public void setPrimaryImageUrl(String primaryImageUrl) {
+        this.primaryImageUrl = primaryImageUrl;
+    }
 
     public Long getProductId() {
         return productId;

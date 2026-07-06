@@ -10,62 +10,91 @@ export default async function ActivityLogPage() {
   const total = logs.length;
 
   return (
-    <div className="space-y-8">
-      <section className="flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-6 shadow-xl shadow-slate-200/70 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/70 dark:shadow-none md:flex-row md:items-end">
-        <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <section className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 p-8 shadow-2xl shadow-purple-900/40 md:flex-row md:items-end">
+        {/* Background Decorative Elements */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-[80px]"></div>
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-cyan-500/20 blur-[80px]"></div>
+
+        <div className="relative z-10">
+          <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-200 backdrop-blur-md">
             <span className="material-symbols-outlined text-sm">history</span>
             Hệ thống
           </p>
-          <h1 className="mt-3 font-headline text-4xl font-black tracking-tight text-slate-900 dark:text-white">Nhật ký hoạt động</h1>
-          <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-            Dữ liệu từ <code className="rounded bg-slate-100 px-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">GET /api/activity/recent</code> qua gateway (
-            <span className="font-mono text-xs text-blue-800 dark:text-blue-300">activity-log-service</span>).
+          <h1 className="mt-4 font-headline text-4xl font-black tracking-tight text-white md:text-5xl">Nhật ký hoạt động</h1>
+          <p className="mt-3 max-w-2xl text-slate-300 font-medium leading-relaxed">
+            Theo dõi tất cả hành động từ <code className="rounded-lg bg-black/30 px-2 py-0.5 text-xs text-fuchsia-300 font-mono">GET /api/activity/recent</code> qua gateway (
+            <span className="font-mono text-xs text-cyan-300">activity-log-service</span>).
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 backdrop-blur-sm shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:shadow-none">
-            <span className="material-symbols-outlined text-xl text-amber-700 dark:text-amber-300">schedule</span>
+        
+        <div className="relative z-10 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-xl transition-all hover:bg-black/30 hover:scale-105">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-orange-500/30">
+              <span className="material-symbols-outlined text-2xl text-white">schedule</span>
+            </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Gần nhất</p>
-              <p className="font-headline text-sm font-black text-amber-950 dark:text-amber-100">{total > 0 ? formatWebActivityTime(logs[0]?.createdAt) : "Chưa có bản ghi"}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gần nhất</p>
+              <p className="font-headline text-sm font-black text-white">{total > 0 ? formatWebActivityTime(logs[0]?.createdAt) : "Chưa có bản ghi"}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-5 py-3 backdrop-blur-sm shadow-sm dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-none">
-            <span className="material-symbols-outlined text-2xl text-blue-700 dark:text-blue-300">history</span>
+          
+          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-xl transition-all hover:bg-black/30 hover:scale-105">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 shadow-lg shadow-blue-500/30">
+              <span className="material-symbols-outlined text-2xl text-white">history_edu</span>
+            </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dòng hiển thị</p>
-              <p className="font-headline text-2xl font-black text-slate-900 dark:text-white">{total}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Dòng hiển thị</p>
+              <p className="font-headline text-2xl font-black text-white">{total}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-        <strong className="text-slate-900 dark:text-white">Gợi ý:</strong> Xóa danh mục / sản phẩm admin sẽ tạo log <code className="rounded border border-slate-200 bg-white px-1 font-mono text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">CATEGORY_DELETE</code>, <code className="rounded border border-slate-200 bg-white px-1 font-mono text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">PRODUCT_DELETE</code>.
-      </p>
+      <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg shadow-xl shadow-black/5">
+        <span className="material-symbols-outlined text-cyan-400 mt-0.5">tips_and_updates</span>
+        <p className="text-sm font-medium text-slate-300 leading-relaxed">
+          <strong className="text-white font-bold">Gợi ý:</strong> Xóa danh mục hoặc sản phẩm admin sẽ tạo log hệ thống với action <code className="rounded-md border border-white/10 bg-black/30 px-1.5 py-0.5 font-mono text-xs text-fuchsia-300">CATEGORY_DELETE</code> hoặc <code className="rounded-md border border-white/10 bg-black/30 px-1.5 py-0.5 font-mono text-xs text-fuchsia-300">PRODUCT_DELETE</code>.
+        </p>
+      </div>
 
       <ActivityLogListClient logs={logs} />
 
       {unauthorized && (
-        <p className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-100">
-          Gateway trả <strong>401 Unauthorized</strong> cho <code className="rounded bg-white/80 px-1 dark:bg-slate-800">/api/activity/recent</code> — endpoint này{" "}
-          <strong>bắt buộc access token còn hạn</strong>, khác với một số route public. Hãy{" "}
-          <strong>đăng xuất rồi đăng nhập lại</strong> (cookie admin vẫn hiển thị khi token đã hết hạn).
-        </p>
+        <div className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5 backdrop-blur-md">
+          <span className="material-symbols-outlined text-rose-500 text-xl">gpp_bad</span>
+          <p className="text-sm font-medium text-rose-200 leading-relaxed">
+            Gateway trả <strong>401 Unauthorized</strong> cho <code className="rounded bg-black/30 px-1.5 py-0.5 text-rose-300">/api/activity/recent</code> — endpoint này{" "}
+            <strong>bắt buộc access token còn hạn</strong>. Hãy{" "}
+            <strong>đăng xuất rồi đăng nhập lại</strong> (cookie admin vẫn hiển thị khi token đã hết hạn).
+          </p>
+        </div>
       )}
+      
       {otherFetchFailure && !unauthorized && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
-          Không lấy được dữ liệu từ gateway (lỗi mạng, HTTP lỗi hoặc phản hồi không phải JSON mảng). Kiểm tra{" "}
-          <code className="rounded bg-white/80 px-1 dark:bg-slate-800">NEXT_PUBLIC_API_BASE_URL</code> / <code className="rounded bg-white/80 px-1 dark:bg-slate-800">API_SERVER_ORIGIN</code> và gateway{" "}
-          <code className="rounded bg-white/80 px-1 dark:bg-slate-800">:8900</code>.
-        </p>
+        <div className="flex items-start gap-3 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-5 backdrop-blur-md">
+          <span className="material-symbols-outlined text-orange-500 text-xl">cloud_off</span>
+          <p className="text-sm font-medium text-orange-200 leading-relaxed">
+            Không lấy được dữ liệu từ gateway (lỗi mạng, HTTP lỗi hoặc phản hồi không hợp lệ). Vui lòng kiểm tra{" "}
+            <code className="rounded bg-black/30 px-1.5 py-0.5 text-orange-300">NEXT_PUBLIC_API_BASE_URL</code> / <code className="rounded bg-black/30 px-1.5 py-0.5 text-orange-300">API_SERVER_ORIGIN</code> và gateway ở cổng{" "}
+            <code className="rounded bg-black/30 px-1.5 py-0.5 text-orange-300">:8900</code>.
+          </p>
+        </div>
       )}
+      
       {total === 0 && !unauthorized && !otherFetchFailure && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-          Chưa có bản ghi nào trong cơ sở nhật ký. Nếu backend đang chạy, thử tạo/sửa/xóa danh mục hoặc sản phẩm admin để phát sinh log. Cần Eureka + gateway +{" "}
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-500/20">activity-log-service</code> (vd. script <code className="rounded bg-amber-100 px-1 dark:bg-amber-500/20">chay-toi-thieu.bat</code>).
-        </p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/20 bg-white/5 p-12 text-center backdrop-blur-md">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 shadow-inner">
+            <span className="material-symbols-outlined text-4xl text-slate-500">search_off</span>
+          </div>
+          <div>
+            <h3 className="font-headline text-lg font-bold text-white mb-2">Chưa có bản ghi nào</h3>
+            <p className="text-sm font-medium text-slate-400 max-w-md mx-auto">
+              Nếu backend đang chạy, hãy thử tạo/sửa/xóa danh mục hoặc sản phẩm admin để phát sinh log. 
+              Đảm bảo Eureka + gateway + <code className="text-cyan-400">activity-log-service</code> đang hoạt động.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -114,15 +114,15 @@ export function RegisterLiveForm({ action }: Props) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
         />
         <label
           htmlFor="reg_username"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
         >
           Tên đăng nhập
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
           account_circle
         </span>
         {username.trim() ? (
@@ -151,15 +151,15 @@ export function RegisterLiveForm({ action }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
         />
         <label
           htmlFor="reg_email"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
         >
           Email (chỉ Gmail)
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
           mail
         </span>
         {email.trim() ? (
@@ -189,18 +189,18 @@ export function RegisterLiveForm({ action }: Props) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
         />
         <label
           htmlFor="reg_password"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
         >
           Mật khẩu (Tối thiểu 8 ký tự)
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
           lock
         </span>
-        <p className="absolute right-2 -bottom-6 text-xs font-bold text-blue-600">Bảo mật: {pwd.label}</p>
+        <p className="absolute right-2 -bottom-6 text-xs font-bold text-blue-600 dark:text-blue-400">Bảo mật: {pwd.label}</p>
       </div>
       <div className="relative mt-4">
         <input
@@ -212,15 +212,15 @@ export function RegisterLiveForm({ action }: Props) {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
         />
         <label
           htmlFor="reg_confirmPassword"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
         >
           Nhập lại mật khẩu
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
           lock_reset
         </span>
         {confirmMismatch && <p className="mt-1 text-xs text-rose-700">Mật khẩu xác nhận không khớp.</p>}

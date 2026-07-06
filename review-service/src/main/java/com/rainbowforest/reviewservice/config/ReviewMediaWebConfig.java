@@ -10,7 +10,14 @@ import java.nio.file.Paths;
 @Configuration
 public class ReviewMediaWebConfig implements WebMvcConfigurer {
 
-    private static final Path REVIEW_MEDIA_DIR = Paths.get("uploads", "review-media").toAbsolutePath().normalize();
+    private static Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir).toAbsolutePath().normalize();
+    }
+    private static final Path REVIEW_MEDIA_DIR = getRootUploadPath("review-media");
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

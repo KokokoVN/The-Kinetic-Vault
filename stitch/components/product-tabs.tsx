@@ -33,7 +33,7 @@ export function ProductTabs({ newProducts, hotProducts, saleProducts, isLoggedIn
           className={`rounded-full px-6 py-3 font-bold transition-all ${
             activeTab === "new"
               ? "bg-primary text-white shadow-lg"
-              : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+              : "bg-surface-container-low dark:bg-slate-800 text-on-surface-variant hover:bg-surface-container dark:bg-slate-800"
           }`}
         >
           Sản phẩm Mới
@@ -43,7 +43,7 @@ export function ProductTabs({ newProducts, hotProducts, saleProducts, isLoggedIn
           className={`rounded-full px-6 py-3 font-bold transition-all ${
             activeTab === "hot"
               ? "bg-secondary-container text-on-secondary-fixed shadow-lg"
-              : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+              : "bg-surface-container-low dark:bg-slate-800 text-on-surface-variant hover:bg-surface-container dark:bg-slate-800"
           }`}
         >
           Bán Chạy
@@ -54,7 +54,7 @@ export function ProductTabs({ newProducts, hotProducts, saleProducts, isLoggedIn
             className={`rounded-full px-6 py-3 font-bold transition-all ${
               activeTab === "sale"
                 ? "bg-error text-white shadow-lg"
-                : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+                : "bg-surface-container-low dark:bg-slate-800 text-on-surface-variant hover:bg-surface-container dark:bg-slate-800"
             }`}
           >
             Khuyến Mãi

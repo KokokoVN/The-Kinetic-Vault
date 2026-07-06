@@ -38,13 +38,13 @@ export function SpecGroupCard({
   }, []);
 
   const variantEditInputClass =
-    "w-full rounded-xl border border-outline-variant/20 bg-white px-3 py-2.5 text-sm text-blue-950 outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400";
+    "w-full rounded-xl border border-outline-variant/20 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-blue-950 dark:text-slate-100 outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400";
 
   return (
     <>
       <article
         onClick={() => setIsOpen(true)}
-        className="group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-indigo-100/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10"
+        className="group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-indigo-100/80 dark:border-indigo-900/30 bg-white dark:bg-slate-900 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="relative z-10 flex items-center gap-4">
@@ -52,7 +52,7 @@ export function SpecGroupCard({
             <span className="material-symbols-outlined text-[24px]">category</span>
           </div>
           <div>
-            <h3 className="font-headline text-lg font-black text-slate-800">{groupName}</h3>
+            <h3 className="font-headline text-lg font-black text-slate-800 dark:text-slate-100">{groupName}</h3>
             <p className="mt-1 text-sm font-medium text-slate-500">{groupSpecs.length} thông số</p>
           </div>
         </div>
@@ -62,10 +62,10 @@ export function SpecGroupCard({
         mounted &&
         createPortal(
           <div className="fixed inset-0 z-[50] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5 animate-in zoom-in-95 duration-200">
-              <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6 sm:px-8">
+            <div className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-slate-900/5 animate-in zoom-in-95 duration-200">
+              <div className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800/50 p-6 sm:px-8">
                 <div>
-                  <h3 className="font-headline text-2xl font-black text-indigo-900 flex items-center gap-2">
+                  <h3 className="font-headline text-2xl font-black text-indigo-900 dark:text-indigo-200 flex items-center gap-2">
                     <span className="material-symbols-outlined text-indigo-500 text-[28px]">folder_open</span>
                     Nhóm: {groupName}
                   </h3>
@@ -73,23 +73,23 @@ export function SpecGroupCard({
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-rose-50 hover:text-rose-600 hover:ring-rose-200"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-900 text-slate-400 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-rose-50 hover:text-rose-600 hover:ring-rose-200"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 sm:px-8 custom-scrollbar bg-slate-50/30">
+              <div className="flex-1 overflow-y-auto p-6 sm:px-8 custom-scrollbar bg-slate-50 dark:bg-slate-800/30 dark:bg-slate-800/30">
                 <div className="flex flex-col gap-4">
                   {groupSpecs.map((s) => (
                     <article
                       key={s.id}
-                      className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:border-indigo-200 hover:shadow-md"
+                      className="flex flex-col justify-between rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 hover:border-indigo-200 hover:shadow-md"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3">
-                          <p className="font-headline text-lg font-black text-slate-800">{s.specKey}</p>
-                          <span className="shrink-0 rounded-lg bg-slate-50 px-2 py-1 font-mono text-[10px] font-bold text-slate-400 ring-1 ring-slate-200/50">
+                          <p className="font-headline text-lg font-black text-slate-800 dark:text-slate-100">{s.specKey}</p>
+                          <span className="shrink-0 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 py-1 font-mono text-[10px] font-bold text-slate-400 ring-1 ring-slate-200/50">
                             #{s.id}
                           </span>
                         </div>
@@ -105,7 +105,7 @@ export function SpecGroupCard({
                           <span className="material-symbols-outlined text-[12px]">sort</span> Vị trí: {s.sortOrder ?? 0}
                         </span>
                       </div>
-                      <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+                      <div className="mt-4 flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex-1">
                           <SpecEditFormLiveCheck
                             action={updateSpecAction}

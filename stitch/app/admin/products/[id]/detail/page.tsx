@@ -7,6 +7,7 @@ import { notifyAdminWebBestEffort } from "@/lib/admin-web-notify";
 import { ProductInboundModal } from "@/components/product-inbound-modal";
 import { ProductReviewsSection } from "@/components/product-reviews-section";
 import { SimilarProductsPanel } from "@/components/similar-products-panel";
+import { StatusToast } from "@/components/status-toast";
 import {
   getAdminBackendProductById,
   getBackendProductById,
@@ -230,7 +231,7 @@ export default async function AdminProductDetailPage({
   }));
 
   const statCardClass =
-    "rounded-xl border border-outline-variant/10 bg-white/90 px-4 py-4 shadow-sm ring-1 ring-slate-100/80 backdrop-blur-sm sm:px-5";
+    "rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/60 px-4 py-4 shadow-sm ring-1 ring-slate-100/80 dark:ring-slate-800/50 backdrop-blur-sm sm:px-5";
 
   const heroSrc = resolveCatalogImageUrl(product.primaryImageUrl);
 
@@ -242,9 +243,9 @@ export default async function AdminProductDetailPage({
     <div className="w-full max-w-none space-y-8 pb-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">Sản phẩm #{pid}</p>
-          <h1 className="font-headline text-3xl font-black text-blue-900">Chi tiết &amp; xem trước dữ liệu</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-on-surface-variant">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sản phẩm #{pid}</p>
+          <h1 className="font-headline text-3xl font-black text-blue-900 dark:text-white">Chi tiết &amp; xem trước dữ liệu</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-550 dark:text-slate-450">
             Tổng hợp thông tin sản phẩm: ảnh, thông số kỹ thuật, biến thể và kho — để kiểm tra trước khi hiển thị trên cửa hàng.
           </p>
         </div>
@@ -269,7 +270,7 @@ export default async function AdminProductDetailPage({
           <Link
             prefetch
             href="/admin/products"
-            className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 text-sm font-bold text-blue-900 shadow-sm hover:bg-surface-container-high"
+            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-350 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700 hover:scale-[1.02]"
           >
             ← Danh sách
           </Link>
@@ -278,47 +279,47 @@ export default async function AdminProductDetailPage({
 
       <nav
         aria-label="Mục trên trang"
-        className="grid grid-cols-2 gap-2 rounded-2xl border border-outline-variant/10 bg-surface-container-low/50 p-2 sm:grid-cols-3 lg:grid-cols-7"
+        className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-2 sm:grid-cols-3 lg:grid-cols-7 backdrop-blur-md"
       >
         <a
           href="#section-overview"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Tổng quan
         </a>
         <a
           href="#section-images"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Phương tiện ({images.length})
         </a>
         <a
           href="#section-specs"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Thông số ({specs.length})
         </a>
         <a
           href="#section-variants"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Biến thể ({variants.length})
         </a>
         <a
           href="#section-stock"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Kho ({movements.length})
         </a>
         <a
           href="#section-reviews"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Đánh giá
         </a>
         <a
           href="#section-changelogs"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-blue-900 transition hover:bg-white hover:shadow-sm sm:text-sm"
+          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
         >
           Lịch sử ({changeLogs.length})
         </a>
@@ -326,65 +327,66 @@ export default async function AdminProductDetailPage({
 
       <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Giá niêm yết</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">{moneyVnd(priceNum)}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giá niêm yết</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{moneyVnd(priceNum)}</p>
         </div>
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tồn kho</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">{stock}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tồn kho</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{stock}</p>
         </div>
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Lượt xem</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">{product.viewCount ?? 0}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Lượt xem</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{product.viewCount ?? 0}</p>
         </div>
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Đã bán</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">{product.salesCount ?? 0}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Đã bán</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{product.salesCount ?? 0}</p>
         </div>
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phương tiện / Thông số</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Phương tiện / Thông số</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">
             {images.length} · {specs.length}
           </p>
         </div>
         <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Biến thể</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900">{variants.length}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Biến thể</p>
+          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{variants.length}</p>
         </div>
       </div>
 
       {err === "readonly" && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">Không đủ quyền chỉnh sửa sản phẩm.</p>
+        <StatusToast tone="error" title="Không đủ quyền" message="Không đủ quyền chỉnh sửa sản phẩm." />
       )}
       {err === "hide" && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">Không ẩn được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi.</p>
+        <StatusToast tone="error" title="Lỗi ẩn sản phẩm" message="Không ẩn được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi." />
       )}
       {err === "unhide" && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">Không hiện lại được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi.</p>
+        <StatusToast tone="error" title="Lỗi hiện sản phẩm" message="Không hiện lại được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi." />
       )}
       {ok === "hide" && (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Đã ẩn sản phẩm khỏi cửa hàng.</p>
+        <StatusToast tone="success" title="Thành công" message="Đã ẩn sản phẩm khỏi cửa hàng." />
       )}
       {ok === "unhide" && (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Đã hiện sản phẩm trên cửa hàng.</p>
+        <StatusToast tone="success" title="Thành công" message="Đã hiện sản phẩm trên cửa hàng." />
       )}
       {ok === "inbound" && null}
       {err === "inbound_validation" && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-          Nhập số lượng nguyên dương (tối thiểu 1).
-        </p>
+        <StatusToast tone="error" title="Lỗi nhập kho" message="Nhập số lượng nguyên dương (tối thiểu 1)." />
+      )}
+      {ok === "create" && (
+        <StatusToast tone="success" title="Thành công" message="Tạo sản phẩm mới thành công!" />
       )}
 
       <section
         id="section-overview"
-        className="scroll-mt-24 relative overflow-hidden rounded-[2.5rem] border border-indigo-100/50 bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/30 shadow-xl shadow-blue-900/5 ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10"
+        className="scroll-mt-24 relative overflow-hidden rounded-[2.5rem] border border-indigo-100/50 bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 shadow-xl shadow-blue-900/5 ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10"
       >
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="relative z-10 grid gap-8 p-8 lg:grid-cols-12 lg:gap-12 lg:p-10">
           <div className="flex flex-col lg:col-span-4 xl:col-span-3">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">Ảnh chính</p>
             <div className="mx-auto w-full max-w-[280px] lg:mx-0">
-              <div className="aspect-square w-full overflow-hidden rounded-2xl border border-outline-variant/15 bg-slate-100 shadow-md ring-1 ring-slate-200/60">
+              <div className="aspect-square w-full overflow-hidden rounded-2xl border border-outline-variant/15 bg-slate-100 dark:bg-slate-800 shadow-md ring-1 ring-slate-200/60">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={heroSrc} alt="" className="h-full w-full object-cover" />
               </div>
@@ -393,17 +395,17 @@ export default async function AdminProductDetailPage({
 
           <div className="min-w-0 space-y-5 lg:col-span-8 xl:col-span-9">
             <div>
-              <h2 className="font-headline text-2xl font-black text-blue-900 sm:text-3xl">{product.productName}</h2>
+              <h2 className="font-headline text-2xl font-black text-blue-900 dark:text-white sm:text-3xl">{product.productName}</h2>
               <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="font-bold text-slate-800">Danh mục</span>
-                <span className="font-headline text-base font-bold text-blue-900/95">{categoryName}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">Danh mục</span>
+                <span className="font-headline text-base font-bold text-blue-900 dark:text-white/95">{categoryName}</span>
                 {product.categoryId != null ? (
                   <span className="text-xs font-medium text-on-surface-variant">(id {product.categoryId})</span>
                 ) : null}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800">SKU {product.sku ?? `—`}</span>
+              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">SKU {product.sku ?? `—`}</span>
               {isDeleted ? (
                 <span className="rounded-full bg-rose-100 px-3 py-1.5 text-xs font-bold text-rose-800">Đã xóa mềm</span>
               ) : (
@@ -452,57 +454,57 @@ export default async function AdminProductDetailPage({
           </div>
         </div>
 
-        <div className="border-t border-outline-variant/10 bg-surface-container-low/50 px-6 py-4 lg:px-8">
+        <div className="border-t border-outline-variant/10 bg-surface-container-low dark:bg-slate-800/50 px-6 py-4 lg:px-8">
           <h3 className="font-headline text-sm font-black uppercase tracking-widest text-indigo-900/80 flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">info</span> Thông tin sản phẩm</h3>
           <p className="mt-2 text-sm font-medium text-slate-500">Giá, danh mục, tồn và trạng thái hiển thị (không hiện mã cột nội bộ).</p>
         </div>
-        <div className="relative z-10 overflow-x-auto border-t border-indigo-100/30 bg-white/40 backdrop-blur-md">
+        <div className="relative z-10 overflow-x-auto border-t border-indigo-100/30 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
           <dl className="grid min-w-[720px] gap-6 p-8 sm:min-w-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:p-10">
-            <div className="group rounded-[1.5rem] border border-slate-200/60 bg-white/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
+            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
               <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Danh mục</dt>
-              <dd className="mt-2 text-base font-bold text-slate-800 transition-colors group-hover:text-indigo-700">{categoryName}</dd>
+              <dd className="mt-2 text-base font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-700">{categoryName}</dd>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200/60 bg-white/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
+            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
               <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Thương hiệu</dt>
-              <dd className="mt-2 text-base font-bold text-slate-800 transition-colors group-hover:text-indigo-700">
+              <dd className="mt-2 text-base font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-700">
                 {product.brandName?.trim() ? product.brandName : "—"}
                 {product.brandId != null ? <span className="ml-1 text-xs font-normal text-slate-500">(id {product.brandId})</span> : null}
               </dd>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200/60 bg-white/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
+            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
               <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Giá niêm yết</dt>
               <dd className="mt-2 text-xl font-black text-slate-900 transition-colors group-hover:text-indigo-700">{moneyVnd(priceNum)}</dd>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200/60 bg-white/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
+            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
               <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Giá hiệu lực</dt>
               <dd className="mt-2 text-xl font-black text-indigo-600">{moneyVnd(effectiveNum)}</dd>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest/80 p-4">
+            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
               <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Tồn kho</dt>
-              <dd className="mt-1 text-lg font-black text-blue-900">{stock}</dd>
+              <dd className="mt-1 text-lg font-black text-blue-900 dark:text-white">{stock}</dd>
               <dd className="mt-2 text-xs leading-relaxed text-on-surface-variant">
                 Điều chỉnh chính qua nhập kho / inventory; PUT sản phẩm không đổi tồn.
               </dd>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest/80 p-4">
+            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
               <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Ẩn khỏi cửa hàng</dt>
-              <dd className="mt-1 text-sm font-bold text-blue-900">{isHidden ? "Có" : "Không"}</dd>
+              <dd className="mt-1 text-sm font-bold text-blue-900 dark:text-white">{isHidden ? "Có" : "Không"}</dd>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest/80 p-4">
+            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
               <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Xóa mềm</dt>
-              <dd className="mt-1 break-all text-sm font-bold text-blue-900">
+              <dd className="mt-1 break-all text-sm font-bold text-blue-900 dark:text-white">
                 {isDeleted ? String(product.deletedAt) : "— (đang hoạt động)"}
               </dd>
             </div>
             {variantRange ? (
-              <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest/80 p-4 sm:col-span-2 lg:col-span-3">
+              <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4 sm:col-span-2 lg:col-span-3">
                 <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Khoảng giá biến thể</dt>
-                <dd className="mt-1 text-sm font-bold text-blue-900">{variantRange}</dd>
+                <dd className="mt-1 text-sm font-bold text-blue-900 dark:text-white">{variantRange}</dd>
               </div>
             ) : null}
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest/80 p-4 sm:col-span-2 lg:col-span-3">
+            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4 sm:col-span-2 lg:col-span-3">
               <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Mô tả</dt>
-              <dd className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+              <dd className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                 {product.discription?.trim() ? product.discription : "—"}
               </dd>
             </div>
@@ -510,11 +512,11 @@ export default async function AdminProductDetailPage({
         </div>
       </section>
 
-      <section id="section-images" className="scroll-mt-24 rounded-3xl border border-outline-variant/10 bg-gradient-to-br from-surface-container-lowest to-blue-50/30 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
+      <section id="section-images" className="scroll-mt-24 rounded-3xl border border-outline-variant/10 bg-gradient-to-br from-surface-container-lowest to-blue-50/30 dark:from-slate-900 dark:to-slate-900/30 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="relative z-10 flex items-center justify-between mb-8">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 flex items-center gap-3">
+            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
               <span className="material-symbols-outlined text-indigo-500 text-3xl">perm_media</span>
               Phương tiện ({images.length})
             </h3>
@@ -523,7 +525,7 @@ export default async function AdminProductDetailPage({
         </div>
 
         {images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-indigo-100 rounded-3xl bg-white/50">
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-indigo-100 rounded-3xl bg-white/50 dark:bg-slate-900/50">
             <span className="material-symbols-outlined text-5xl text-indigo-200 mb-3">hide_image</span>
             <p className="text-sm font-bold text-indigo-900/50">Sản phẩm chưa có phương tiện nào</p>
           </div>
@@ -532,7 +534,7 @@ export default async function AdminProductDetailPage({
             {images.map((img: any) => {
               const isVideo = img.mediaType === "VIDEO";
               return (
-                <li key={img.id} className="group relative overflow-hidden rounded-[2rem] bg-white shadow-md ring-1 ring-slate-900/5 transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-indigo-500/30">
+                <li key={img.id} className="group relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 shadow-md ring-1 ring-slate-900/5 transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-indigo-500/30">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900 flex items-center justify-center">
                     {isVideo ? (
                       <video src={imageSrc(img)} controls className="h-full w-full object-contain bg-black/90 transition-transform duration-700 group-hover:scale-105" />
@@ -543,7 +545,7 @@ export default async function AdminProductDetailPage({
                     {/* Badge */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
                       {img.primaryImage && (
-                        <div className="backdrop-blur-md bg-white/90 shadow-lg px-3 py-1.5 rounded-full flex items-center gap-1.5 text-indigo-600 ring-1 ring-indigo-500/20 animate-in fade-in slide-in-from-top-2">
+                        <div className="backdrop-blur-md bg-white/90 dark:bg-slate-900/90 shadow-lg px-3 py-1.5 rounded-full flex items-center gap-1.5 text-indigo-600 ring-1 ring-indigo-500/20 animate-in fade-in slide-in-from-top-2">
                           <span className="material-symbols-outlined text-[14px] fill-current">star</span>
                           <span className="text-[10px] font-black uppercase tracking-wider">Ảnh chính</span>
                         </div>
@@ -555,9 +557,9 @@ export default async function AdminProductDetailPage({
                     </div>
                   </div>
 
-                  <div className="p-5 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
+                  <div className="p-5 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-t border-slate-100 dark:border-slate-700">
                     <div className="flex items-center justify-between">
-                      <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                      <p className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
                         {img.primaryImage ? "Phương tiện đại diện" : (isVideo ? "Video đính kèm" : "Ảnh đính kèm")}
                       </p>
                       {img.sortOrder != null && (
@@ -574,34 +576,34 @@ export default async function AdminProductDetailPage({
         )}
       </section>
 
-      <section id="section-specs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <h3 className="font-headline text-2xl font-black text-blue-900 flex items-center gap-3">
+      <section id="section-specs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
+        <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-500 text-3xl">list_alt</span>
           Thông số kỹ thuật ({specs.length})
         </h3>
         <p className="mt-2 text-sm font-medium text-slate-500">Tên thông số, giá trị và đơn vị tính của sản phẩm.</p>
         {specs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 mt-6 rounded-3xl bg-slate-50/50">
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 mt-6 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_list_bulleted</span>
             <p className="text-sm font-bold text-slate-400">Chưa có thông số kỹ thuật</p>
           </div>
         ) : (
-          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
             <table className="w-full min-w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
                   <th className="py-5 pl-6 pr-4">Thứ tự</th>
                   <th className="py-3 pr-4">Thông số</th>
                   <th className="py-3 pr-4">Giá trị</th>
                   <th className="py-3 pr-4">Đơn vị</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {specs.map((s, idx) => (
-                  <tr key={s.id} className="group transition-colors hover:bg-slate-50/80">
+                  <tr key={s.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
                     <td className="py-4 pl-6 pr-4 font-mono text-xs font-bold text-slate-400">{s.sortOrder ?? "—"}</td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 transition-colors group-hover:text-indigo-600">{s.specKey}</td>
-                    <td className="py-4 pr-4 font-medium text-slate-600">{s.specValue}</td>
+                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-600">{s.specKey}</td>
+                    <td className="py-4 pr-4 font-medium text-slate-600 dark:text-slate-300">{s.specValue}</td>
                     <td className="py-4 pr-4 text-xs font-bold text-slate-400">{s.unit ?? "—"}</td>
                   </tr>
                 ))}
@@ -611,8 +613,8 @@ export default async function AdminProductDetailPage({
         )}
       </section>
 
-      <section id="section-variants" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <h3 className="font-headline text-2xl font-black text-blue-900 flex items-center gap-3">
+      <section id="section-variants" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
+        <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
           <span className="material-symbols-outlined text-indigo-500 text-3xl">style</span>
           Biến thể ({variants.length})
         </h3>
@@ -620,15 +622,15 @@ export default async function AdminProductDetailPage({
           Danh sách các tuỳ chọn cỡ và màu, kèm ảnh riêng, giá và tồn kho cho từng biến thể.
         </p>
         {variants.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 mt-6 rounded-3xl bg-slate-50/50">
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 mt-6 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_size</span>
             <p className="text-sm font-bold text-slate-400">Chưa có biến thể nào</p>
           </div>
         ) : (
-          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
             <table className="w-full min-w-[600px] text-left text-sm lg:min-w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
                   <th className="py-5 pl-6 pr-4">ID</th>
                   <th className="py-5 pr-4">Ảnh</th>
                   <th className="py-3 pr-4">Size</th>
@@ -637,9 +639,9 @@ export default async function AdminProductDetailPage({
                   <th className="py-3 pr-4">Tồn</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {variants.map((v, idx) => (
-                  <tr key={v.id} className="group transition-colors hover:bg-slate-50/80">
+                  <tr key={v.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
                     <td className="py-4 pl-6 pr-4 font-mono text-xs font-bold text-slate-400">#{v.id}</td>
                     <td className="py-4 pr-4">
                       {v.variantImageUrl ? (
@@ -658,15 +660,15 @@ export default async function AdminProductDetailPage({
                           />
                         </a>
                       ) : (
-                        <span className="inline-flex h-16 w-16 items-center justify-center rounded-[1rem] bg-slate-50 border border-dashed border-slate-200 text-[10px] font-bold text-slate-300">
+                        <span className="inline-flex h-16 w-16 items-center justify-center rounded-[1rem] bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-300">
                           Trống
                         </span>
                       )}
                     </td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 text-base">{v.size}</td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 text-base">{v.color}</td>
+                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 text-base">{v.size}</td>
+                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 text-base">{v.color}</td>
                     <td className="py-4 pr-4 whitespace-nowrap font-medium text-indigo-600">{v.price != null ? moneyVnd(Number(v.price)) : "—"}</td>
-                    <td className="py-4 pr-4 font-mono font-bold text-slate-600">{v.availability ?? "—"}</td>
+                    <td className="py-4 pr-4 font-mono font-bold text-slate-600 dark:text-slate-300">{v.availability ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -675,10 +677,10 @@ export default async function AdminProductDetailPage({
         )}
       </section>
 
-      <section id="section-stock" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
+      <section id="section-stock" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 flex items-center gap-3">
+            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
               <span className="material-symbols-outlined text-indigo-500 text-3xl">warehouse</span>
               Kho — lịch sử nhập / xuất
             </h3>
@@ -694,15 +696,15 @@ export default async function AdminProductDetailPage({
           ) : null}
         </div>
         {movements.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
             <p className="text-sm font-bold text-slate-400">Chưa có phiếu kho nào được ghi nhận</p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
             <table className="w-full min-w-[900px] text-left text-sm lg:min-w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
                   <th className="py-5 pl-6 pr-4">Loại</th>
                   <th className="py-3 pr-4">SL</th>
                   <th className="py-3 pr-4">Phạm vi</th>
@@ -715,15 +717,15 @@ export default async function AdminProductDetailPage({
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
                 {movements.map((m: AdminStockMovement, idx: number) => (
-                  <tr key={m.id} className={idx % 2 === 1 ? "bg-slate-50/50" : undefined}>
-                    <td className="py-3 pl-4 pr-4 font-medium text-blue-900">{movementTypeVi(m.movementType)}</td>
+                  <tr key={m.id} className={idx % 2 === 1 ? "bg-slate-50/50 dark:bg-slate-800/50" : undefined}>
+                    <td className="py-3 pl-4 pr-4 font-medium text-blue-900 dark:text-white">{movementTypeVi(m.movementType)}</td>
                     <td className="py-3 pr-4 font-mono">{m.quantity ?? "—"}</td>
-                    <td className="py-3 pr-4 text-slate-700">{variantStockScope(variants, m.variantId)}</td>
+                    <td className="py-3 pr-4 text-slate-700 dark:text-slate-200">{variantStockScope(variants, m.variantId)}</td>
                     <td className="py-3 pr-4 font-mono">{m.balanceAfter ?? "—"}</td>
                     <td className="py-3 pr-4">{moneyInline(m.unitCost)}</td>
-                    <td className="py-3 pr-4 whitespace-nowrap text-xs text-slate-600">{formatStockDateTime(m.movementAt ?? undefined)}</td>
-                    <td className="py-3 pr-4 text-xs text-slate-600">{m.createdBy ?? "—"}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-600" title={m.note ?? ""}>
+                    <td className="py-3 pr-4 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">{formatStockDateTime(m.movementAt ?? undefined)}</td>
+                    <td className="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">{m.createdBy ?? "—"}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-600 dark:text-slate-300" title={m.note ?? ""}>
                       {m.note?.trim() ? m.note : "—"}
                     </td>
                   </tr>
@@ -736,10 +738,10 @@ export default async function AdminProductDetailPage({
 
       <ProductReviewsSection productId={numId} />
 
-      <section id="section-changelogs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
+      <section id="section-changelogs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 flex items-center gap-3">
+            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
               <span className="material-symbols-outlined text-indigo-500 text-3xl">manage_history</span>
               Lịch sử thay đổi
             </h3>
@@ -747,15 +749,15 @@ export default async function AdminProductDetailPage({
           </div>
         </div>
         {changeLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">history_toggle_off</span>
             <p className="text-sm font-bold text-slate-400">Chưa có lịch sử thay đổi</p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
+          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
             <table className="w-full min-w-[800px] text-left text-sm lg:min-w-full">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
                   <th className="py-5 pl-6 pr-4">Trường dữ liệu</th>
                   <th className="py-3 pr-4">Giá trị cũ</th>
                   <th className="py-3 pr-4">Giá trị mới</th>
@@ -763,10 +765,10 @@ export default async function AdminProductDetailPage({
                   <th className="py-3 pr-4">Người thực hiện</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {changeLogs.map((log, idx: number) => (
-                  <tr key={log.id} className="group transition-colors hover:bg-slate-50/80">
-                    <td className="py-4 pl-6 pr-4 font-bold text-slate-800 transition-colors group-hover:text-indigo-600">{log.changedField}</td>
+                  <tr key={log.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
+                    <td className="py-4 pl-6 pr-4 font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-600">{log.changedField}</td>
                     <td className="max-w-[200px] truncate py-4 pr-4 text-xs font-medium text-slate-400 line-through" title={log.oldValue ?? ""}>{log.oldValue ?? "—"}</td>
                     <td className="max-w-[200px] truncate py-4 pr-4 text-xs font-bold text-emerald-600" title={log.newValue ?? ""}>{log.newValue ?? "—"}</td>
                     <td className="py-4 pr-4 whitespace-nowrap text-xs font-medium text-slate-500">{formatStockDateTime(log.changedAt)}</td>

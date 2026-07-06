@@ -108,7 +108,7 @@ export default async function ProductsPage({
     let finalMaxPrice = p.maxPrice;
 
     activeSalePrograms.forEach(program => {
-      const hasProduct = program.items?.some((item: any) => item.productId === Number(p.id));
+      const hasProduct = program.items?.some((item: any) => item.productId === Number(p.id) && (item.promoQtyLimit == null || item.promoQtyLimit > 0));
       if (hasProduct) {
         let currentDiscountValue = 0;
         let currentSalePrice = originalPriceValue;
@@ -174,10 +174,9 @@ export default async function ProductsPage({
     if (page2 > 1) qp.set("page", String(page2));
     return `/products${qp.toString() ? `?${qp.toString()}` : ""}`;
   };
-
   return (
     <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="products">
-      <main className="bg-slate-50/50">
+      <main className="bg-slate-50/20 dark:bg-slate-950/40 min-h-screen">
         {/* PREMIUM HERO BANNER */}
         <section className="relative overflow-hidden bg-slate-950 px-6 py-20 lg:py-32">
           {/* Subtle background glow */}
@@ -204,7 +203,7 @@ export default async function ProductsPage({
               <Link
                 href={buildUrl({ category: "", page: 1 })}
                 className={`flex h-12 items-center justify-center rounded-full px-7 text-sm font-bold transition-all duration-300 ${
-                  !categoryId ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5"
+                  !categoryId ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5"
                 }`}
               >
                 Tất cả sản phẩm
@@ -219,7 +218,7 @@ export default async function ProductsPage({
                       key={c.id}
                       href={buildUrl({ category: String(c.id), page: 1 })}
                       className={`flex h-12 items-center justify-center rounded-full px-7 text-sm font-bold transition-all duration-300 ${
-                        isActive ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5"
+                        isActive ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 hover:text-indigo-600 hover:-translate-y-0.5"
                       }`}
                     >
                       {c.name}
@@ -230,7 +229,7 @@ export default async function ProductsPage({
           </div>
 
           {/* SEARCH & FILTERS BAR */}
-          <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-3xl bg-white p-4 shadow-sm border border-slate-200/60">
+          <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-3xl bg-white dark:bg-slate-900 p-4 shadow-sm border border-slate-200/60 dark:border-slate-800">
             <SoftNavigateForm actionPath="/products" className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
               <input type="hidden" name="category" value={categoryId > 0 ? categoryId : ""} />
               
@@ -241,7 +240,7 @@ export default async function ProductsPage({
                   name="q"
                   defaultValue={q}
                   placeholder="Tìm kiếm sản phẩm theo tên, SKU..."
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-3.5 pl-14 pr-4 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 py-3.5 pl-14 pr-4 text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10"
                 />
               </div>
 
@@ -250,7 +249,7 @@ export default async function ProductsPage({
                 <AutoSubmitSelect
                   name="status"
                   defaultValue={status}
-                  className="h-[52px] rounded-2xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 outline-none transition-all hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
+                  className="h-[52px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 text-sm font-bold text-slate-700 dark:text-slate-350 outline-none transition-all hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
                   <option value="all">Mọi trạng thái</option>
                   <option value="in_stock">Còn hàng</option>
@@ -262,22 +261,22 @@ export default async function ProductsPage({
               </div>
             </SoftNavigateForm>
             
-            <div className="hidden h-8 w-px bg-slate-200 md:block" />
+            <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-800 md:block" />
 
             <div className="flex items-center gap-2 pr-2">
-              <span className="text-sm font-bold text-slate-900">{totalItems}</span>
-              <span className="text-sm font-semibold text-slate-500">kết quả</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">{totalItems}</span>
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">kết quả</span>
             </div>
           </div>
 
           {/* PRODUCT GRID */}
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 bg-white/50 py-32 text-center shadow-sm">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-8 shadow-inner">
+            <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 py-32 text-center shadow-sm">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-8 shadow-inner">
                 <span className="material-symbols-outlined text-[48px]">search_off</span>
               </div>
-              <h3 className="font-headline text-2xl font-black text-slate-900">Không tìm thấy sản phẩm</h3>
-              <p className="mt-3 max-w-md text-base font-medium text-slate-500 leading-relaxed">
+              <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white">Không tìm thấy sản phẩm</h3>
+              <p className="mt-3 max-w-md text-base font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
                 Rất tiếc, chúng tôi không tìm thấy sản phẩm nào phù hợp với bộ lọc của bạn. Vui lòng thử lại với từ khóa khác.
               </p>
               <Link href="/products" className="mt-8 rounded-2xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-indigo-500/30 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/40">
@@ -285,7 +284,7 @@ export default async function ProductsPage({
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 sm:gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
               {items.map((p, idx) => (
                 <div key={p.id} style={{ animationDelay: `${idx * 50}ms` }} className="animate-in fade-in zoom-in-95 duration-500 ease-out fill-mode-both">
                   <ProductCard
@@ -301,7 +300,7 @@ export default async function ProductsPage({
                     footer={
                       <div className="space-y-3">
                         <div className="flex items-end justify-between gap-3">
-                          <p className="text-xs font-semibold text-slate-500">Kho: {p.stock.toLocaleString("vi-VN")}</p>
+                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Kho: {p.stock.toLocaleString("vi-VN")}</p>
                           <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
                             p.stock <= 0 ? "bg-rose-100 text-rose-700" : p.stock < 20 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
                           }`}>
@@ -323,19 +322,19 @@ export default async function ProductsPage({
               <Link
                 href={buildUrl({ page: Math.max(1, safePage - 1) })}
                 className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${
-                  safePage <= 1 ? "pointer-events-none bg-slate-100 text-slate-300" : "bg-white text-slate-600 shadow-sm border border-slate-200 hover:-translate-y-1 hover:border-indigo-600 hover:text-indigo-600 hover:shadow-xl hover:shadow-indigo-500/10"
+                  safePage <= 1 ? "pointer-events-none bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-650" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-350 shadow-sm border border-slate-200 dark:border-slate-800 hover:-translate-y-1 hover:border-indigo-650 dark:hover:border-indigo-500 hover:text-indigo-650 hover:shadow-xl hover:shadow-indigo-500/10"
                 }`}
               >
                 <span className="material-symbols-outlined text-[24px]">chevron_left</span>
               </Link>
               
-              <div className="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-1 rounded-2xl bg-white dark:bg-slate-900 p-1.5 shadow-sm border border-slate-200 dark:border-slate-800">
                 {Array.from({ length: totalPages }).map((_, i) => {
                   const p = i + 1;
                   const isActive = p === safePage;
                   
                   if (totalPages > 7 && (p < safePage - 2 || p > safePage + 2) && p !== 1 && p !== totalPages) {
-                    if (p === safePage - 3 || p === safePage + 3) return <span key={p} className="px-3 text-slate-400 font-bold">...</span>;
+                    if (p === safePage - 3 || p === safePage + 3) return <span key={p} className="px-3 text-slate-400 dark:text-slate-600 font-bold">...</span>;
                     return null;
                   }
                   
@@ -344,7 +343,7 @@ export default async function ProductsPage({
                       key={p}
                       href={buildUrl({ page: p })}
                       className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 ${
-                        isActive ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "text-slate-600 hover:bg-slate-100"
+                        isActive ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       {p}
@@ -356,7 +355,7 @@ export default async function ProductsPage({
               <Link
                 href={buildUrl({ page: Math.min(totalPages, safePage + 1) })}
                 className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${
-                  safePage >= totalPages ? "pointer-events-none bg-slate-100 text-slate-300" : "bg-white text-slate-600 shadow-sm border border-slate-200 hover:-translate-y-1 hover:border-indigo-600 hover:text-indigo-600 hover:shadow-xl hover:shadow-indigo-500/10"
+                  safePage >= totalPages ? "pointer-events-none bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-650" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-350 shadow-sm border border-slate-200 dark:border-slate-800 hover:-translate-y-1 hover:border-indigo-650 dark:hover:border-indigo-500 hover:text-indigo-650 hover:shadow-xl hover:shadow-indigo-500/10"
                 }`}
               >
                 <span className="material-symbols-outlined text-[24px]">chevron_right</span>

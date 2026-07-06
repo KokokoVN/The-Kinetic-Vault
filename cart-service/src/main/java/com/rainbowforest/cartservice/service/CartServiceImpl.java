@@ -67,8 +67,10 @@ public class CartServiceImpl implements CartService {
                     if (pi.getProductId() != null && pi.getProductId().equals(item.getProductId())) {
                         Long itemVariantId = item.getVariantId();
                         if (pi.getVariantId() == null || (itemVariantId != null && pi.getVariantId().equals(itemVariantId))) {
-                            hasProduct = true;
-                            break;
+                            if (pi.getPromoQtyLimit() == null || pi.getPromoQtyLimit() > 0) {
+                                hasProduct = true;
+                                break;
+                            }
                         }
                     }
                 }

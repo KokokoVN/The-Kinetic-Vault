@@ -174,7 +174,7 @@ export function InventoryDashboard({
           className={`pb-4 text-sm font-bold transition-all ${
             activeTab === "balances"
               ? "border-b-2 border-blue-600 text-blue-700 dark:text-blue-400 dark:border-blue-500"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 dark:hover:text-slate-200"
           }`}
           onClick={() => setActiveTab("balances")}
         >
@@ -184,7 +184,7 @@ export function InventoryDashboard({
           className={`pb-4 text-sm font-bold transition-all ${
             activeTab === "import"
               ? "border-b-2 border-emerald-600 text-emerald-700 dark:text-emerald-400 dark:border-emerald-500"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 dark:hover:text-slate-200"
           }`}
           onClick={() => setActiveTab("import")}
         >
@@ -195,7 +195,7 @@ export function InventoryDashboard({
           className={`flex items-center gap-2 border-b-2 px-6 pb-4 text-sm font-bold transition-all ${
             activeTab === "history"
               ? "border-purple-600 text-purple-700 dark:text-purple-400 dark:border-purple-500"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200"
           }`}
         >
           <span className="material-symbols-outlined text-[20px]">history</span>
@@ -259,19 +259,19 @@ export function InventoryDashboard({
                       balances.map((b) => {
                         const product = products.find(p => p.id === b.productId);
                         return (
-                          <tr key={b.id} className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                          <tr key={b.id} className="transition-colors hover:bg-slate-50/50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-4">
                                 <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700">
                                   {product?.heroImage ? (
                                     <img src={product.heroImage} alt={product.name} className="h-full w-full object-cover" />
                                   ) : (
-                                    <span className="material-symbols-outlined text-slate-300 dark:text-slate-600">image</span>
+                                    <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 dark:text-slate-400">image</span>
                                   )}
                                 </div>
                                 <div>
                                   <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-bold tracking-wider text-slate-500 dark:text-slate-400">#{b.productId}</span>
-                                  {product?.sku && <p className="mt-1 text-xs font-medium text-slate-400 dark:text-slate-500">SKU: {product.sku}</p>}
+                                  {product?.sku && <p className="mt-1 text-xs font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400">SKU: {product.sku}</p>}
                                 </div>
                               </div>
                             </td>
@@ -280,18 +280,18 @@ export function InventoryDashboard({
                             </td>
                             <td className="px-6 py-4 font-medium text-slate-500 dark:text-slate-400">{b.variantId ? variantNamesMap[b.variantId] || `#${b.variantId}` : "—"}</td>
                             <td className="px-6 py-4 font-black text-slate-800 dark:text-slate-100">{b.quantityOnHand}</td>
-                            <td className="px-6 py-4 text-xs font-medium text-slate-400 dark:text-slate-500">{new Date(b.updatedAt).toLocaleString("vi-VN")}</td>
+                            <td className="px-6 py-4 text-xs font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(b.updatedAt).toLocaleString("vi-VN")}</td>
                             <td className="px-6 py-4 text-right">
                               {b.quantityOnHand <= 0 ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-200">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-200">
                                   Hết hàng
                                 </span>
                               ) : b.quantityOnHand < 10 ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-200">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-200">
                                   Sắp hết
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">
                                   Sẵn sàng
                                 </span>
                               )}
@@ -313,8 +313,8 @@ export function InventoryDashboard({
                   disabled={page <= 0}
                   className={`rounded-lg border px-4 py-2 text-sm font-bold transition-colors shadow-sm ${
                     page <= 0 
-                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed' 
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 cursor-not-allowed' 
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700'
                   }`}
                 >
                   Trước
@@ -329,8 +329,8 @@ export function InventoryDashboard({
                   disabled={page >= totalPages - 1}
                   className={`rounded-lg border px-4 py-2 text-sm font-bold transition-colors shadow-sm ${
                     page >= totalPages - 1 
-                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed' 
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 cursor-not-allowed' 
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700'
                   }`}
                 >
                   Sau
@@ -366,17 +366,17 @@ export function InventoryDashboard({
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {loading && movements.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400 dark:text-slate-500">Đang tải dữ liệu...</td>
+                    <td colSpan={7} className="py-8 text-center text-slate-400 dark:text-slate-500 dark:text-slate-400">Đang tải dữ liệu...</td>
                   </tr>
                 ) : movements.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400 dark:text-slate-500">Chưa có lịch sử giao dịch nào.</td>
+                    <td colSpan={7} className="py-8 text-center text-slate-400 dark:text-slate-500 dark:text-slate-400">Chưa có lịch sử giao dịch nào.</td>
                   </tr>
                 ) : (
                   movements.map((m: any, idx: number) => {
                     const isOutbound = m.movementType === "OUTBOUND";
                     return (
-                      <tr key={idx} className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <tr key={idx} className="transition-colors hover:bg-slate-50/50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50">
                         <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                           {new Date(m.movementAt).toLocaleString("vi-VN")}
                         </td>
@@ -413,21 +413,21 @@ export function InventoryDashboard({
           </div>
 
           <div className="mt-6 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-500">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Trang {historyPage + 1} / {historyTotalPages || 1}
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => setHistoryPage((p) => Math.max(0, p - 1))}
                 disabled={historyPage === 0}
-                className="flex items-center justify-center rounded-xl bg-slate-100 p-2 text-slate-600 transition-all hover:bg-slate-200 disabled:opacity-50"
+                className="flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-400 transition-all hover:bg-slate-200 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
               <button
                 onClick={() => setHistoryPage((p) => Math.min(historyTotalPages - 1, p + 1))}
                 disabled={historyPage >= historyTotalPages - 1}
-                className="flex items-center justify-center rounded-xl bg-slate-100 p-2 text-slate-600 transition-all hover:bg-slate-200 disabled:opacity-50"
+                className="flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-400 transition-all hover:bg-slate-200 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
@@ -444,7 +444,7 @@ export function InventoryDashboard({
               <h3 className={`text-xl font-black ${modalType === "INBOUND" ? "text-blue-700 dark:text-blue-400" : "text-red-700 dark:text-red-400"}`}>
                 {modalType === "INBOUND" ? "Nhập Kho Thủ Công" : "Xuất Kho Thủ Công"}
               </h3>
-              <button onClick={() => { setShowModal(false); setPendingItems([]); }} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+              <button onClick={() => { setShowModal(false); setPendingItems([]); }} className="text-slate-400 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -463,7 +463,7 @@ export function InventoryDashboard({
                     required
                     value={formData.productId}
                     onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:bg-white dark:bg-slate-900 dark:focus:bg-slate-900 text-slate-800 dark:text-slate-200"
                   >
                     <option value="">-- Chọn sản phẩm --</option>
                     {products.map((p) => (
@@ -478,7 +478,7 @@ export function InventoryDashboard({
                   <select
                     value={formData.variantId}
                     onChange={(e) => setFormData({ ...formData, variantId: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:bg-slate-900 dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
                   >
                     <option value="">-- Không chọn (Mặc định) --</option>
                     {variants.map((v) => (
@@ -498,7 +498,7 @@ export function InventoryDashboard({
                   min="1"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:bg-slate-900 dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
                 />
               </div>
 
@@ -509,7 +509,7 @@ export function InventoryDashboard({
                   min="0"
                   value={formData.unitCost}
                   onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:bg-slate-900 dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
                 />
               </div>
 
@@ -518,7 +518,7 @@ export function InventoryDashboard({
                 <textarea
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:bg-slate-900 dark:focus:bg-slate-900 focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
                   rows={2}
                 />
               </div>
@@ -526,7 +526,7 @@ export function InventoryDashboard({
               <div className="pt-4 border-b border-slate-100 dark:border-slate-800 pb-6">
                 <button
                   type="submit"
-                  className="w-full rounded-xl px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                  className="w-full rounded-xl px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all"
                 >
                   <span className="material-symbols-outlined text-sm align-middle mr-1">add</span>
                   Thêm vào danh sách
@@ -545,7 +545,7 @@ export function InventoryDashboard({
                           <p className="font-bold text-slate-800 dark:text-slate-200">{item.pName} <span className="text-slate-500 dark:text-slate-400 font-normal ml-1">x{item.quantity}</span></p>
                           {item.vName && <p className="text-slate-500 dark:text-slate-400">{item.vName}</p>}
                         </div>
-                        <button onClick={() => setPendingItems(pendingItems.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                        <button onClick={() => setPendingItems(pendingItems.filter((_, i) => i !== idx))} className="text-red-500 hover:bg-red-50 dark:bg-red-900/30 p-1 rounded">
                           <span className="material-symbols-outlined text-sm">delete</span>
                         </button>
                       </li>

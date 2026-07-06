@@ -60,8 +60,8 @@ export default async function ProductDetailPage({
   let saleValue: number | null = null;
   
   productSalePrograms.forEach(program => {
-    const hasProductWide = program.items.some(item => item.productId === numericId && item.variantId == null);
-    const hasAnyVariant = program.items.some(item => item.productId === numericId);
+    const hasProductWide = program.items.some(item => item.productId === numericId && item.variantId == null && (item.promoQtyLimit == null || item.promoQtyLimit > 0));
+    const hasAnyVariant = program.items.some(item => item.productId === numericId && (item.promoQtyLimit == null || item.promoQtyLimit > 0));
     
     // For the base product display, we consider product-wide sales or the best variant sale
     if (hasAnyVariant) {
@@ -116,25 +116,24 @@ export default async function ProductDetailPage({
   return (
     <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="products">
       <ProductViewTracker productId={id} />
-      <main style={{ background: "linear-gradient(180deg,#f5f7ff 0%,#ffffff 400px)" }}>
+      <main className="bg-gradient-to-b from-[#f5f7ff] to-white dark:from-slate-950 dark:to-slate-900/40 min-h-screen">
         <div className="mx-auto max-w-screen-2xl px-6 py-10">
 
           {/* ── Breadcrumb ── */}
-          <nav className="mb-8 flex items-center gap-1.5">
+          <nav className="mb-8 flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
             <Link
               href="/"
-              className="flex items-center gap-1 text-sm font-semibold transition hover:text-primary"
-              style={{ color: "rgba(0,0,0,0.45)" }}
+              className="flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>home</span>
+              <span className="material-symbols-outlined text-[14px]">home</span>
               Trang chủ
             </Link>
-            <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "rgba(0,0,0,0.25)" }}>chevron_right</span>
-            <Link href="/" className="text-sm font-semibold transition hover:text-primary" style={{ color: "rgba(0,0,0,0.45)" }}>
+            <span className="material-symbols-outlined text-[14px] text-slate-300 dark:text-slate-700">chevron_right</span>
+            <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
               {product.category}
             </Link>
-            <span className="material-symbols-outlined" style={{ fontSize: "14px", color: "rgba(0,0,0,0.25)" }}>chevron_right</span>
-            <span className="max-w-[200px] truncate text-sm font-bold text-primary">{product.name}</span>
+            <span className="material-symbols-outlined text-[14px] text-slate-300 dark:text-slate-700">chevron_right</span>
+            <span className="max-w-[200px] truncate text-indigo-650 dark:text-indigo-400 font-bold">{product.name}</span>
           </nav>
 
           {/* ── Main Showcase ── */}
@@ -161,42 +160,42 @@ export default async function ProductDetailPage({
           {/* ── Specs Section ── */}
           {specs.length > 0 && (
             <section className="mt-16">
-              <div
-                className="overflow-hidden"
-                style={{ borderRadius: "1.5rem", border: "1.5px solid rgba(0,0,0,0.07)", background: "#fff", boxShadow: "0 4px 24px rgba(0,0,0,0.05)" }}
-              >
+              <div className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 backdrop-blur-md shadow-lg shadow-indigo-500/5">
                 {/* Header */}
-                <div
-                  className="flex items-center gap-3 px-7 py-5"
-                  style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", background: "linear-gradient(90deg,#f8f9ff,#fff)" }}
-                >
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-xl"
-                    style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-                  >
+                <div className="flex items-center gap-3 px-5 py-4 md:px-7 md:py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+                  <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-650 shadow-md shadow-indigo-500/20">
                     <span className="material-symbols-outlined text-white" style={{ fontSize: "18px" }}>tune</span>
                   </div>
-                  <h2 className="text-lg font-black" style={{ color: "#0f0f23" }}>Thông số kỹ thuật</h2>
+                  <h2 className="text-base md:text-lg font-black text-slate-800 dark:text-white">Thông số kỹ thuật</h2>
                 </div>
 
-                {/* Specs Grid */}
-                <div className="grid gap-0 md:grid-cols-2">
-                  {specs.map((spec, i) => (
-                    <div
-                      key={spec.id}
-                      className="flex items-center justify-between px-7 py-4"
-                      style={{
-                        borderBottom: i < specs.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
-                        background: i % 2 === 0 ? "#fff" : "rgba(99,102,241,0.02)",
-                      }}
-                    >
-                      <dt className="text-sm font-semibold" style={{ color: "rgba(0,0,0,0.5)" }}>{spec.specKey}</dt>
-                      <dd
-                        className="rounded-full px-3 py-1 text-sm font-black"
-                        style={{ background: "rgba(99,102,241,0.08)", color: "#4f46e5" }}
-                      >
-                        {specValue(spec)}
-                      </dd>
+                {/* Specs by Group */}
+                <div className="flex flex-col">
+                  {Object.entries(
+                    specs.reduce((acc, spec) => {
+                      const group = spec.specGroup?.trim() || "Thông tin chung";
+                      if (!acc[group]) acc[group] = [];
+                      acc[group].push(spec);
+                      return acc;
+                    }, {} as Record<string, typeof specs>)
+                  ).map(([groupName, groupSpecs], gIdx, arr) => (
+                    <div key={groupName} className={gIdx < arr.length - 1 ? "border-b border-slate-200 dark:border-slate-800" : ""}>
+                      <div className="bg-slate-100/50 dark:bg-slate-800/50 px-5 py-2.5 md:px-7 md:py-3 border-b border-slate-200 dark:border-slate-800">
+                        <h3 className="text-xs md:text-sm font-black tracking-widest text-slate-600 dark:text-slate-300 uppercase">{groupName}</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-slate-100 dark:bg-slate-800">
+                        {groupSpecs.map((spec) => (
+                          <div
+                            key={spec.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 px-5 py-3 md:px-7 md:py-4 bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-900/80 transition-colors"
+                          >
+                            <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">{spec.specKey}</dt>
+                            <dd className="text-sm font-semibold text-slate-900 dark:text-slate-200 sm:text-right break-words max-w-full">
+                              {specValue(spec)}
+                            </dd>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -208,7 +207,7 @@ export default async function ProductDetailPage({
           <ProductReviewsSection productId={numericId} />
 
           {/* ── Similar Products (client-side lazy load) ── */}
-          <SimilarProductsSection productId={numericId} limit={8} />
+          <SimilarProductsSection productId={numericId} limit={8} activePrograms={activeSalePrograms} />
         </div>
       </main>
     </StorefrontLayout>

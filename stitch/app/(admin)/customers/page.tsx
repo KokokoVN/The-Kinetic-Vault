@@ -63,7 +63,7 @@ function roleTone(roleName: string): string {
 function membershipTone(level: string): string {
   switch (level.toUpperCase()) {
     case "BRONZE": return "bg-orange-50 text-orange-700 border-orange-200";
-    case "SILVER": return "bg-slate-100 text-slate-600 border-slate-300";
+    case "SILVER": return "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700";
     case "GOLD": return "bg-yellow-50 text-yellow-700 border-yellow-300";
     case "PLATINUM": return "bg-teal-50 text-teal-700 border-teal-200";
     case "DIAMOND": return "bg-indigo-50 text-indigo-700 border-indigo-200";
@@ -233,7 +233,7 @@ export default async function AdminCustomersPage({
         </div>
       </section>
 
-      <section className="rounded-3xl border border-outline-variant/20 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-outline-variant/20 bg-white dark:bg-slate-900 p-6 shadow-sm">
         {success === "role" && (
           <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 flex items-center gap-2">
             <span className="material-symbols-outlined text-emerald-600">check_circle</span>
@@ -255,24 +255,24 @@ export default async function AdminCustomersPage({
 
         <SoftNavigateForm actionPath="/admin/customers" className="grid gap-4 md:grid-cols-12">
           <div className="md:col-span-5">
-            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Tìm kiếm</label>
+            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Tìm kiếm</label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
               <input
                 name="q"
                 defaultValue={q}
                 placeholder="Tên, email, số điện thoại, ID..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 pl-10 pr-4 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
               />
             </div>
           </div>
           
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Phân quyền</label>
+            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Phân quyền</label>
             <select
               name="role"
               defaultValue={filterRole}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
             >
               <option value="ALL">Tất cả role</option>
               <option value="ROLE_USER">Khách hàng</option>
@@ -283,11 +283,11 @@ export default async function AdminCustomersPage({
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Trạng thái</label>
+            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Trạng thái</label>
             <select
               name="status"
               defaultValue={filterStatus}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
             >
               <option value="ALL">Tất cả</option>
               <option value="ACTIVE">Đang hoạt động</option>
@@ -297,11 +297,11 @@ export default async function AdminCustomersPage({
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Số lượng</label>
+            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Số lượng</label>
             <select
               name="pageSize"
               defaultValue={String(pageSize)}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
             >
               {[10, 20, 50, 100].map((n) => (
                 <option key={n} value={String(n)}>
@@ -320,17 +320,17 @@ export default async function AdminCustomersPage({
         </SoftNavigateForm>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50/80 backdrop-blur-sm border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Khách hàng</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Liên hệ</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Thành viên</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Trạng thái</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Chi tiêu</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Thao tác</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Khách hàng</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Liên hệ</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Thành viên</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Trạng thái</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Chi tiêu</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -340,7 +340,7 @@ export default async function AdminCustomersPage({
                 const memberLevel = u.membershipLevel ?? "NEW";
                 
                 return (
-                  <tr key={String(u.id ?? `row-${idx}`)} className="group hover:bg-slate-50/80 transition-colors">
+                  <tr key={String(u.id ?? `row-${idx}`)} className="group hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 shadow-sm border border-blue-200/50">
@@ -349,7 +349,7 @@ export default async function AdminCustomersPage({
                           </span>
                         </div>
                         <div>
-                          <Link href={`/admin/customers/${encodeURIComponent(String(u.id ?? ""))}`} className="font-bold text-slate-900 hover:text-blue-600 transition-colors">
+                          <Link href={`/admin/customers/${encodeURIComponent(String(u.id ?? ""))}`} className="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition-colors">
                             {u.userName ?? "—"}
                           </Link>
                           <div className="flex items-center gap-2 mt-1">
@@ -363,8 +363,8 @@ export default async function AdminCustomersPage({
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex flex-col gap-1">
-                        <span className="text-slate-700 font-medium">{u.email ?? "—"}</span>
-                        <span className="text-slate-500">{u.phoneNumber ?? "—"}</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">{u.email ?? "—"}</span>
+                        <span className="text-slate-500 dark:text-slate-400">{u.phoneNumber ?? "—"}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -385,7 +385,7 @@ export default async function AdminCustomersPage({
                             Kích hoạt
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 border border-slate-200 w-max">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 w-max">
                             <span className="material-symbols-outlined text-[14px]">pending</span>
                             Chờ kích hoạt
                           </span>
@@ -396,10 +396,10 @@ export default async function AdminCustomersPage({
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">
+                      <p className="font-bold text-slate-900 dark:text-white">
                         {Number(u.totalSpent ?? 0).toLocaleString("vi-VN")} ₫
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                         {u.completedOrdersCount ?? 0} đơn
                       </p>
                     </td>
@@ -430,7 +430,7 @@ export default async function AdminCustomersPage({
                               name="roleName"
                               defaultValue={roleName}
                               disabled={u.userName === session.username}
-                              className={`h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-xs font-bold outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 appearance-none text-slate-600 ${u.userName === session.username ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                              className={`h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 pr-8 text-xs font-bold outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10 appearance-none text-slate-600 dark:text-slate-400 ${u.userName === session.username ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
                               <option value="ROLE_USER">USER</option>
                               <option value="ROLE_STAFF">STAFF</option>
@@ -456,30 +456,30 @@ export default async function AdminCustomersPage({
         </div>
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-            <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <div className="h-24 w-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
               <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
             </div>
-            <p className="text-lg font-bold text-slate-700">Không tìm thấy khách hàng nào</p>
-            <p className="text-sm text-slate-500 mt-1 max-w-md">Vui lòng điều chỉnh lại bộ lọc tìm kiếm hoặc từ khóa để xem kết quả.</p>
+            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">Không tìm thấy khách hàng nào</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md">Vui lòng điều chỉnh lại bộ lọc tìm kiếm hoặc từ khóa để xem kết quả.</p>
           </div>
         ) : null}
       </section>
 
-      <section className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl border border-outline-variant/20 bg-white p-4 shadow-sm">
-        <p className="text-sm font-medium text-slate-500 pl-2">
-          Hiển thị trang <span className="font-bold text-slate-900">{safePage}</span> / <span className="font-bold text-slate-900">{totalPages}</span> · Tổng <span className="font-bold text-blue-600">{total.toLocaleString("vi-VN")}</span> tài khoản
+      <section className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl border border-outline-variant/20 bg-white dark:bg-slate-900 p-4 shadow-sm">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 pl-2">
+          Hiển thị trang <span className="font-bold text-slate-900 dark:text-white">{safePage}</span> / <span className="font-bold text-slate-900 dark:text-white">{totalPages}</span> · Tổng <span className="font-bold text-blue-600">{total.toLocaleString("vi-VN")}</span> tài khoản
         </p>
         <div className="flex gap-2">
           <Link
             href={prevHref}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${safePage <= 1 ? "pointer-events-none bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95"}`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${safePage <= 1 ? "pointer-events-none bg-slate-50 dark:bg-slate-800/50 text-slate-300" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-700 active:scale-95"}`}
           >
             <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             Trang trước
           </Link>
           <Link
             href={nextHref}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${safePage >= totalPages ? "pointer-events-none bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95"}`}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${safePage >= totalPages ? "pointer-events-none bg-slate-50 dark:bg-slate-800/50 text-slate-300" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-700 active:scale-95"}`}
           >
             Trang sau
             <span className="material-symbols-outlined text-[18px]">chevron_right</span>

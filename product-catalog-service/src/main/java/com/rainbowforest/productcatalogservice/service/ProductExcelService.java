@@ -49,7 +49,7 @@ public class ProductExcelService {
 
             Row headerRow = sheet.createRow(0);
             List<String> columnsList = new ArrayList<>(Arrays.asList("SKU", "Tên sản phẩm", "Mô tả", "Giá cơ bản", "Brand ID", "Category ID", "Kích thước (Size)", "Màu sắc (Color)", "Giá biến thể"));
-            for (int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 20; i++) {
                 columnsList.add("Nhóm thông số " + i);
                 columnsList.add("Tên thông số " + i);
                 columnsList.add("Giá trị " + i);
@@ -292,7 +292,7 @@ public class ProductExcelService {
                         dto.addError("Giá cơ bản không được để trống");
                     }
 
-                    for (int s = 0; s < 5; s++) {
+                    for (int s = 0; s < 20; s++) {
                         int baseIdx = 9 + (s * 4);
                         String g = getCellValueAsString(row.getCell(baseIdx));
                         String k = getCellValueAsString(row.getCell(baseIdx + 1));
@@ -471,7 +471,7 @@ public class ProductExcelService {
 
             Row headerRow = sheet.createRow(0);
             List<String> columnsList = new ArrayList<>(Arrays.asList("SKU", "Tên sản phẩm", "Mô tả", "Giá cơ bản", "Brand ID", "Category ID", "Kích thước (Size)", "Màu sắc (Color)", "Giá biến thể"));
-            for (int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 20; i++) {
                 columnsList.add("Nhóm thông số " + i);
                 columnsList.add("Tên thông số " + i);
                 columnsList.add("Giá trị " + i);
@@ -511,7 +511,7 @@ public class ProductExcelService {
 
                 int specStartCol = 9;
                 if (rowDto.getSpecs() != null) {
-                    for (int i = 0; i < Math.min(rowDto.getSpecs().size(), 5); i++) {
+                    for (int i = 0; i < Math.min(rowDto.getSpecs().size(), 20); i++) {
                         ProductExcelRowDto.SpecExcelDto spec = rowDto.getSpecs().get(i);
                         int baseCol = specStartCol + (i * 4);
                         row.createCell(baseCol).setCellValue(spec.getGroup() != null ? spec.getGroup() : "");

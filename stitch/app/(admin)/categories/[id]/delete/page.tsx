@@ -6,6 +6,7 @@ import { getAdminUserBrief } from "@/lib/api";
 import { sendNotification } from "@/lib/notification-api";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { StatusToast } from "@/components/status-toast";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,6 @@ export default async function DeleteCategoryPage({
   const childCount = preview?.childCategoryCount ?? 0;
   const productCount = preview?.productCount ?? 0;
   const hasChildren = childCount > 0;
-  /** Gửi confirm=true khi còn SP (cùng logic delete-preview). */
   const confirmDeleteWithProducts = productCount > 0;
   const previewMissing = preview == null;
 
@@ -102,98 +102,94 @@ export default async function DeleteCategoryPage({
     redirect(`/admin/categories/${cid}/delete?error=api`);
   }
 
-  /** Khi không có preview, gửi confirm=false rồi để server action xử lý REQUIRES_CONFIRMATION. */
   const confirmFieldValue =
     previewMissing ? "false" : confirmDeleteWithProducts ? "true" : "false";
 
   const cancelHref = `/admin/categories/${id}`;
 
   return (
-    <div className="relative min-h-[70vh]">
-      <section className="grid gap-6 opacity-40 lg:grid-cols-3">
+    <div className="relative min-h-[70vh] animate-in fade-in duration-300">
+      {/* Toast Error Messages instead of static red boxes inside the modal */}
+      {flowError === "children" && (
+        <StatusToast tone="error" title="Không thể xóa" message="Còn danh mục con — không xóa được. Vui lòng xử lý danh mục con trước." />
+      )}
+      {flowError === "api" && (
+        <StatusToast tone="error" title="Xóa thất bại" message="Xóa thất bại. Kiểm tra kết nối gateway và thử lại." />
+      )}
+
+      <section className="grid gap-6 opacity-20 lg:grid-cols-3 pointer-events-none select-none">
         {[category, category, category].map((c, index) => (
           <div
             key={`${c.id}-${index}`}
-            className="flex items-center gap-4 rounded-xl bg-surface-container-lowest p-6 shadow-sm"
+            className="flex items-center gap-4 rounded-xl bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800"
           >
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-surface-container text-primary">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500">
               <span className="material-symbols-outlined text-3xl">category</span>
             </div>
             <div className="flex-1">
-              <h3 className={`font-bold ${index === 1 ? "text-error" : "text-blue-900"}`}>{c.name}</h3>
-              <p className="text-sm text-on-surface-variant">{c.slug ? `Slug: ${c.slug}` : "Chưa có slug"}</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">{c.name}</h3>
+              <p className="text-sm text-slate-500">{c.slug ? `Slug: ${c.slug}` : "Chưa có slug"}</p>
             </div>
-            <div className="text-right font-mono text-xs text-slate-500">#{c.id}</div>
+            <div className="text-right font-mono text-xs text-slate-400">#{c.id}</div>
           </div>
         ))}
       </section>
 
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 dark:bg-slate-900/80 p-6 backdrop-blur-sm">
-        <div className="w-full max-w-md overflow-hidden rounded-[1.25rem] border border-white/20 dark:border-slate-800/50 bg-white/95 dark:bg-slate-900/95 shadow-2xl backdrop-blur-md">
-          <div className="p-8 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <span className="material-symbols-outlined material-filled text-4xl text-red-600 dark:text-red-400">warning</span>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 dark:bg-slate-950/80 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in zoom-in-95 duration-200">
+          
+          <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-rose-600" />
+          
+          <div className="p-6 sm:p-8 text-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 ring-8 ring-red-50/50 dark:ring-red-950/10">
+              <span className="material-symbols-outlined text-3xl material-filled">warning</span>
             </div>
-            <h2 className="mb-2 font-headline text-2xl font-bold text-blue-900 dark:text-white">Xác nhận xóa danh mục</h2>
-            <p className="mb-6 text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
-              Bạn có chắc muốn xóa danh mục này?
+            <h2 className="mb-2 font-headline text-2xl font-black text-slate-900 dark:text-white">Xác nhận xóa danh mục</h2>
+            <p className="mb-6 text-xs sm:text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+              Bạn có chắc chắn muốn xóa danh mục này?
               <br />
-              <span className="font-bold text-red-600 dark:text-red-400">Danh mục sẽ được xóa mềm (có thể khôi phục từ nhật ký).</span>
+              <span className="font-bold text-red-600 dark:text-red-400">Hành động này sẽ ẩn danh mục khỏi cửa hàng (có thể khôi phục lại sau).</span>
             </p>
 
-            {flowError === "children" && (
-              <p className="mb-4 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-sm text-rose-900 dark:text-rose-400">
-                Còn danh mục con — không xóa được. Xử lý danh mục con trước.
-              </p>
-            )}
-            {flowError === "api" && (
-              <p className="mb-4 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-sm text-rose-900 dark:text-rose-400">
-                Xóa thất bại. Kiểm tra gateway, catalog và thử lại.
-              </p>
-            )}
-
             {previewMissing ? (
-              <p className="mb-6 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-400">
-                Không tải được bản xem trước xóa (gateway hoặc phiên đăng nhập). Bạn vẫn có thể thử xóa — nếu còn sản phẩm,
-                backend sẽ yêu cầu xác nhận lần hai.
+              <p className="mb-6 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-800 dark:text-amber-400 text-left">
+                Không tải được bản xem trước xóa. Bạn vẫn có thể thử xóa — nếu còn sản phẩm liên kết, hệ thống sẽ tự động chuyển sang chế độ ẩn danh mục.
               </p>
             ) : hasChildren ? (
-              <p className="mb-6 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-400">
-                Không thể xóa: còn <strong>{childCount}</strong> danh mục con. Hãy xóa hoặc gỡ danh mục con trước.
+              <p className="mb-6 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/20 px-4 py-3 text-xs text-rose-800 dark:text-rose-400 text-left">
+                Không thể xóa: Còn <strong>{childCount}</strong> danh mục con đang trực thuộc. Vui lòng xóa hoặc thay đổi danh mục cha của các danh mục con trước.
               </p>
             ) : productCount > 0 ? (
-              <p className="mb-6 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-400">
-                Danh mục này hiện có <strong>{productCount}</strong> sản phẩm liên quan. Khi xóa, hệ thống sẽ tự động{" "}
-                <strong>ẩn danh mục</strong> và giữ nguyên thông tin tồn kho của các sản phẩm đó.
+              <p className="mb-6 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-800 dark:text-amber-400 text-left">
+                Danh mục này đang chứa <strong>{productCount}</strong> sản phẩm. Khi xóa, các sản phẩm này sẽ được giữ nguyên thông tin kho nhưng sẽ bị ẩn danh mục phân loại.
               </p>
             ) : (
-              <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Không có sản phẩm đang gắn trực tiếp theo thống kê hiện tại.</p>
+              <p className="mb-6 text-xs text-slate-500 dark:text-slate-400">Danh mục này hiện đang trống, sẵn sàng để xóa an toàn.</p>
             )}
 
-            <div className="mb-8 flex items-center gap-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4 text-left">
-              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm">
-                <span className="material-symbols-outlined text-3xl">category</span>
+            <div className="mb-8 flex items-center gap-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/80 p-4 text-left shadow-inner">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm">
+                <span className="material-symbols-outlined text-2xl">category</span>
               </div>
-              <div>
-                <h4 className="text-base font-bold leading-tight text-blue-900 dark:text-white">{category.name}</h4>
-                <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                  ID #{category.id}
-                  {category.slug ? ` · ${category.slug}` : ""}
+              <div className="min-w-0">
+                <h4 className="text-sm sm:text-base font-bold leading-tight text-slate-800 dark:text-white truncate">{category.name}</h4>
+                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 truncate">
+                  ID #{category.id} {category.slug ? ` · ${category.slug}` : ""}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Link
-                className="rounded-xl bg-slate-100 dark:bg-slate-800 px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-200 dark:hover:bg-slate-700"
+                className="flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 px-4 py-3.5 text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors"
                 href={cancelHref}
               >
-                Hủy
+                Hủy bỏ
               </Link>
               {hasChildren ? (
                 <Link
                   href="/admin/categories"
-                  className="flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 px-6 py-4 font-bold text-blue-600 dark:text-blue-400 transition-all hover:bg-slate-200 dark:hover:bg-slate-700"
+                  className="flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 px-4 py-3.5 text-sm font-bold text-blue-600 dark:text-blue-400 transition-colors"
                 >
                   Về danh sách
                 </Link>
@@ -203,16 +199,17 @@ export default async function DeleteCategoryPage({
                   <input type="hidden" name="confirmWithProducts" value={confirmFieldValue} />
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-red-600 dark:bg-red-500 px-6 py-4 font-bold text-white shadow-lg shadow-red-600/20 dark:shadow-red-500/20 transition-all hover:saturate-150"
+                    className="w-full rounded-xl bg-red-650 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 dark:shadow-red-500/20 transition-all hover:scale-[1.02]"
                   >
-                    Xóa danh mục
+                    Xóa ngay
                   </button>
                 </form>
               )}
             </div>
           </div>
-          <div className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 px-8 py-3">
-            <span className="material-symbols-outlined text-[12px] text-slate-400">lock</span>
+          
+          <div className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-850 px-8 py-3.5">
+            <span className="material-symbols-outlined text-[13px] text-slate-400">lock</span>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Thao tác quản trị an toàn</span>
           </div>
         </div>

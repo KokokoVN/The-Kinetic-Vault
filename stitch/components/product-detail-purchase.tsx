@@ -140,7 +140,7 @@ export function ProductDetailPurchase({
     
     activeSalePrograms.forEach(program => {
       // Find items in the program matching this product
-      const matchingItems = program.items.filter(it => it.productId === numProductId);
+      const matchingItems = program.items.filter(it => it.productId === numProductId && (it.promoQtyLimit == null || it.promoQtyLimit > 0));
       if (matchingItems.length === 0) return;
 
       // Check if it applies to the currently selected variant
@@ -320,259 +320,210 @@ export function ProductDetailPurchase({
   }
 
   return (
-    <>
-
-      <div className="divide-y divide-black/5">
-        {/* ── Price block ── */}
-        <div className="px-6 py-5">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.35)" }}>Giá bán</p>
-              <div className="flex flex-col gap-1 mt-1">
-                <p
-                  className="font-black tracking-tight leading-none inline-block"
-                  style={{
-                    fontSize: "2.25rem",
-                    backgroundImage: hasSale 
-                      ? "linear-gradient(90deg, #FF4D4D, #e02020)" 
-                      : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    color: "transparent",
-                    filter: hasSale ? "drop-shadow(0 2px 8px rgba(255,77,77,0.25))" : "drop-shadow(0 2px 8px rgba(99,102,241,0.25))",
-                  }}
-                >
-                  {asCurrency(currentPrice)}
-                </p>
-                {displayOriginalPrice && (
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-on-surface-variant line-through opacity-60">
-                      {asCurrency(displayOriginalPrice)}
-                    </p>
-                    {finalDiscountPct > 0 && (
-                      <span className="rounded bg-error/10 px-2 py-1 text-xs font-bold text-error">
-                        -{finalDiscountPct}%
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Stock pill */}
-            <div
-              className="flex flex-col items-end gap-1.5"
-            >
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-black"
-                style={currentStock > 0
-                  ? { background: "rgba(16,185,129,.1)", color: "#059669", border: "1px solid rgba(16,185,129,.2)" }
-                  : { background: "rgba(239,68,68,.1)", color: "#dc2626", border: "1px solid rgba(239,68,68,.2)" }}
+    <div className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900/60">
+      {/* ── Price block ── */}
+      <div className="px-6 py-5">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Giá bán</p>
+            <div className="flex flex-col gap-1 mt-1">
+              <p
+                className="font-black tracking-tight leading-none inline-block text-4xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400 drop-shadow-sm"
               >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: currentStock > 0 ? "#10b981" : "#ef4444" }} />
-                {currentStock > 0 ? `Còn ${currentStock.toLocaleString("vi-VN")} sp` : "Hết hàng"}
-              </span>
-              {/* Stock progress bar */}
-              {currentStock > 0 && (
-                <div className="w-28 overflow-hidden rounded-full" style={{ height: "4px", background: "rgba(0,0,0,0.08)" }}>
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${stockPct}%`,
-                      background: stockPct > 50 ? "linear-gradient(90deg,#10b981,#34d399)" : stockPct > 20 ? "linear-gradient(90deg,#f59e0b,#fbbf24)" : "linear-gradient(90deg,#ef4444,#f87171)",
-                    }}
-                  />
+                {asCurrency(currentPrice)}
+              </p>
+              {displayOriginalPrice && (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-slate-400 dark:text-slate-500 line-through opacity-60">
+                    {asCurrency(displayOriginalPrice)}
+                  </p>
+                  {finalDiscountPct > 0 && (
+                    <span className="rounded bg-rose-500/10 dark:bg-rose-500/20 px-2 py-1 text-xs font-bold text-rose-600 dark:text-rose-400">
+                      -{finalDiscountPct}%
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* ── Variants ── */}
-        {variants.length > 0 && (
-          <div className="space-y-5 px-6 py-5">
-            {colorOptions.length > 0 && (
-              <div>
-                <div className="mb-2.5 flex items-center justify-between">
-                  <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>Màu sắc</p>
-                  {selectedColor && (
-                    <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: "rgba(99,102,241,0.1)", color: "#6366f1" }}>{selectedColor}</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {colorOptions.map((color) => {
-                    const active = selectedColor === color;
-                    const disabled = !canPickColor(color);
-                    return (
-                      <button
-                        key={color} type="button"
-                        onClick={() => {
-                          hasUserPickedVariantRef.current = true;
-                          setSelectedColor(color); setQuantity(1);
-                          const resolved = resolveVariantImageBySelection(color, selectedSize);
-                          emitVariantImage(resolved.id, resolved.url);
-                        }}
-                        disabled={disabled || busy}
-                        className="relative overflow-hidden rounded-xl px-4 py-2 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-35"
-                        style={{
-                          border: active ? "2px solid #6366f1" : "1.5px solid rgba(0,0,0,0.1)",
-                          background: active ? "linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.12))" : "#fff",
-                          color: active ? "#6366f1" : "rgba(0,0,0,0.65)",
-                          boxShadow: active ? "0 0 0 3px rgba(99,102,241,.2), 0 4px 12px rgba(99,102,241,.15)" : "0 1px 4px rgba(0,0,0,0.06)",
-                          transform: active ? "scale(1.05)" : "scale(1)",
-                        }}
-                      >
-                        {active && <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[8px]">✓</span>}
-                        <span style={{ marginLeft: active ? "8px" : "0" }}>{color}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {sizeOptions.length > 0 && (
-              <div>
-                <div className="mb-2.5 flex items-center justify-between">
-                  <p className="text-xs font-black uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>Kích cỡ</p>
-                  {selectedSize && (
-                    <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style={{ background: "rgba(99,102,241,0.1)", color: "#6366f1" }}>{selectedSize}</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {sizeOptions.map((size) => {
-                    const active = selectedSize === size;
-                    const disabled = !canPickSize(size);
-                    return (
-                      <button
-                        key={size} type="button"
-                        onClick={() => {
-                          hasUserPickedVariantRef.current = true;
-                          setSelectedSize(size); setQuantity(1);
-                          const resolved = resolveVariantImageBySelection(selectedColor, size);
-                          emitVariantImage(resolved.id, resolved.url);
-                        }}
-                        disabled={disabled || busy}
-                        className="relative min-w-[52px] overflow-hidden rounded-xl px-3 py-2 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-35"
-                        style={{
-                          border: active ? "2px solid #6366f1" : "1.5px solid rgba(0,0,0,0.1)",
-                          background: active ? "linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.12))" : "#fff",
-                          color: active ? "#6366f1" : "rgba(0,0,0,0.65)",
-                          boxShadow: active ? "0 0 0 3px rgba(99,102,241,.2), 0 4px 12px rgba(99,102,241,.15)" : "0 1px 4px rgba(0,0,0,0.06)",
-                          transform: active ? "scale(1.06)" : "scale(1)",
-                        }}
-                      >
-                        {size}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Quantity + Subtotal ── */}
-        <div className="flex items-center justify-between px-6 py-4">
-          {/* Qty stepper */}
-          <div
-            className="flex items-center overflow-hidden"
-            style={{ borderRadius: "0.875rem", border: "1.5px solid rgba(0,0,0,0.1)", background: "#f5f6ff" }}
-          >
-            <button
-              type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={busy || quantity <= 1}
-              className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-30"
-            >−</button>
-            <span className="w-12 select-none text-center text-base font-black" style={{ color: "#0f0f23" }}>{quantity}</span>
-            <button
-              type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-              disabled={busy || quantity >= maxQty}
-              className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-30"
-            >+</button>
-          </div>
-
-          {/* Subtotal */}
-          <div className="text-right">
-            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "rgba(0,0,0,0.35)" }}>Thành tiền</p>
-            <p className="text-lg font-black" style={{ color: "#6366f1" }}>{asCurrency(currentPrice * quantity)}</p>
-          </div>
-        </div>
-
-        {/* ── CTA Buttons ── */}
-        <div className="space-y-3 px-6 py-5">
-          {/* Add to cart */}
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void addToCart(); }}
-            disabled={!canBuy}
-            className="relative flex w-full items-center justify-center gap-2 overflow-hidden font-black text-white transition-all duration-300 disabled:opacity-50"
-            style={{
-              height: "52px", borderRadius: "1rem",
-              background: addedToCart
-                ? "linear-gradient(135deg,#10b981,#059669)"
-                : "linear-gradient(135deg,#6366f1,#8b5cf6,#a78bfa)",
-              boxShadow: addedToCart
-                ? "0 8px 28px rgba(16,185,129,.4)"
-                : "0 8px 28px rgba(99,102,241,.4)",
-              fontSize: "0.9rem",
-              transition: "all .4s cubic-bezier(.22,1,.36,1)",
-            }}
-          >
-            {/* Shine sweep */}
+          {/* Stock pill */}
+          <div className="flex flex-col items-end gap-1.5">
             <span
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background: "linear-gradient(110deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%)",
-                backgroundSize: "200% 100%",
-                animation: canBuy ? "shine 2.5s linear infinite" : "none",
-              }}
-            />
-            <style>{`@keyframes shine{from{background-position:-200% 0}to{background-position:200% 0}}`}</style>
-            {busy ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            ) : addedToCart ? (
-              <><span className="material-symbols-outlined" style={{ fontSize: "20px" }}>check_circle</span>Đã thêm vào giỏ!</>
-            ) : (
-              <><span className="material-symbols-outlined" style={{ fontSize: "20px" }}>shopping_bag</span>Thêm vào giỏ hàng</>
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-black border ${
+                currentStock > 0
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250/20 text-emerald-600 dark:text-emerald-400"
+                  : "bg-rose-50 dark:bg-rose-950/20 border-rose-250/20 text-rose-600 dark:text-rose-400"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${currentStock > 0 ? "bg-emerald-500" : "bg-rose-500"}`} />
+              {currentStock > 0 ? `Còn ${currentStock.toLocaleString("vi-VN")} sp` : "Hết hàng"}
+            </span>
+            {/* Stock progress bar */}
+            {currentStock > 0 && (
+              <div className="w-28 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${stockPct}%`,
+                    background: stockPct > 50 ? "linear-gradient(90deg,#10b981,#34d399)" : stockPct > 20 ? "linear-gradient(90deg,#f59e0b,#fbbf24)" : "linear-gradient(90deg,#ef4444,#f87171)",
+                  }}
+                />
+              </div>
             )}
-          </button>
-
-          {/* Buy now */}
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); proceedBuyNow(); }}
-            disabled={!canBuy}
-            className="group flex w-full items-center justify-center gap-2 font-black transition-all duration-300 disabled:opacity-40"
-            style={{
-              height: "52px", borderRadius: "1rem",
-              border: "2px solid #6366f1",
-              background: "transparent",
-              color: "#6366f1",
-              fontSize: "0.9rem",
-            }}
-            onMouseEnter={(e) => {
-              if (!canBuy) return;
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                color: "#fff",
-                boxShadow: "0 8px 28px rgba(99,102,241,.35)",
-              });
-            }}
-            onMouseLeave={(e) => {
-              Object.assign((e.currentTarget as HTMLElement).style, {
-                background: "transparent",
-                color: "#6366f1",
-                boxShadow: "none",
-              });
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>bolt</span>
-            Mua ngay — {asCurrency(currentPrice * quantity)}
-          </button>
+          </div>
         </div>
       </div>
-    </>
+
+      {/* ── Variants ── */}
+      {variants.length > 0 && (
+        <div className="space-y-5 px-6 py-5">
+          {colorOptions.length > 0 && (
+            <div>
+              <div className="mb-2.5 flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Màu sắc</p>
+                {selectedColor && (
+                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400">{selectedColor}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {colorOptions.map((color) => {
+                  const active = selectedColor === color;
+                  const disabled = !canPickColor(color);
+                  return (
+                    <button
+                      key={color} type="button"
+                      onClick={() => {
+                        hasUserPickedVariantRef.current = true;
+                        setSelectedColor(color); setQuantity(1);
+                        const resolved = resolveVariantImageBySelection(color, selectedSize);
+                        emitVariantImage(resolved.id, resolved.url);
+                      }}
+                      disabled={disabled || busy}
+                      className={`relative overflow-hidden rounded-xl px-4 py-2 text-sm font-bold transition-all duration-200 border ${
+                        active 
+                          ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20" 
+                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      } disabled:cursor-not-allowed disabled:opacity-35`}
+                    >
+                      {active && <span className="mr-1 text-[10px]">✓</span>}
+                      <span>{color}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {sizeOptions.length > 0 && (
+            <div>
+              <div className="mb-2.5 flex items-center justify-between">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Kích cỡ</p>
+                {selectedSize && (
+                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400">{selectedSize}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {sizeOptions.map((size) => {
+                  const active = selectedSize === size;
+                  const disabled = !canPickSize(size);
+                  return (
+                    <button
+                      key={size} type="button"
+                      onClick={() => {
+                        hasUserPickedVariantRef.current = true;
+                        setSelectedSize(size); setQuantity(1);
+                        const resolved = resolveVariantImageBySelection(selectedColor, size);
+                        emitVariantImage(resolved.id, resolved.url);
+                      }}
+                      disabled={disabled || busy}
+                      className={`relative min-w-[52px] overflow-hidden rounded-xl px-3 py-2 text-sm font-bold transition-all duration-200 border ${
+                        active 
+                          ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20" 
+                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      } disabled:cursor-not-allowed disabled:opacity-35`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Quantity + Subtotal ── */}
+      <div className="flex items-center justify-between px-6 py-4">
+        {/* Qty stepper */}
+        <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+          <button
+            type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            disabled={busy || quantity <= 1}
+            className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 dark:text-indigo-400 transition hover:bg-indigo-50 dark:hover:bg-indigo-955/40 disabled:opacity-30"
+          >−</button>
+          <span className="w-12 select-none text-center text-base font-black text-slate-800 dark:text-white">{quantity}</span>
+          <button
+            type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+            disabled={busy || quantity >= maxQty}
+            className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 dark:text-indigo-400 transition hover:bg-indigo-50 dark:hover:bg-indigo-955/40 disabled:opacity-30"
+          >+</button>
+        </div>
+
+        {/* Subtotal */}
+        <div className="text-right">
+          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Thành tiền</p>
+          <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{asCurrency(currentPrice * quantity)}</p>
+        </div>
+      </div>
+
+      {/* ── CTA Buttons ── */}
+      <div className="space-y-3 px-6 py-5">
+        {/* Add to cart */}
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void addToCart(); }}
+          disabled={!canBuy}
+          className="group relative flex h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl font-black text-white text-sm transition-all duration-300 disabled:opacity-50"
+          style={{
+            background: addedToCart
+              ? "linear-gradient(135deg,#10b981,#059669)"
+              : "linear-gradient(135deg,#6366f1,#8b5cf6,#a78bfa)",
+            boxShadow: addedToCart
+              ? "0 8px 28px rgba(16,185,129,.4)"
+              : "0 8px 28px rgba(99,102,241,.4)",
+          }}
+        >
+          {/* Shine sweep */}
+          <span
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: "linear-gradient(110deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%)",
+              backgroundSize: "200% 100%",
+              animation: canBuy ? "shine 2.5s linear infinite" : "none",
+            }}
+          />
+          <style>{`@keyframes shine{from{background-position:-200% 0}to{background-position:200% 0}}`}</style>
+          {busy ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          ) : addedToCart ? (
+            <><span className="material-symbols-outlined text-[20px]">check_circle</span>Đã thêm vào giỏ!</>
+          ) : (
+            <><span className="material-symbols-outlined text-[20px]">shopping_bag</span>Thêm vào giỏ hàng</>
+          )}
+        </button>
+
+        {/* Buy now */}
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); proceedBuyNow(); }}
+          disabled={!canBuy}
+          className="group flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-indigo-600 dark:border-indigo-500 bg-transparent text-indigo-600 dark:text-indigo-400 text-sm font-black transition-all hover:bg-indigo-600 hover:text-white dark:hover:text-white hover:shadow-lg hover:shadow-indigo-500/20 disabled:opacity-40"
+        >
+          <span className="material-symbols-outlined text-[20px]">bolt</span>
+          Mua ngay — {asCurrency(currentPrice * quantity)}
+        </button>
+      </div>
+    </div>
   );
 }

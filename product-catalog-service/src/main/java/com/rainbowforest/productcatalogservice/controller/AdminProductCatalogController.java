@@ -36,7 +36,14 @@ import java.util.UUID;
 public class AdminProductCatalogController {
     private static final Logger log = LoggerFactory.getLogger(AdminProductCatalogController.class);
 
-    private static final Path PRODUCT_UPLOAD_DIR = Paths.get("uploads", "product-images");
+    private static Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final Path PRODUCT_UPLOAD_DIR = getRootUploadPath("product-images");
     private final ProductRepository productRepository;
     private final ProductChangeLogRepository changeLogRepository;
     private final ActivityLogFeignClient activityLogFeignClient;

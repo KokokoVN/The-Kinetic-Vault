@@ -50,7 +50,7 @@ export function WebNotificationBell(props: { isLoggedIn: boolean }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-on-surface-variant transition hover:bg-surface-container"
+        className="relative inline-flex items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container-low dark:bg-slate-800 px-3 py-2 text-on-surface-variant transition hover:bg-surface-container dark:bg-slate-800"
         aria-label="Thông báo"
       >
         <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -62,7 +62,7 @@ export function WebNotificationBell(props: { isLoggedIn: boolean }) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-12 z-[120] w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest shadow-panel">
+        <div className="absolute right-0 top-12 z-[120] w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest dark:bg-slate-900 shadow-panel">
           <div className="border-b border-outline-variant/10 px-4 py-3">
             <p className="text-sm font-extrabold text-primary">Thông báo hệ thống</p>
           </div>

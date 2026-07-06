@@ -15,7 +15,7 @@ function ButtonRow({ buttons }: { buttons: ActionButton[] }) {
       {buttons.map((b, idx) => {
         const cls =
           b.variant === "secondary"
-            ? "flex h-12 w-full items-center justify-center rounded-2xl bg-surface-container-high px-6 text-base font-semibold leading-none text-primary transition-colors hover:bg-surface-container-highest active:scale-[0.98]"
+            ? "flex h-12 w-full items-center justify-center rounded-2xl bg-surface-container dark:bg-slate-800-high px-6 text-base font-semibold leading-none text-primary transition-colors hover:bg-surface-container dark:bg-slate-800-highest active:scale-[0.98]"
             : "flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container px-6 text-base font-bold leading-none text-on-primary shadow-lg shadow-primary/20 transition-all duration-300 hover:brightness-110 active:scale-[0.98]";
 
         if (b.href) {
@@ -100,13 +100,13 @@ export function ActionResultModal({
       }}
     >
       <div
-        className="relative flex w-full max-w-xl flex-col items-center overflow-hidden rounded-[1.75rem] bg-surface-container-lowest p-8 text-center shadow-[0_48px_80px_-12px_rgba(0,49,128,0.18)] sm:p-10"
+        className="relative flex w-full max-w-xl flex-col items-center overflow-hidden rounded-[1.75rem] bg-surface-container-lowest dark:bg-slate-900 p-8 text-center shadow-[0_48px_80px_-12px_rgba(0,49,128,0.18)] sm:p-10"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative mb-9">
           <div className={`absolute inset-0 ${glowClass} scale-150 rounded-full blur-3xl opacity-40`} />
           <div
-            className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-surface-container-lowest shadow-inner border-4 ${ringClass}`}
+            className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-surface-container-lowest dark:bg-slate-900 shadow-inner border-4 ${ringClass}`}
           >
             <span
               className={`material-symbols-outlined ${iconClass} text-6xl`}

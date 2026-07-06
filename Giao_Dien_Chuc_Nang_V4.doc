@@ -1,0 +1,91 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Danh Sach Chuc Nang Chi Tiet V4</title></head>
+<body style='font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.5;'>
+
+<h2 style='color: #2c3e50; text-align: center; text-transform: uppercase;'>4.4. Đánh giá chi tiết Giao diện và Toàn bộ Chức năng Hệ thống</h2>
+<p>Được xây dựng trên nền tảng kiến trúc Microservices kết hợp Next.js (React), <b>The Kinetic Vault</b> không chỉ là một trang web bán hàng cơ bản mà là một <b>Hệ sinh thái Thương mại điện tử toàn diện</b>. Dưới đây là Đặc tả chi tiết cho hơn 40 chức năng/luồng nghiệp vụ khổng lồ của toàn hệ thống:</p>
+
+<hr style='border-top: 2px solid #2980b9;'>
+
+<h3 style='color: #2980b9; text-transform: uppercase;'>I. PHÂN HỆ KHÁCH HÀNG (USER STOREFRONT)</h3>
+
+<p><b>1. Hệ thống Bảo mật & Nhận diện Người dùng (Auth & Security System)</b></p>
+<ul>
+    <li><b>Đăng ký & Đăng nhập bảo mật cao:</b> Mật khẩu được băm mã hóa (Bcrypt). Tích hợp cơ chế gửi mã xác thực <b>OTP qua Email</b> để kích hoạt tài khoản hoặc khôi phục mật khẩu.</li>
+    <li><b>Bảo mật 2 Lớp (2FA) & Quản lý Phiên đăng nhập (Session):</b> Hệ thống ghi nhận địa chỉ IP và lịch sử các thiết bị (PC, Mobile) đã từng đăng nhập.</li>
+    <li><b>Phê duyệt Thiết bị lạ (Device Approval):</b> Khi phát hiện đăng nhập từ một thiết bị mới, hệ thống sẽ tạm khóa và gửi Email chứa Token xác thực yêu cầu chủ tài khoản phê duyệt thì mới cấp quyền truy cập.</li>
+</ul>
+
+<p><b>2. Trải nghiệm Mua sắm & Tương tác (Shopping Experience)</b></p>
+<ul>
+    <li><b>Trang Chủ (Home Page):</b> Cung cấp dải Slider Banner quảng cáo động, Đồng hồ đếm ngược Flash Sale, và các phân khu sản phẩm "Bán chạy", "Sản phẩm mới".</li>
+    <li><b>Hệ thống Bộ lọc & Tìm kiếm (Search & Filters):</b> Thanh tìm kiếm toàn văn giúp khách hàng tra cứu nhanh sản phẩm, kết hợp với cây Danh mục (Category) đa cấp.</li>
+    <li><b>Trợ lý Ảo AI (AI Chatbot):</b> Khung chat thông minh (Widget) tích hợp Trí tuệ nhân tạo, hoạt động 24/7 để trả lời các câu hỏi thường gặp của khách hàng về chính sách vận chuyển, đổi trả, hoặc thông số sản phẩm.</li>
+</ul>
+
+<p><b>3. Chi tiết Sản phẩm & Thuật toán Gợi ý (Product Detail & Recommendations)</b></p>
+<ul>
+    <li><b>Xử lý Đa biến thể (Multi-Variants):</b> Khi khách hàng bấm chọn các cấu hình khác nhau (VD: Đen - 256GB), trang web ngay lập tức tự đổi hình ảnh, giá tiền và <b>hiển thị tồn kho thực tế</b> (Từ Inventory Service) mà không tải lại trang.</li>
+    <li><b>Hệ thống Gợi ý (Smart Recommendations):</b> Thuật toán tự động đề xuất mục "Sản phẩm tương tự" hoặc "Thường được mua kèm" ở cuối trang để thúc đẩy hành vi Cross-sell (Bán chéo).</li>
+</ul>
+
+<p><b>4. Giỏ hàng & Thanh toán Đa Kênh (Cart & Multi-Payment Gateway)</b></p>
+<ul>
+    <li><b>Giỏ hàng thời gian thực (Redis Cache):</b> Lưu trữ tạm thời thao tác thêm/bớt/xóa sản phẩm của khách hàng trên RAM (Redis), mang lại tốc độ phản hồi tính bằng mili-giây.</li>
+    <li><b>Kiểm tra Mã Khuyến mãi (Voucher Validation):</b> Khách hàng nhập mã giảm giá, hệ thống sẽ kiểm tra hạn mức đơn hàng tối thiểu và tự động trừ tiền (% hoặc VNĐ).</li>
+    <li><b>Thanh toán Điện tử Toàn diện:</b> Hỗ trợ thanh toán Tiền mặt (COD) và tích hợp các Cổng thanh toán nội địa hàng đầu: <b>VNPay</b>, <b>PayOS</b>, và <b>SePay (Quét mã QR)</b>. </li>
+    <li><b>Tự động Xác nhận (Webhook Reconcile):</b> Đối với thanh toán điện tử, hệ thống nhận Webhook trực tiếp từ Ngân hàng và tự động đẩy khách hàng sang trang "Cảm ơn" (Success Page) chỉ trong 3 giây sau khi chuyển khoản thành công.</li>
+</ul>
+
+<p><b>5. Hậu mãi & Quản lý Tài khoản (Post-Purchase & Profile)</b></p>
+<ul>
+    <li><b>Quản lý Sổ địa chỉ (Address Book):</b> Lưu trữ nhiều địa chỉ giao hàng khác nhau. Tích hợp API tự động gợi ý Tỉnh/Thành/Quận/Huyện (VN-Address).</li>
+    <li><b>Đánh giá & Chấm điểm (Review & Rating):</b> Khách hàng được quyền chấm sao (1-5 sao) và <b>Tải lên Hình ảnh thực tế (Media Upload)</b> đính kèm bình luận sau khi nhận hàng.</li>
+    <li><b>Quản lý Đơn hàng (My Orders):</b> Theo dõi danh sách đơn hàng được phân loại theo tiến trình (Đang chờ, Đang giao).</li>
+    <li><b>Tra cứu Vận đơn (Shipment Tracker):</b> Cung cấp thanh công cụ nhập mã vận đơn để khách hàng theo dõi tọa độ lô hàng theo thời gian thực.</li>
+    <li><b>Cổng Thông báo (Notifications):</b> Chuông thông báo góc màn hình lưu trữ các tin nhắn đẩy (Push Notifications) về lịch sử đơn hàng.</li>
+</ul>
+
+<hr style='border-top: 2px solid #27ae60;'>
+
+<h3 style='color: #27ae60; text-transform: uppercase;'>II. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN WORKSPACE)</h3>
+
+<p><b>1. Bảng điều khiển & Trích xuất Dữ liệu (Dashboard & Excel Export)</b></p>
+<ul>
+    <li><b>Bảng Phân tích Trung tâm (Dashboard Analytics):</b> Hiển thị biểu đồ báo cáo Doanh thu, số lượng đơn hàng, và lượt xem sản phẩm.</li>
+    <li><b>Xuất Báo cáo Excel (Export Reports):</b> Cung cấp chức năng cho phép Admin <b>Trích xuất (Export) toàn bộ số liệu báo cáo ra file Excel (.xlsx)</b> hoặc CSV để phục vụ công tác kế toán, kiểm toán và báo cáo Ban Giám đốc.</li>
+</ul>
+
+<p><b>2. Quản lý Hệ sinh thái Hàng hóa (Catalog & Products)</b></p>
+<ul>
+    <li><b>Quản lý Thương hiệu & Danh mục:</b> Cho phép tải lên (Upload) Logo thương hiệu, quản lý cây thư mục sản phẩm.</li>
+    <li><b>Tạo Sản phẩm Nâng cao (Product Creation):</b> Soạn thảo mô tả bằng HTML (WYSIWYG Editor). Đặc biệt, hỗ trợ nhập liệu chi tiết Bảng thông số kỹ thuật (Technical Specs), sắp xếp thứ tự hiển thị Hình ảnh (Primary/Gallery), và bật/tắt (Hide/Show) sản phẩm.</li>
+</ul>
+
+<p><b>3. Quản trị Kho bãi (Inventory & Inbound)</b></p>
+<ul>
+    <li><b>Lịch sử Di chuyển Kho (Stock Movements):</b> Ghi log chi tiết mọi hoạt động Xuất (Out) / Nhập (In) kho.</li>
+    <li><b>Nhập hàng Thủ công (Inbound):</b> Cung cấp màn hình riêng để Admin làm phiếu nhập kho khi nhà cung cấp giao hàng đến, hệ thống sẽ cộng dồn số lượng vào Tồn kho hiện hành.</li>
+</ul>
+
+<p><b>4. Xử lý Đơn hàng (Order Fulfillment)</b></p>
+<ul>
+    <li>Xét duyệt, đối soát đơn hàng. Cho phép Admin thay đổi trạng thái giao hàng, hệ thống sẽ tự động kích hoạt gửi Email cập nhật đến khách hàng.</li>
+</ul>
+
+<p><b>5. Trung tâm Marketing (Sales, Vouchers & Banners)</b></p>
+<ul>
+    <li><b>Quản lý Mã Giảm giá (Vouchers):</b> Thiết lập đa dạng loại mã (Giảm % hoặc Giảm số tiền cố định), thiết lập mức giảm tối đa (Max discount) và theo dõi Lịch sử người dùng đã xài mã (Voucher Usage).</li>
+    <li><b>Chiến dịch Sale (Programs):</b> Gắn nhãn giảm giá (Promo Price) cho một nhóm sản phẩm cụ thể theo thời gian định trước.</li>
+    <li><b>Banner Quảng cáo:</b> Cấu hình ảnh nền trang chủ phục vụ các chiến dịch dịp Lễ, Tết.</li>
+</ul>
+
+<p><b>6. Kiểm soát Hệ thống & Báo động (System Admin & Logs)</b></p>
+<ul>
+    <li><b>Kiểm duyệt Đánh giá (Review Moderation):</b> Admin có quyền xem Lịch sử chỉnh sửa bình luận (Edit History) của khách hàng, ẩn các bình luận tiêu cực và trực tiếp Trả lời (Response) lại nhận xét của khách.</li>
+    <li><b>Nhật ký Hoạt động (Activity Logs):</b> Hệ thống ngầm ghi lại (Audit) tất cả thao tác của người dùng trên Web (Ai đã xóa sản phẩm, ai đã đổi giá...) kèm theo địa chỉ IP để chống gian lận nội bộ.</li>
+    <li><b>Liên kết Bot Telegram (Telegram Integration):</b> Cung cấp tính năng tạo Mã bảo mật (Generate Token) để kết nối thẳng hệ thống Web vào ứng dụng Telegram. Nhờ đó, Ban quản trị sẽ nhận được cảnh báo lỗi và thông báo "Có đơn hàng mới" qua tin nhắn điện thoại ngay lập tức.</li>
+</ul>
+
+</body>
+</html>

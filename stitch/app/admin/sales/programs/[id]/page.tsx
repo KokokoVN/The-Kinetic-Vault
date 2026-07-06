@@ -82,13 +82,13 @@ function programStatus(active: boolean, startAt: string, endAt: string): { label
   const start = new Date(startAt);
   const end = new Date(endAt);
   if (!active) {
-    return { label: "Tạm ngưng", className: "bg-slate-100 text-slate-700" };
+    return { label: "Tạm ngưng", className: "bg-white/10 text-slate-300" };
   }
   if (!Number.isNaN(start.getTime()) && start > now) {
     return { label: "Sắp diễn ra", className: "bg-amber-100 text-amber-800" };
   }
   if (!Number.isNaN(end.getTime()) && end < now) {
-    return { label: "Đã kết thúc", className: "bg-slate-100 text-slate-700" };
+    return { label: "Đã kết thúc", className: "bg-white/10 text-slate-300" };
   }
   return { label: "Đang chạy", className: "bg-emerald-100 text-emerald-800" };
 }
@@ -149,7 +149,7 @@ export default async function AdminSaleProgramDetailPage({
           <h1 className="font-headline text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-indigo-700 dark:from-purple-400 dark:to-indigo-400">
             {program.name}
           </h1>
-          <p className="mt-2 text-base text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-base text-slate-400">
             {program.description || "Chưa có mô tả."}
           </p>
         </div>
@@ -165,7 +165,7 @@ export default async function AdminSaleProgramDetailPage({
           ) : null}
           <Link
             href="/admin/sales/programs"
-            className="flex items-center justify-center gap-2 rounded-2xl bg-white/60 dark:bg-slate-900/60 px-6 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl transition-all hover:scale-105 hover:bg-white dark:hover:bg-slate-800"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white px-6 py-3.5 text-sm font-bold text-slate-300 shadow-sm border border-white/10 backdrop-blur-xl transition-all hover:scale-105 hover:bg-white/5 backdrop-blur-xl text-slate-200 dark:hover:bg-slate-800"
           >
             Quay lại
           </Link>
@@ -175,15 +175,15 @@ export default async function AdminSaleProgramDetailPage({
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {[
           { label: "Trạng thái", value: status.label, color: status.className, icon: "monitoring" },
-          { label: "Khuyến mãi", value: discountLabel, color: "text-blue-900 dark:text-blue-400", icon: "sell" },
-          { label: "Sản phẩm áp dụng", value: enrichedItems.length.toString(), color: "text-blue-900 dark:text-blue-400", icon: "category" },
-          { label: "Tồn kho hiện tại", value: totalStock.toLocaleString("vi-VN"), color: "text-blue-900 dark:text-blue-400", icon: "inventory_2" },
+          { label: "Khuyến mãi", value: discountLabel, color: "text-blue-300", icon: "sell" },
+          { label: "Sản phẩm áp dụng", value: enrichedItems.length.toString(), color: "text-blue-300", icon: "category" },
+          { label: "Tồn kho hiện tại", value: totalStock.toLocaleString("vi-VN"), color: "text-blue-300", icon: "inventory_2" },
           { label: "Còn được KM", value: totalPromoRemaining.toLocaleString("vi-VN"), color: "text-emerald-700 dark:text-emerald-400", icon: "inventory" },
         ].map((stat, idx) => (
-          <div key={idx} className="group relative overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 p-6 shadow-xl shadow-purple-900/5 backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-900/10">
+          <div key={idx} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white p-6 shadow-xl shadow-purple-900/5 backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-900/10">
             <div className="relative z-10">
               <span className="material-symbols-outlined mb-3 text-3xl text-indigo-500/50 transition-transform group-hover:scale-110 group-hover:text-indigo-600">{stat.icon}</span>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{stat.label}</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</p>
               {stat.label === "Trạng thái" ? (
                 <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold ${stat.color}`}>{stat.value}</span>
               ) : (
@@ -194,35 +194,35 @@ export default async function AdminSaleProgramDetailPage({
         ))}
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 p-8 shadow-xl shadow-purple-900/5 backdrop-blur-xl">
-        <h2 className="mb-6 font-headline text-xl font-black text-slate-900 dark:text-white">Chi tiết cấu hình</h2>
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white p-8 shadow-xl shadow-purple-900/5 backdrop-blur-xl">
+        <h2 className="mb-6 font-headline text-xl font-black text-white">Chi tiết cấu hình</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Bắt đầu</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-200">{formatDateTime(program.startAt)}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Bắt đầu</p>
+            <p className="font-semibold text-white dark:text-slate-200">{formatDateTime(program.startAt)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Kết thúc</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-200">{formatDateTime(program.endAt)}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Kết thúc</p>
+            <p className="font-semibold text-white dark:text-slate-200">{formatDateTime(program.endAt)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Kiểu giảm</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-200">{program.discountType === "PERCENT" ? "Theo phần trăm" : "Đồng giá"}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Kiểu giảm</p>
+            <p className="font-semibold text-white dark:text-slate-200">{program.discountType === "PERCENT" ? "Theo phần trăm" : "Đồng giá"}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giá trị</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Giá trị</p>
+            <p className="font-semibold text-white dark:text-slate-200">
               {program.discountType === "PERCENT" ? `${program.discountValue}%` : moneyVnd(Number(program.discountValue ?? 0))}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 shadow-xl shadow-purple-900/5 backdrop-blur-xl">
-        <div className="border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-6 flex items-center justify-between">
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-xl shadow-purple-900/5 backdrop-blur-xl">
+        <div className="border-b border-white/10 px-8 py-6 flex items-center justify-between">
           <div>
-            <h2 className="font-headline text-xl font-black text-slate-900 dark:text-white">Sản phẩm đang được khuyến mãi</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Hiển thị giá gốc, giá khuyến mãi, tồn kho và số lượng còn được áp dụng khuyến mãi.</p>
+            <h2 className="font-headline text-xl font-black text-white">Sản phẩm đang được khuyến mãi</h2>
+            <p className="mt-1 text-sm text-slate-400">Hiển thị giá gốc, giá khuyến mãi, tồn kho và số lượng còn được áp dụng khuyến mãi.</p>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
             <span className="material-symbols-outlined">inventory_2</span>
@@ -230,22 +230,22 @@ export default async function AdminSaleProgramDetailPage({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-left">
-            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="bg-white/10 border-white/10 text-white/50 dark:bg-slate-800/50">
               <tr>
-                <th className="px-8 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sản phẩm</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Biến thể</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giá gốc</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giá KM</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tồn kho</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giới hạn KM</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Còn KM</th>
-                <th className="px-8 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Thao tác</th>
+                <th className="px-8 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Sản phẩm</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Biến thể</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Giá gốc</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Giá KM</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Tồn kho</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Giới hạn KM</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Còn KM</th>
+                <th className="px-8 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {enrichedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-8 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <td colSpan={8} className="px-8 py-12 text-center text-sm text-slate-400">
                     Chương trình chưa có sản phẩm áp dụng.
                   </td>
                 </tr>
@@ -256,27 +256,27 @@ export default async function AdminSaleProgramDetailPage({
                   const imageUrl = resolveCatalogImageUrl(product?.primaryImageUrl);
                   const discount = Math.max(0, row.basePrice - row.finalPrice);
                   return (
-                    <tr key={`${row.item.productId}-${row.item.variantId ?? "all"}-${row.item.id ?? ""}`} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+                    <tr key={`${row.item.productId}-${row.item.variantId ?? "all"}-${row.item.id ?? ""}`} className="transition-colors hover:bg-white/10 border-white/10 text-white/70 dark:hover:bg-slate-800/30">
                       <td className="px-8 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-14 w-14 overflow-hidden rounded-2xl border border-slate-200/50 dark:border-slate-700/50 bg-white shadow-sm">
+                          <div className="h-14 w-14 overflow-hidden rounded-2xl border border-white/10/50 dark:border-slate-700/50 bg-white/5 backdrop-blur-xl text-slate-200 shadow-sm">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={imageUrl} alt="" className="h-full w-full object-cover" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-slate-900 dark:text-slate-100">{productName}</p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">ID {row.item.productId} · SKU {product?.sku ?? "-"}</p>
+                            <p className="font-bold text-white dark:text-slate-100">{productName}</p>
+                            <p className="mt-1 text-xs text-slate-400">ID {row.item.productId} · SKU {product?.sku ?? "-"}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300">{variantLabel(row.variant, row.item.variantId)}</td>
-                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">{moneyVnd(row.basePrice)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-300">{variantLabel(row.variant, row.item.variantId)}</td>
+                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-300">{moneyVnd(row.basePrice)}</td>
                       <td className="px-6 py-4 text-right">
-                        <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{moneyVnd(row.finalPrice)}</p>
-                        {discount > 0 ? <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Giảm {moneyVnd(discount)}</p> : null}
+                        <p className="text-sm font-black text-emerald-400">{moneyVnd(row.finalPrice)}</p>
+                        {discount > 0 ? <p className="mt-1 text-[11px] text-slate-400">Giảm {moneyVnd(discount)}</p> : null}
                       </td>
-                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">{row.stock.toLocaleString("vi-VN")}</td>
-                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-300">{row.stock.toLocaleString("vi-VN")}</td>
+                      <td className="px-6 py-4 text-right text-sm font-semibold text-slate-300">
                         {row.promoLimit == null ? "Theo tồn kho" : row.promoLimit.toLocaleString("vi-VN")}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -287,7 +287,7 @@ export default async function AdminSaleProgramDetailPage({
                       <td className="px-8 py-4 text-right">
                         <Link
                           href={`/admin/products/${row.item.productId}/detail`}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 border-white/10 text-white dark:bg-slate-800 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400"
                           title="Xem chi tiết sản phẩm"
                         >
                           <span className="material-symbols-outlined text-[20px]">open_in_new</span>

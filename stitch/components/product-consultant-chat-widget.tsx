@@ -82,6 +82,7 @@ const CHAT_STYLES = `
 export function ProductConsultantChatWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<ChatTurn[]>([
@@ -155,12 +156,9 @@ export function ProductConsultantChatWidget() {
   return (
     <>
       <style>{CHAT_STYLES}</style>
-      <div style={{
-        position: "fixed", bottom: 0, right: 0, zIndex: 100,
-        display: "flex", flexDirection: "column", alignItems: "flex-end",
-        gap: 12, padding: "16px 20px",
-        pointerEvents: "none",
-      }}>
+      <div 
+        className="fixed bottom-0 right-0 z-[100] flex flex-col items-end gap-3 pointer-events-none p-4 pb-[100px] md:pb-6 md:pr-6"
+      >
 
         {/* ═══ CHAT WINDOW ═══ */}
         {open && (
@@ -171,10 +169,12 @@ export function ProductConsultantChatWidget() {
               pointerEvents: "auto",
               display: "flex",
               flexDirection: "column",
-              width: "min(100vw - 2rem, 400px)",
-              maxHeight: "min(520px, 75vh)",
+              width: isMaximized ? "min(100vw - 2rem, 800px)" : "min(100vw - 2rem, 400px)",
+              height: isMaximized ? "min(800px, 90vh)" : undefined,
+              maxHeight: isMaximized ? "90vh" : "min(520px, 75vh)",
               borderRadius: 24,
               overflow: "hidden",
+              transition: "width 0.3s cubic-bezier(0.16,1,0.3,1), height 0.3s cubic-bezier(0.16,1,0.3,1), max-height 0.3s cubic-bezier(0.16,1,0.3,1)",
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(24px) saturate(1.8)",
               WebkitBackdropFilter: "blur(24px) saturate(1.8)",
@@ -204,21 +204,40 @@ export function ProductConsultantChatWidget() {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Đóng chat"
-                style={{
-                  width: 32, height: 32, borderRadius: 10,
-                  border: "none", background: "rgba(255,255,255,0.15)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", transition: "background 0.2s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.3)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>close</span>
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsMaximized(v => !v)}
+                  aria-label={isMaximized ? "Thu nhỏ" : "Phóng to"}
+                  style={{
+                    width: 32, height: 32, borderRadius: 10,
+                    border: "none", background: "rgba(255,255,255,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", transition: "background 0.2s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>
+                    {isMaximized ? "close_fullscreen" : "open_in_full"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Đóng chat"
+                  style={{
+                    width: 32, height: 32, borderRadius: 10,
+                    border: "none", background: "rgba(255,255,255,0.15)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", transition: "background 0.2s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.3)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>close</span>
+                </button>
+              </div>
             </div>
 
             {/* ── Messages ── */}

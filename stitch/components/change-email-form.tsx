@@ -338,14 +338,14 @@ export function ChangeEmailForm({
     <div className="space-y-6 pt-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">
+          <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
             Security
           </p>
 
-          <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-[28px]">
+          <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white sm:text-[28px]">
             Thay đổi Gmail
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
             Nhập 8 số OTP, bạn có thể dán cả mã vào ô đầu tiên.
           </p>
         </div>
@@ -353,7 +353,7 @@ export function ChangeEmailForm({
 
       {step === "oldOtp" && (
         <div className="space-y-5">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Nhập OTP gửi tới Gmail hiện tại
           </p>
 
@@ -370,16 +370,16 @@ export function ChangeEmailForm({
                 onChange={(e) => handleOldOtpChange(e.target.value, index)}
                 onKeyDown={(e) => handleOtpKeyDown(e, index, oldOtpRefs, oldOtp, setOldOtp)}
                 onPaste={(e) => handlePasteOtp(e, oldOtpRefs, oldOtp, setOldOtp)}
-                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border border-slate-200 bg-white text-center text-lg font-black shadow-sm outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center text-xl font-black text-blue-600 dark:text-blue-400 shadow-sm outline-none transition-all focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20"
               />
             ))}
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleVerifyOldOtp} className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={loading} onClick={handleVerifyOldOtp} className="rounded-2xl bg-blue-600 dark:bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
               {loading ? "Đang xác thực..." : "Xác thực OTP"}
             </button>
-            <button type="button" disabled={loading} onClick={handleResendOldOtp} className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700 disabled:opacity-50">
+            <button type="button" disabled={loading} onClick={handleResendOldOtp} className="rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-transparent px-5 py-3 font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
               Gửi lại OTP
             </button>
           </div>
@@ -389,7 +389,7 @@ export function ChangeEmailForm({
       {step === "newEmail" && (
         <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-bold text-blue-900">
+            <label className="mb-2 block text-sm font-bold text-blue-900 dark:text-blue-400">
               Gmail mới
             </label>
 
@@ -402,8 +402,8 @@ export function ChangeEmailForm({
               }}
               onBlur={handleEmailBlur}
               placeholder="example@gmail.com"
-              className={`w-full rounded-2xl border bg-slate-50 px-4 py-3 outline-none transition-colors ${
-                emailError ? "border-red-500 focus:border-red-500" : "focus:border-blue-500"
+              className={`w-full rounded-2xl border-2 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white outline-none transition-colors ${
+                emailError ? "border-red-500 focus:border-red-500" : "border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500"
               }`}
             />
             {emailError && (
@@ -412,7 +412,7 @@ export function ChangeEmailForm({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleSendOtp} className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={loading} onClick={handleSendOtp} className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
               {loading ? "Đang gửi..." : "Gửi OTP"}
             </button>
           </div>
@@ -421,9 +421,9 @@ export function ChangeEmailForm({
 
       {step === "newOtp" && (
         <div className="space-y-5">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Nhập OTP gửi tới:
-            <strong> {confirmedNewEmail || email}</strong>
+            <strong className="text-slate-900 dark:text-white"> {confirmedNewEmail || email}</strong>
           </p>
 
           <div className="flex flex-wrap gap-1 sm:gap-2 justify-between" aria-label="OTP Gmail mới">
@@ -439,16 +439,16 @@ export function ChangeEmailForm({
                 onChange={(e) => handleNewOtpChange(e.target.value, index)}
                 onKeyDown={(e) => handleOtpKeyDown(e, index, newOtpRefs, newOtp, setNewOtp)}
                 onPaste={(e) => handlePasteOtp(e, newOtpRefs, newOtp, setNewOtp)}
-                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border border-slate-200 bg-white text-center text-lg font-black shadow-sm outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center text-xl font-black text-blue-600 dark:text-blue-400 shadow-sm outline-none transition-all focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20"
               />
             ))}
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleVerify} className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={loading} onClick={handleVerify} className="rounded-2xl bg-blue-600 dark:bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
               {loading ? "Đang xác nhận..." : "Xác nhận đổi Gmail"}
             </button>
-            <button type="button" disabled={loading || cooldown > 0} onClick={handleResendNewOtp} className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700 disabled:opacity-50">
+            <button type="button" disabled={loading || cooldown > 0} onClick={handleResendNewOtp} className="rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-transparent px-5 py-3 font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
               {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi lại OTP"}
             </button>
           </div>
@@ -456,7 +456,7 @@ export function ChangeEmailForm({
       )}
 
       {message && (
-        <p className="text-sm font-bold text-slate-700">
+        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
           {message}
         </p>
       )}

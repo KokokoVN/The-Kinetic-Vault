@@ -92,6 +92,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             row.setProductName(s.product.getProductName());
             row.setSku(s.product.getSku());
             row.setCategoryId(s.product.getCategoryId());
+            row.setPrimaryImageUrl(s.product.getPrimaryImageUrl());
             BigDecimal p = effectivePrice(s.product);
             row.setPrice(p != null ? p.setScale(2, RoundingMode.HALF_UP) : null);
             row.setPriceDelta(s.priceGap.setScale(2, RoundingMode.HALF_UP));

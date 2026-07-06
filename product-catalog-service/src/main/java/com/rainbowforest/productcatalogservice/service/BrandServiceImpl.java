@@ -2,6 +2,7 @@ package com.rainbowforest.productcatalogservice.service;
 
 import com.rainbowforest.productcatalogservice.entity.Brand;
 import com.rainbowforest.productcatalogservice.repository.BrandRepository;
+import com.rainbowforest.productcatalogservice.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +13,11 @@ import java.util.List;
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
+    private final ProductRepository productRepository;
 
-    public BrandServiceImpl(BrandRepository brandRepository) {
+    public BrandServiceImpl(BrandRepository brandRepository, ProductRepository productRepository) {
         this.brandRepository = brandRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -71,6 +74,7 @@ public class BrandServiceImpl implements BrandService {
     public void deleteBrand(Long id, String actorUsername, String actorUserId) {
         Brand existing = brandRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found"));
+        productRepository.hideAndClearBrandReference(id);
         brandRepository.delete(existing);
     }
 }

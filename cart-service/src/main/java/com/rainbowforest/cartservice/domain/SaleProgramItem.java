@@ -3,6 +3,7 @@ package com.rainbowforest.cartservice.domain;
 public class SaleProgramItem {
     private Long productId;
     private Long variantId;
+    private Integer promoQtyLimit;
 
     public Long getProductId() {
         return productId;
@@ -15,5 +16,11 @@ public class SaleProgramItem {
     }
     public void setVariantId(Long variantId) {
         this.variantId = variantId;
+    }
+    public Integer getPromoQtyLimit() {
+        return promoQtyLimit;
+    }
+    public void setPromoQtyLimit(Integer promoQtyLimit) {
+        this.promoQtyLimit = promoQtyLimit;
     }
 }

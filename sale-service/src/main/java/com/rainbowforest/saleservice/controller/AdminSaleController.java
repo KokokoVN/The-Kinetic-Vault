@@ -6,6 +6,7 @@ import com.rainbowforest.saleservice.dto.VoucherUsageResponse;
 import com.rainbowforest.saleservice.entity.PromoBanner;
 import com.rainbowforest.saleservice.entity.SaleProgram;
 import com.rainbowforest.saleservice.entity.Voucher;
+import com.rainbowforest.saleservice.service.NotificationAsyncService;
 import com.rainbowforest.saleservice.service.SaleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,10 +22,20 @@ public class AdminSaleController {
 
     @Autowired
     private SaleServiceImpl saleService;
+    
+    @Autowired
+    private NotificationAsyncService notificationAsyncService;
 
     // ---- Sale Programs ----
 
-    private static final java.nio.file.Path BANNER_UPLOAD_DIR = java.nio.file.Paths.get("uploads", "banner-images");
+    private static java.nio.file.Path getRootUploadPath(String subDir) {
+        java.nio.file.Path path = java.nio.file.Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final java.nio.file.Path BANNER_UPLOAD_DIR = getRootUploadPath("banner-images");
 
     @GetMapping("/programs")
     public ResponseEntity<List<SaleProgram>> listPrograms() {
@@ -40,7 +51,11 @@ public class AdminSaleController {
     public ResponseEntity<SaleProgram> createProgram(
             @RequestBody SaleProgramRequest req,
             @RequestHeader(value = "X-Username", required = false) String username) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(saleService.createProgram(req, username));
+        SaleProgram program = saleService.createProgram(req, username);
+        if (Boolean.TRUE.equals(req.getSendEmailNotification())) {
+            notificationAsyncService.sendPromotionEmails(program);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(program);
     }
 
     @PutMapping("/programs/{id}")
@@ -48,7 +63,11 @@ public class AdminSaleController {
             @PathVariable Long id,
             @RequestBody SaleProgramRequest req,
             @RequestHeader(value = "X-Username", required = false) String username) {
-        return ResponseEntity.ok(saleService.updateProgram(id, req, username));
+        SaleProgram program = saleService.updateProgram(id, req, username);
+        if (Boolean.TRUE.equals(req.getSendEmailNotification())) {
+            notificationAsyncService.sendPromotionEmails(program);
+        }
+        return ResponseEntity.ok(program);
     }
 
     @DeleteMapping("/programs/{id}")

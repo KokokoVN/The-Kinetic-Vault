@@ -115,22 +115,22 @@ export default async function AdminCustomerDetailPage({
   }
 
   const overviewContent = (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div key="overview" className="grid gap-6 md:grid-cols-3">
       <div className="md:col-span-2 space-y-6">
-        <section className="rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-md">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-md">
           <div className="flex items-center gap-4 mb-6">
             <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full ring-4 ring-slate-100">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+                <div className="flex h-full w-full items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-400">
                   <span className="material-symbols-outlined text-4xl">person</span>
                 </div>
               )}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">{fullName}</h2>
-              <p className="text-sm text-slate-500">{user.email ?? "—"}</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{fullName}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{user.email ?? "—"}</p>
               <div className="mt-2 flex gap-2">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${isLocked ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                   {isLocked ? "Đã khóa" : "Hoạt động"}
@@ -143,23 +143,23 @@ export default async function AdminCustomerDetailPage({
           </div>
 
           <dl className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">ID</dt><dd className="text-sm font-semibold text-slate-900">#{user.id ?? "—"}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">Username</dt><dd className="text-sm font-semibold text-slate-900">{user.userName ?? "—"}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">Số điện thoại</dt><dd className="text-sm font-semibold text-slate-900">{user.phoneNumber ?? "—"}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">Ngày sinh</dt><dd className="text-sm font-semibold text-slate-900">{asDate(user.userDetails?.birthDate ?? null)}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">Giới tính</dt><dd className="text-sm font-semibold text-slate-900">{user.userDetails?.gender ?? "—"}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-xs font-medium text-slate-500 mb-1">Cập nhật lúc</dt><dd className="text-sm font-semibold text-slate-900">{asDate(user.updatedAt ?? null)}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">ID</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">#{user.id ?? "—"}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Username</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">{user.userName ?? "—"}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Số điện thoại</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">{user.phoneNumber ?? "—"}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Ngày sinh</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">{asDate(user.userDetails?.birthDate ?? null)}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Giới tính</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">{user.userDetails?.gender ?? "—"}</dd></div>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4"><dt className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Cập nhật lúc</dt><dd className="text-sm font-semibold text-slate-900 dark:text-white">{asDate(user.updatedAt ?? null)}</dd></div>
           </dl>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-md">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Lịch sử thay đổi hồ sơ</h3>
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-md">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Lịch sử thay đổi hồ sơ</h3>
           {changeLogs.length === 0 ? (
-            <p className="text-sm text-slate-500">Chưa có lịch sử thay đổi.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Chưa có lịch sử thay đổi.</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
                   <tr>
                     <th className="px-4 py-3 font-medium">Thời gian</th>
                     <th className="px-4 py-3 font-medium">Trường</th>
@@ -168,14 +168,14 @@ export default async function AdminCustomerDetailPage({
                     <th className="px-4 py-3 font-medium">Người sửa</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
                   {changeLogs.map((log, idx) => (
                     <tr key={String(log?.id ?? `log-${idx}`)}>
                       <td className="px-4 py-3">{asDate(log?.changedAt ?? null)}</td>
-                      <td className="px-4 py-3 font-medium text-slate-900">{fieldLabel(log?.changedField)}</td>
-                      <td className="px-4 py-3 text-slate-500">{log?.oldValue ?? "—"}</td>
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{fieldLabel(log?.changedField)}</td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{log?.oldValue ?? "—"}</td>
                       <td className="px-4 py-3 text-emerald-600 font-medium">{log?.newValue ?? "—"}</td>
-                      <td className="px-4 py-3 text-slate-600">{log?.changedBy ?? "—"}</td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{log?.changedBy ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -186,8 +186,8 @@ export default async function AdminCustomerDetailPage({
       </div>
 
       <div className="space-y-6">
-        <section className="rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-md">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Hành động</h3>
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-md">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Hành động</h3>
           <div className="space-y-4">
             {isLocked && (
               <form action={unlockAction}>
@@ -197,9 +197,9 @@ export default async function AdminCustomerDetailPage({
               </form>
             )}
             
-            <form action={updateRoleAction} className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <label htmlFor="roleName" className="block text-sm font-medium text-slate-700">Đổi quyền</label>
-              <select name="roleName" id="roleName" defaultValue={roleName} className="block w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500 h-10 px-3 border outline-none">
+            <form action={updateRoleAction} className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+              <label htmlFor="roleName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Đổi quyền</label>
+              <select name="roleName" id="roleName" defaultValue={roleName} className="block w-full rounded-lg border-slate-300 dark:border-slate-700 text-sm focus:border-blue-500 focus:ring-blue-500 h-10 px-3 border outline-none">
                 <option value="ROLE_USER">USER</option>
                 <option value="ROLE_ADMIN">ADMIN</option>
                 <option value="ROLE_SUPER_ADMIN">SUPER_ADMIN</option>
@@ -243,8 +243,8 @@ export default async function AdminCustomerDetailPage({
   );
 
   const ordersContent = (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+    <div key="orders" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Lịch sử mua hàng</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Danh sách các đơn hàng gần đây của khách hàng.</p>
       </div>
@@ -290,21 +290,21 @@ export default async function AdminCustomerDetailPage({
   );
 
   const addressesContent = (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div key="addresses" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {addresses.length === 0 ? (
-        <div className="col-span-full rounded-2xl border border-slate-200 border-dashed p-8 text-center text-slate-500">
+        <div className="col-span-full rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed p-8 text-center text-slate-500 dark:text-slate-400">
           Chưa có địa chỉ nào được lưu.
         </div>
       ) : (
         addresses.map((addr) => (
-          <div key={addr.id} className={`rounded-2xl border p-5 transition-shadow hover:shadow-md ${addr.isDefault ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 bg-white'}`}>
+          <div key={addr.id} className={`rounded-2xl border p-5 transition-shadow hover:shadow-md ${addr.isDefault ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
             <div className="flex items-center gap-2 mb-3">
               <span className={`material-symbols-outlined ${addr.isDefault ? 'text-blue-500' : 'text-slate-400'}`}>
                 {addr.isDefault ? 'home' : 'location_on'}
               </span>
-              <h4 className="font-bold text-slate-900">{addr.isDefault ? 'Địa chỉ mặc định' : 'Địa chỉ phụ'}</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white">{addr.isDefault ? 'Địa chỉ mặc định' : 'Địa chỉ phụ'}</h4>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               {addr.fullAddress || [addr.streetLine, addr.wardName, addr.districtName, addr.provinceName].filter(Boolean).join(", ")}
             </p>
           </div>
@@ -314,17 +314,17 @@ export default async function AdminCustomerDetailPage({
   );
 
   const devicesContent = (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-slate-200 bg-slate-50/50">
-        <h3 className="text-lg font-bold text-slate-900">Thiết bị đăng nhập</h3>
-        <p className="text-sm text-slate-500 mt-1">Các thiết bị đã từng sử dụng tài khoản này.</p>
+    <div key="devices" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Thiết bị đăng nhập</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Các thiết bị đã từng sử dụng tài khoản này.</p>
       </div>
       {devices.length === 0 ? (
-        <div className="p-8 text-center text-slate-500">Chưa có thiết bị nào.</div>
+        <div className="p-8 text-center text-slate-500 dark:text-slate-400">Chưa có thiết bị nào.</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4 font-medium">Thiết bị</th>
                 <th className="px-6 py-4 font-medium">IP</th>
@@ -333,19 +333,19 @@ export default async function AdminCustomerDetailPage({
                 <th className="px-6 py-4 font-medium">Trạng thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {devices.map((device) => (
-                <tr key={device.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
+                <tr key={device.id} className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
                     <span className="material-symbols-outlined text-slate-400">devices</span>
                     {device.deviceLabel || "Không rõ"}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 font-mono">{device.lastLoginIp || "—"}</td>
-                  <td className="px-6 py-4 text-slate-600">{device.lastLoginLocation || "—"}</td>
-                  <td className="px-6 py-4 text-slate-600">{asDate(device.lastSeenAt)}</td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">{device.lastLoginIp || "—"}</td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{device.lastLoginLocation || "—"}</td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{asDate(device.lastSeenAt)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
-                      ${(device as any).isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                      ${(device as any).isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                       {(device as any).isActive ? 'Đang hoạt động' : 'Đã đăng xuất'}
                     </span>
                   </td>
@@ -362,12 +362,12 @@ export default async function AdminCustomerDetailPage({
     <div className="space-y-8 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Chi tiết khách hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">Quản lý thông tin, đơn hàng, bảo mật của khách hàng.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Chi tiết khách hàng</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Quản lý thông tin, đơn hàng, bảo mật của khách hàng.</p>
         </div>
         <Link 
           href="/admin/customers" 
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-all"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-white dark:bg-slate-900 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 transition-all"
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
           Quay lại danh sách

@@ -16,7 +16,7 @@ export function SimilarProductsPanel({ items }: { items: UiSimilarProduct[] }) {
   if (!items.length) return null;
 
   return (
-    <section id="section-similar" className="scroll-mt-24 rounded-2xl border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-sm sm:p-8">
+    <section id="section-similar" className="scroll-mt-24 rounded-2xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-sm sm:p-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="font-headline text-lg font-black text-blue-900">Sản phẩm tương tự</h3>
@@ -25,7 +25,7 @@ export function SimilarProductsPanel({ items }: { items: UiSimilarProduct[] }) {
         {items.length > 4 ? (
           <button
             type="button"
-            className="rounded-xl border border-outline-variant/20 px-3 py-2 text-xs font-bold text-blue-900 hover:bg-surface-container-high"
+            className="rounded-xl border border-outline-variant/20 px-3 py-2 text-xs font-bold text-blue-900 hover:bg-surface-container dark:bg-slate-800-high"
             onClick={() => setLimit((prev) => (prev >= items.length ? 4 : items.length))}
           >
             {limit >= items.length ? "Thu gọn" : "Xem thêm"}

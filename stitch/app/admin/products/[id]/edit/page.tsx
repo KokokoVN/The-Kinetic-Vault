@@ -10,6 +10,7 @@ import { SpecFormLiveCheck } from "@/components/spec-form-live-check";
 import { SpecGroupCard } from "@/components/spec-group-card";
 import { VariantEditFormLiveCheck } from "@/components/variant-edit-form-live-check";
 import { VariantFormLiveCheck } from "@/components/variant-form-live-check";
+import { StatusToast } from "@/components/status-toast";
 import { notifyAdminWebBestEffort } from "@/lib/admin-web-notify";
 import {
   addAdminProductSpec,
@@ -57,14 +58,14 @@ function isVideoUrl(url: string | null | undefined): boolean {
 type PageSearchParams = { error?: string; success?: string };
 
 const fieldClass =
-  "w-full rounded-xl border border-outline-variant/20 bg-white px-4 py-3 text-sm text-blue-950 outline-none transition-[box-shadow,border-color] placeholder:text-slate-400 focus:border-primary/35 focus:ring-2 focus:ring-primary/25";
+  "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
 const compactFieldClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-white px-2 py-1.5 text-xs text-blue-950 outline-none focus:ring-2 focus:ring-primary/25 placeholder:text-slate-400";
+  "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/25 placeholder:text-slate-400";
 
 /** Form chỉnh sửa trong thẻ biến thể — chữ to hơn compactFieldClass. */
 const variantEditInputClass =
-  "w-full rounded-xl border border-outline-variant/20 bg-white px-3 py-2.5 text-sm text-blue-950 outline-none transition focus:border-primary/30 focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400";
+  "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-800 dark:text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-slate-400";
 
 export default async function AdminEditProductPage({
   params,
@@ -417,6 +418,12 @@ export default async function AdminEditProductPage({
 
   return (
     <div className="w-full space-y-8 pb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {err === "upload_images" && (
+        <StatusToast tone="error" title="Lỗi tải ảnh" message="Không tải lên được ảnh sản phẩm." />
+      )}
+      {ok === "update" && (
+        <StatusToast tone="success" title="Thành công" message="Cập nhật sản phẩm thành công." />
+      )}
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="flex items-center gap-4">
@@ -433,7 +440,7 @@ export default async function AdminEditProductPage({
             </h1>
             <p className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono font-bold text-slate-600 dark:text-slate-300">#{pid}</span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <span className="text-slate-300 dark:text-slate-600 dark:text-slate-300">•</span>
               Tồn kho:
               <Link
                 prefetch
@@ -457,7 +464,7 @@ export default async function AdminEditProductPage({
           <Link
             prefetch
             href={`/admin/products/${encodeURIComponent(pid)}/detail`}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-[1.02] hover:shadow-md"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700 hover:scale-[1.02] hover:shadow-md"
           >
             <span className="material-symbols-outlined text-[16px]">visibility</span>
             Xem chi tiết
@@ -480,7 +487,7 @@ export default async function AdminEditProductPage({
             <img
               src={heroImg}
               alt=""
-              className="h-20 w-20 rounded-[16px] border border-slate-100 object-cover shadow-md ring-2 ring-white"
+              className="h-20 w-20 rounded-[16px] border border-slate-100 dark:border-slate-700 object-cover shadow-md ring-2 ring-white"
             />
             <div className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 ring-2 ring-white shadow-sm">
               <span className="material-symbols-outlined text-[14px] text-white">inventory_2</span>
@@ -493,7 +500,7 @@ export default async function AdminEditProductPage({
               {product.productName}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 px-3 py-1.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200/60">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 ring-1 ring-slate-200/60">
                 <span className="material-symbols-outlined text-[13px]">barcode</span>
                 {product.sku ?? "Không có SKU"}
               </span>
@@ -559,7 +566,7 @@ export default async function AdminEditProductPage({
                     )}
                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
                       {img.primaryImage && (
-                        <div className="backdrop-blur-md bg-white/90 shadow-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-indigo-600 ring-1 ring-indigo-500/20">
+                        <div className="backdrop-blur-md bg-white/90 dark:bg-slate-900/90 shadow-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-indigo-600 ring-1 ring-indigo-500/20">
                           <span className="material-symbols-outlined text-[12px] fill-current">star</span>
                           <span className="text-[9px] font-black uppercase tracking-wider">Ảnh chính</span>
                         </div>
@@ -575,7 +582,7 @@ export default async function AdminEditProductPage({
                       <span className="font-mono bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md">#{img.id}</span>
                     </div>
                     <p className="truncate text-xs text-slate-400 font-medium" title={img.storagePath ?? ""}>{img.storagePath}</p>
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                       {!img.primaryImage && !isVideo ? (
                         <form action={setPrimaryImageAction} className="flex-1">
                           <input type="hidden" name="imageId" value={String(img.id)} />
@@ -646,12 +653,12 @@ export default async function AdminEditProductPage({
               </div>
             </div>
           ) : (
-            <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-sm font-semibold text-slate-500">
+            <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 px-4 py-8 text-center text-sm font-semibold text-slate-500">
               Chưa có thông số kỹ thuật nào.
             </p>
           )}
 
-          <div className="mt-8 rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 p-6 shadow-inner sm:p-8">
+          <div className="mt-8 rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 shadow-inner sm:p-8">
             <h3 className="font-headline text-lg font-black uppercase tracking-wider text-indigo-900 flex items-center gap-2">
               <span className="material-symbols-outlined text-[20px] text-indigo-600">add_circle</span>
               Thêm thông số mới
@@ -698,7 +705,7 @@ export default async function AdminEditProductPage({
                                 href={variantThumb}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="block relative overflow-hidden rounded-2xl border-2 border-slate-100 shadow-sm"
+                                className="block relative overflow-hidden rounded-2xl border-2 border-slate-100 dark:border-slate-700 shadow-sm"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -708,7 +715,7 @@ export default async function AdminEditProductPage({
                                 />
                               </a>
                             ) : (
-                              <div className="flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-slate-400 sm:h-32 sm:w-32">
+                              <div className="flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 sm:h-32 sm:w-32">
                                 <span className="material-symbols-outlined text-3xl opacity-50">image_not_supported</span>
                                 <span className="text-[10px] font-bold">Chưa có ảnh</span>
                               </div>
@@ -718,13 +725,13 @@ export default async function AdminEditProductPage({
                             </span>
                           </div>
                           <div className="min-w-0 flex-1 text-center sm:text-left">
-                            <p className="font-headline text-2xl font-black leading-tight text-slate-800 transition-colors group-hover/card:text-indigo-700">
+                            <p className="font-headline text-2xl font-black leading-tight text-slate-800 dark:text-slate-100 transition-colors group-hover/card:text-indigo-700">
                               <span className="text-indigo-900">{v.size}</span>
                               <span className="mx-3 font-light text-slate-300">|</span>
                               <span className="">{v.color}</span>
                             </p>
                             <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
-                              <span className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200/80">
+                              <span className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-sm ring-1 ring-slate-200/80">
                                 <span className="material-symbols-outlined text-[18px] text-emerald-500">payments</span>
                                 {v.price != null ? moneyVnd(Number(v.price)) : "—"}
                               </span>
@@ -753,7 +760,7 @@ export default async function AdminEditProductPage({
                             <input type="hidden" name="variantId" value={String(v.id)} />
                             <button
                               type="submit"
-                              className="h-[52px] w-full sm:w-auto px-6 rounded-2xl border border-rose-200 bg-white text-rose-600 shadow-sm transition-all hover:bg-rose-50 hover:border-rose-300 hover:shadow-md flex items-center justify-center gap-2 font-bold text-sm"
+                              className="h-[52px] w-full sm:w-auto px-6 rounded-2xl border border-rose-200 bg-white dark:bg-slate-900 text-rose-600 shadow-sm transition-all hover:bg-rose-50 hover:border-rose-300 hover:shadow-md flex items-center justify-center gap-2 font-bold text-sm"
                             >
                               <span className="material-symbols-outlined text-[20px]">delete</span>
                               Xóa biến thể
@@ -767,13 +774,13 @@ export default async function AdminEditProductPage({
               </ul>
             </div>
           ) : (
-            <div className="mt-6 flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 rounded-[1.5rem] bg-slate-50/50">
+            <div className="mt-6 flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[1.5rem] bg-slate-50/50 dark:bg-slate-800/50">
               <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_size</span>
               <p className="text-sm font-bold text-slate-400">Chưa có biến thể nào được tạo.</p>
             </div>
           )}
  
-          <div className="mt-8 rounded-[2rem] border border-blue-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/50 p-6 shadow-inner sm:p-8">
+          <div className="mt-8 rounded-[2rem] border border-blue-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 shadow-inner sm:p-8">
             <h3 className="font-headline text-lg font-black uppercase tracking-wider text-indigo-900 flex items-center gap-2">
               <span className="material-symbols-outlined text-[20px] text-indigo-600">add_box</span>
               Thêm biến thể mới

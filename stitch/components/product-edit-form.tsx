@@ -77,9 +77,7 @@ export function ProductEditForm({
   };
 
   return (
-    <div className="space-y-6">
-
-
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* ── Main card ── */}
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-slate-900/8 dark:shadow-none">
         {/* Top accent bar */}
@@ -92,15 +90,15 @@ export function ProductEditForm({
         <form onSubmit={handleSubmit} className="relative z-10 p-6 sm:p-10">
           {/* Section title */}
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
               <span className="material-symbols-outlined text-[22px]">edit_square</span>
             </div>
             <div>
-              <h2 className="font-headline text-xl font-black text-slate-900 dark:text-white">
+              <h2 className="font-headline text-xl font-black text-slate-900 dark:text-white tracking-tight">
                 Thông tin sản phẩm
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Cập nhật tên, mô tả, danh mục, thương hiệu và giá
+                Vui lòng điền đủ các trường bắt buộc (*)
               </p>
             </div>
           </div>
@@ -132,12 +130,13 @@ export function ProductEditForm({
                   <span className="material-symbols-outlined text-[15px] text-indigo-500">
                     description
                   </span>
-                  Mô tả sản phẩm
+                  Mô tả sản phẩm <span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <textarea
                   id="discription"
                   name="discription"
                   rows={9}
+                  required
                   defaultValue={product.discription ?? ""}
                   placeholder="Mô tả chi tiết về chất liệu, đặc điểm, công dụng..."
                   className={`${inputClass} resize-none leading-relaxed`}
@@ -147,7 +146,7 @@ export function ProductEditForm({
 
             {/* ─ Right: Category, Brand, Price, SKU ─ */}
             <div className="lg:col-span-5 space-y-5">
-              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-6 space-y-5">
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/50 p-6 space-y-6">
                 {/* Category */}
                 <div>
                   <label className={labelClass} htmlFor="categoryId">
@@ -156,24 +155,27 @@ export function ProductEditForm({
                     </span>
                     Danh mục <span className="text-rose-500 ml-0.5">*</span>
                   </label>
-                  <select
-                    id="categoryId"
-                    name="categoryId"
-                    required
-                    defaultValue={
-                      product.categoryId != null
-                        ? String(product.categoryId)
-                        : ""
-                    }
-                    className={`${inputClass} appearance-none`}
-                  >
-                    <option value="">— Chọn danh mục —</option>
-                    {categoryOptions.map((c) => (
-                      <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="categoryId"
+                      name="categoryId"
+                      required
+                      defaultValue={
+                        product.categoryId != null
+                          ? String(product.categoryId)
+                          : ""
+                      }
+                      className={`${inputClass} appearance-none`}
+                    >
+                      <option value="" disabled>— Chọn danh mục —</option>
+                      {categoryOptions.map((c) => (
+                        <option key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">expand_more</span>
+                  </div>
                 </div>
 
                 {/* Brand */}
@@ -182,23 +184,27 @@ export function ProductEditForm({
                     <span className="material-symbols-outlined text-[15px] text-indigo-500">
                       stars
                     </span>
-                    Thương hiệu
+                    Thương hiệu <span className="text-rose-500 ml-0.5">*</span>
                   </label>
-                  <select
-                    id="brandId"
-                    name="brandId"
-                    defaultValue={
-                      product.brandId != null ? String(product.brandId) : ""
-                    }
-                    className={`${inputClass} appearance-none`}
-                  >
-                    <option value="">— Tuỳ chọn —</option>
-                    {brands.map((b) => (
-                      <option key={b.id} value={String(b.id)}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="brandId"
+                      name="brandId"
+                      required
+                      defaultValue={
+                        product.brandId != null ? String(product.brandId) : ""
+                      }
+                      className={`${inputClass} appearance-none`}
+                    >
+                      <option value="" disabled>— Chọn thương hiệu —</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={String(b.id)}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">expand_more</span>
+                  </div>
                 </div>
 
                 {/* Price */}
@@ -238,17 +244,15 @@ export function ProductEditForm({
                     <span className="material-symbols-outlined text-[15px] text-slate-400">
                       barcode
                     </span>
-                    Mã SKU
-                    <span className="ml-1 rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-500 dark:text-slate-300">
-                      Tuỳ chọn
-                    </span>
+                    Mã SKU <span className="text-rose-500 ml-0.5">*</span>
                   </label>
                   <input
                     id="sku"
                     name="sku"
                     autoComplete="off"
+                    required
                     defaultValue={product.sku ?? ""}
-                    placeholder="Bỏ trống nếu không dùng"
+                    placeholder="Mã SKU (VD: SP001)"
                     className={`${inputClass} font-mono uppercase placeholder:normal-case placeholder:font-sans`}
                   />
                 </div>

@@ -73,31 +73,15 @@ export function ProductCard({
   const hasSale = Boolean(originalPrice) && discountPct != null;
 
   return (
-    <article
-      className="group relative flex h-full flex-col"
-      style={{
-        borderRadius: "1.5rem",
-        background: "linear-gradient(145deg, #ffffff, #f8f9fe)",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
-        border: "1px solid rgba(0,0,0,0.06)",
-        transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease",
-        overflow: "hidden",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-8px) scale(1.01)";
-        (e.currentTarget as HTMLElement).style.boxShadow =
-          "0 24px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(99,102,241,0.12)";
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.3)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)";
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.06)";
-      }}
-    >
-      <Link href={href} className="flex h-full flex-col outline-none">
-        {/* ── Image ─────────────────────────────────── */}
-        <div className="relative overflow-hidden" style={{ aspectRatio: "4/5", borderRadius: "1.5rem 1.5rem 0 0" }}>
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 dark:hover:shadow-indigo-500/10 hover:-translate-y-2">
+      
+      {/* Background Glow Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 dark:from-indigo-500/10 dark:via-purple-500/10 dark:to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0 pointer-events-none" />
+
+      <Link href={href} className="flex h-full flex-col outline-none relative z-10">
+        {/* ── Image Section ─────────────────────────────────── */}
+        <div className="relative overflow-hidden m-1.5 md:m-2 rounded-2xl md:rounded-[2rem]" style={{ aspectRatio: "4/5" }}>
+          {/* Main Image */}
           <img
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
             src={image}
@@ -106,35 +90,35 @@ export function ProductCard({
             decoding="async"
           />
 
-          {/* Dark gradient at bottom for price legibility on hover */}
-          <div
-            className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)" }}
-          />
+          {/* Elegant Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-          {/* Shimmer overlay on hover */}
-          <div
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              background:
-                "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
-              backgroundSize: "200% 100%",
-              animation: "shimmer 1.5s infinite linear",
-            }}
-          />
-
-          {/* Badges */}
+          {/* Badges Overlay */}
           {badges.length > 0 && (
-            <div className="absolute left-3 top-3 flex flex-col gap-1.5 z-10">
+            <div className="absolute left-3 top-3 flex flex-col gap-2 z-10">
               {badges.map((badge, idx) => {
-                const { bg, glow, icon } = getBadgeStyle(badge);
+                const b = badge.toLowerCase();
+                let colors = "from-indigo-500 to-purple-500 shadow-indigo-500/30 ring-indigo-400/30";
+                let icon = "✨";
+                if (b.includes("sale") || b.includes("giảm")) {
+                  colors = "from-rose-500 to-pink-500 shadow-rose-500/30 ring-rose-400/30";
+                  icon = "🔥";
+                }
+                if (b.includes("hot")) {
+                  colors = "from-amber-500 to-orange-500 shadow-amber-500/30 ring-amber-400/30";
+                  icon = "⚡";
+                }
+                if (b.includes("mới")) {
+                  colors = "from-emerald-500 to-teal-500 shadow-emerald-500/30 ring-emerald-400/30";
+                  icon = "🌟";
+                }
+                
                 return (
                   <span
                     key={idx}
-                    className={`bg-gradient-to-r ${bg} flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black tracking-wider uppercase text-white`}
-                    style={{ boxShadow: `0 4px 14px ${glow}`, backdropFilter: "blur(6px)" }}
+                    className={`bg-gradient-to-r ${colors} flex items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white shadow-lg backdrop-blur-md ring-1`}
                   >
-                    {icon && <span style={{ fontSize: "10px" }}>{icon}</span>}
+                    <span className="text-[10px] md:text-xs">{icon}</span>
                     {badge}
                   </span>
                 );
@@ -142,129 +126,83 @@ export function ProductCard({
             </div>
           )}
 
-          {/* Discount pill - top right */}
+          {/* Floating Discount Tag */}
           {hasSale && discountPct && (
-            <div
-              className="absolute right-3 top-3 z-10 flex h-10 w-10 flex-col items-center justify-center rounded-full text-white"
-              style={{
-                background: "linear-gradient(135deg, #FF4D4D, #c0392b)",
-                boxShadow: "0 4px 16px rgba(255,77,77,0.5)",
-                fontSize: "9px",
-                fontWeight: 900,
-                lineHeight: 1.1,
-              }}
-            >
-              <span>-{discountPct}%</span>
+            <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex h-9 w-9 md:h-12 md:w-12 flex-col items-center justify-center rounded-full bg-white/95 dark:bg-slate-900/95 text-rose-600 dark:text-rose-400 font-black text-[10px] md:text-xs shadow-xl backdrop-blur-md border border-rose-100 dark:border-rose-900/50 transform transition-transform md:group-hover:scale-110">
+              <span className="leading-none text-[7px] md:text-[9px] uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-0.5">Giảm</span>
+              <span className="leading-none text-[11px] md:text-sm">{discountPct}%</span>
             </div>
           )}
 
-          {/* Hover CTA pill */}
-          <div className="absolute inset-0 z-20 flex items-end justify-center pb-5 opacity-0 transition-all duration-400 group-hover:opacity-100">
-            <span
-              className="translate-y-4 rounded-full px-5 py-2.5 text-xs font-bold text-primary transition-all duration-400 group-hover:translate-y-0"
-              style={{
-                background: "rgba(255,255,255,0.95)",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-                border: "1px solid rgba(255,255,255,0.6)",
-              }}
-            >
-              🔍 Xem chi tiết
+          {/* Quick View Button (Hidden on Mobile) */}
+          <div className="hidden md:flex absolute inset-0 z-20 items-center justify-center opacity-0 transition-all duration-500 group-hover:opacity-100 bg-black/10 backdrop-blur-[2px]">
+            <span className="translate-y-4 rounded-full px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 bg-white/95 dark:bg-slate-900/95 border border-white/50 dark:border-slate-800/50 shadow-2xl transition-all duration-500 group-hover:translate-y-0 hover:scale-105 hover:bg-white dark:hover:bg-slate-800">
+              Xem chi tiết
             </span>
           </div>
         </div>
 
-        {/* ── Content ──────────────────────────────── */}
-        <div className="flex flex-1 flex-col px-5 pb-4 pt-4">
-          {/* Category chip */}
-          {category && (
-            <span
-              className="mb-2 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-              style={{
-                background: "rgba(99,102,241,0.08)",
-                color: "rgba(99,102,241,0.9)",
-              }}
-            >
-              {category}
-            </span>
-          )}
+        {/* ── Content Section ──────────────────────────────── */}
+        <div className="flex flex-1 flex-col px-3 pb-3 pt-2 md:px-5 md:pb-5 md:pt-4">
+          <div className="flex items-center justify-between mb-2">
+            {category ? (
+              <span className="inline-flex items-center text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                {category}
+              </span>
+            ) : <div />}
+            
+            {/* Wishlist Heart Icon */}
+            <button className="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-all duration-300 z-20 hover:scale-110 active:scale-95" onClick={(e) => e.preventDefault()}>
+              <span className="material-symbols-outlined text-[20px] font-bold">favorite</span>
+            </button>
+          </div>
 
-          {/* Title */}
-          <h3
-            className="mb-1 line-clamp-2 font-bold leading-snug text-on-surface transition-colors duration-300 group-hover:text-primary"
-            style={{ fontSize: "0.95rem" }}
-          >
+          <h3 className="mb-1 md:mb-2 line-clamp-2 font-headline font-black text-sm sm:text-base md:text-lg text-slate-800 dark:text-white transition-colors duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 leading-tight">
             {safeTitle}
           </h3>
 
-          {/* Subtitle */}
           {subtitle && (
-            <p className="mb-3 line-clamp-1 text-xs font-medium text-on-surface-variant/60">{subtitle}</p>
+            <p className="mb-4 line-clamp-1 text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+              {subtitle}
+            </p>
           )}
 
-          {/* Price block */}
-          <div
-            className="mt-auto flex items-center justify-between gap-2 border-t pt-3"
-            style={{ borderColor: "rgba(0,0,0,0.06)" }}
-          >
-            <div className="flex flex-col gap-0.5">
-              <p
-                className="font-black tracking-tight leading-none"
-                style={{
-                  fontSize: hasSale ? "1.1rem" : "1.05rem",
-                  background: hasSale
-                    ? "linear-gradient(90deg, #FF4D4D, #e02020)"
-                    : "linear-gradient(90deg, #4f46e5, #6366f1)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {showRange
-                  ? `Từ ${asCurrencyVnd(Number(minPrice))}`
-                  : priceText || "—"}
-              </p>
-
+          <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-end justify-between">
+            <div>
               {originalPrice && (
-                <p className="text-[11px] font-semibold line-through" style={{ color: "rgba(0,0,0,0.35)" }}>
+                <p className="text-[11px] font-bold line-through text-slate-400 dark:text-slate-500 mb-0.5">
                   {renderPrice(originalPrice)}
                 </p>
               )}
-
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Giá</span>
+                <p className={`font-headline font-black text-base sm:text-lg md:text-xl ${hasSale ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white"}`}>
+                  {showRange ? asCurrencyVnd(Number(minPrice)) : priceText || "—"}
+                </p>
+              </div>
               {showRange && (
-                <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "rgba(0,0,0,0.4)" }}>
-                  ~ {asCurrencyVnd(Number(maxPrice))}
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1 inline-block bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 rounded-full border border-slate-100 dark:border-slate-800">
+                  Đến {asCurrencyVnd(Number(maxPrice))}
                 </p>
               )}
             </div>
-
-            {/* Mini wishlist / spark icon */}
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full opacity-0 transition-all duration-300 group-hover:opacity-100"
-              style={{
-                background: hasSale ? "rgba(255,77,77,0.08)" : "rgba(99,102,241,0.08)",
-                fontSize: "16px",
-              }}
-            >
-              {hasSale ? "🏷️" : "🛍️"}
+            
+            {/* Animated Arrow (Visible on Mobile, Animated on Desktop) */}
+            <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-indigo-50 md:bg-slate-50 dark:bg-slate-800 text-indigo-600 md:text-slate-400 dark:text-slate-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/20 md:group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-all duration-300 md:-translate-x-2 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100">
+              <span className="material-symbols-outlined text-[16px] md:text-[18px]">arrow_forward</span>
             </div>
           </div>
         </div>
       </Link>
 
-      {/* Footer (add to cart button) */}
+      {/* Footer / Add to Cart */}
       {footer ? (
-        <div className="px-5 pb-5 pt-0">
-          {footer}
+        <div className="px-3 pb-3 pt-0 md:px-5 md:pb-5 relative z-20">
+          <div className="w-full relative overflow-hidden rounded-[1.25rem] transition-transform hover:scale-[1.02] active:scale-[0.98]">
+            {footer}
+          </div>
         </div>
       ) : null}
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
     </article>
   );
 }

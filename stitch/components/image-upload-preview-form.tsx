@@ -89,7 +89,7 @@ export function ImageUploadPreviewForm({ productId, action }: ImageUploadPreview
   }
 
   return (
-    <form action={action} className="grid gap-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
+    <form action={action} className="grid gap-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low dark:bg-slate-800 p-5">
       <input type="hidden" name="_productId" value={productId} />
       <input type="hidden" name="primaryIndex" value={String(primaryIndex)} />
       <label className="block text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">
@@ -100,7 +100,7 @@ export function ImageUploadPreviewForm({ productId, action }: ImageUploadPreview
         type="file"
         multiple
         accept="image/*,video/*"
-        className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-sm"
+        className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-lowest dark:bg-slate-900 px-3 py-2 text-sm"
         onChange={handleFileChange}
       />
       {errorMsg ? <p className="text-xs font-semibold text-rose-600">{errorMsg}</p> : null}
@@ -113,7 +113,7 @@ export function ImageUploadPreviewForm({ productId, action }: ImageUploadPreview
               <label
                 key={`${p.name}-${idx}`}
                 className={[
-                  "cursor-pointer overflow-hidden rounded-xl border bg-surface-container-lowest transition-all",
+                  "cursor-pointer overflow-hidden rounded-xl border bg-surface-container-lowest dark:bg-slate-900 transition-all",
                   idx === primaryIndex ? "border-secondary ring-2 ring-secondary/20" : "border-outline-variant/20",
                 ].join(" ")}
               >

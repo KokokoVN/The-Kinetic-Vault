@@ -43,7 +43,7 @@ export function CustomerDetailTabs({ overviewContent, ordersContent, addressesCo
             className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
-                : "bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 hover:text-slate-900 dark:text-white"
             }`}
           >
             <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>

@@ -355,7 +355,7 @@ export function AddToCartButton(props: { productId: string; hasVariants: boolean
                   setOpen(false);
                 }}
               >
-                <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-white/15 bg-surface-container-lowest shadow-2xl">
+                <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-white/15 bg-surface-container-lowest dark:bg-slate-900 shadow-2xl">
                   <div className="flex items-center justify-between border-b border-outline-variant/10 bg-gradient-to-r from-primary/10 via-secondary/10 to-transparent px-6 py-5">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">Chọn biến thể</p>
@@ -368,7 +368,7 @@ export function AddToCartButton(props: { productId: string; hasVariants: boolean
                         e.stopPropagation();
                         setOpen(false);
                       }}
-                      className="rounded-xl bg-surface-container-high px-3 py-2 text-xs font-black text-primary transition hover:bg-surface-container-highest"
+                      className="rounded-xl bg-surface-container dark:bg-slate-800-high px-3 py-2 text-xs font-black text-primary transition hover:bg-surface-container dark:bg-slate-800-highest"
                     >
                       Đóng
                     </button>
@@ -383,16 +383,16 @@ export function AddToCartButton(props: { productId: string; hasVariants: boolean
                   >
                     {variants == null ? (
                       <div className="space-y-2">
-                        <div className="h-11 animate-pulse rounded-xl bg-surface-container-low" />
-                        <div className="h-11 animate-pulse rounded-xl bg-surface-container-low" />
+                        <div className="h-11 animate-pulse rounded-xl bg-surface-container-low dark:bg-slate-800" />
+                        <div className="h-11 animate-pulse rounded-xl bg-surface-container-low dark:bg-slate-800" />
                       </div>
                     ) : variants.length === 0 ? (
-                      <p className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-medium text-on-surface-variant">
+                      <p className="rounded-2xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-3 text-sm font-medium text-on-surface-variant">
                         Sản phẩm chưa có biến thể khả dụng.
                       </p>
                     ) : (
                       <div className="space-y-4">
-                        <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 py-3">
+                        <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-3">
                           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Giá biến thể đã chọn</p>
                           <p className="mt-1 text-lg font-extrabold text-primary">{asMoneyVnd(selectedVariant?.price)}</p>
                         </div>
@@ -495,7 +495,7 @@ export function AddToCartButton(props: { productId: string; hasVariants: boolean
                           e.stopPropagation();
                           setOpen(false);
                         }}
-                        className={[baseBtn, "bg-surface-container-high text-primary hover:bg-surface-container-highest"].join(" ")}
+                        className={[baseBtn, "bg-surface-container dark:bg-slate-800-high text-primary hover:bg-surface-container dark:bg-slate-800-highest"].join(" ")}
                       >
                         Hủy
                       </button>

@@ -22,7 +22,14 @@ import java.util.UUID;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private static final Path REVIEW_MEDIA_DIR = Paths.get("uploads", "review-media");
+    private static Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final Path REVIEW_MEDIA_DIR = getRootUploadPath("review-media");
 
     @PostMapping
     public ResponseEntity<ReviewResponseDto> createReview(@RequestHeader("userId") Long userId,

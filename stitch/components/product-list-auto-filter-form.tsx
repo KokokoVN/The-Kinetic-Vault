@@ -172,7 +172,7 @@ export function ProductListAutoFilterForm(props: {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Tên sản phẩm, SKU, danh mục..."
-          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
         />
       </div>
       <div className="min-w-[160px] flex-1 md:flex-[0.9_1_0%]">
@@ -181,7 +181,7 @@ export function ProductListAutoFilterForm(props: {
           name="status"
           value={status}
           onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
         >
           <option value="all">Tất cả</option>
           <option value="in_stock">Còn hàng</option>
@@ -195,7 +195,7 @@ export function ProductListAutoFilterForm(props: {
           name="size"
           value={String(size)}
           onChange={(e) => setSize(Number(e.target.value))}
-          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
         >
           <option value="10">10</option>
           <option value="20">20</option>
@@ -210,7 +210,7 @@ export function ProductListAutoFilterForm(props: {
           name="categoryId"
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
-          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
         >
           <option value="">Tất cả danh mục</option>
           {props.categories
@@ -230,7 +230,7 @@ export function ProductListAutoFilterForm(props: {
           name="sort"
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
-          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+          className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
         >
           <option value="newest">Mới nhất</option>
           <option value="name_asc">Tên A → Z</option>
@@ -250,14 +250,14 @@ export function ProductListAutoFilterForm(props: {
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
             placeholder="Từ"
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
           />
           <input
             inputMode="numeric"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
             placeholder="Đến"
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
           />
         </div>
       </div>
@@ -270,14 +270,14 @@ export function ProductListAutoFilterForm(props: {
             value={minStock}
             onChange={(e) => setMinStock(e.target.value)}
             placeholder="Từ"
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
           />
           <input
             inputMode="numeric"
             value={maxStock}
             onChange={(e) => setMaxStock(e.target.value)}
             placeholder="Đến"
-            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-2.5 text-sm outline-none focus:border-secondary"
+            className="w-full rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 px-4 py-2.5 text-sm outline-none focus:border-secondary"
           />
         </div>
       </div>

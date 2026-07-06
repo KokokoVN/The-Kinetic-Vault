@@ -69,6 +69,34 @@ export function ProductsDashboard({
     setLoading(false);
   }, [qParam, filterDeletedParam, categoryParam, brandParam, sortByParam, pageSize, initialProducts]);
 
+  // Listen to searchParams to show floating toast messages
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const successParam = searchParams.get("success");
+    if (errorParam === "readonly") {
+      toast.error("Bạn không có quyền thực hiện hành động này (Chỉ đọc)!");
+      const params = new URLSearchParams(window.location.search);
+      params.delete("error");
+      router.replace(`?${params.toString()}`);
+    } else if (errorParam) {
+      toast.error(`Lỗi: ${errorParam}`);
+      const params = new URLSearchParams(window.location.search);
+      params.delete("error");
+      router.replace(`?${params.toString()}`);
+    }
+    if (successParam === "create") {
+      toast.success("Tạo sản phẩm thành công!");
+      const params = new URLSearchParams(window.location.search);
+      params.delete("success");
+      router.replace(`?${params.toString()}`);
+    } else if (successParam) {
+      toast.success(`Thành công: ${successParam}`);
+      const params = new URLSearchParams(window.location.search);
+      params.delete("success");
+      router.replace(`?${params.toString()}`);
+    }
+  }, [searchParams, router]);
+
   // Debounced navigation
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -372,7 +400,7 @@ export function ProductsDashboard({
                               {canWrite && p.isDeleted && (
                                   <button
                                     onClick={() => handleAction("restore", String(p.id))}
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
                                     title="Khôi phục"
                                   >
                                   <span className="material-symbols-outlined text-[18px]">restore</span>
@@ -382,7 +410,7 @@ export function ProductsDashboard({
                               {canWrite && !p.isDeleted && !p.isHidden && (
                                   <button
                                     onClick={() => handleAction("hide", String(p.id))}
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
                                     title="Ẩn khỏi web"
                                   >
                                   <span className="material-symbols-outlined text-[18px]">visibility_off</span>
@@ -392,7 +420,7 @@ export function ProductsDashboard({
                               {canWrite && !p.isDeleted && p.isHidden && (
                                 <button
                                   onClick={() => handleAction("unhide", String(p.id))}
-                                  className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                                  className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400"
                                   title="Hiển thị lại trên web"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">public</span>

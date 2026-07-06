@@ -56,8 +56,8 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
   const sizeInvalid = duplicate && normalize(size) !== "";
   const colorInvalid = duplicate && normalize(color) !== "";
 
-  const sizeClass = `${fieldClass} ${sizeInvalid ? "border-rose-400 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-200" : ""}`;
-  const colorClass = `${fieldClass} ${colorInvalid ? "border-rose-400 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-200" : ""}`;
+  const sizeClass = `${fieldClass} ${sizeInvalid ? "border-rose-400 bg-rose-50/40 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 focus:border-rose-500 focus:ring-rose-200" : ""}`;
+  const colorClass = `${fieldClass} ${colorInvalid ? "border-rose-400 bg-rose-50/40 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 focus:border-rose-500 focus:ring-rose-200" : ""}`;
 
   return (
     <form
@@ -77,13 +77,13 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
       }}
       className="mt-4 w-full min-w-0 space-y-4"
     >
-      <div className="flex flex-col gap-6 rounded-3xl border border-slate-200/60 bg-white/60 p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-6 rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-5 shadow-sm sm:p-6 backdrop-blur-md">
         <div className="flex min-w-0 flex-col gap-3">
-          <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="variantImage">
+          <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400" htmlFor="variantImage">
             <span className="material-symbols-outlined text-[16px] text-pink-500">imagesmode</span>
             Ảnh biến thể (Tuỳ chọn)
           </label>
-          <div className="relative group overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-4 transition-all hover:border-pink-400 hover:bg-pink-50/30">
+          <div className="relative group overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4 transition-all hover:border-pink-400 hover:bg-pink-50/30 dark:hover:bg-pink-950/10">
             <input
               id="variantImage"
               name="variantImage"
@@ -151,22 +151,22 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
               <div className="flex flex-col items-center gap-3 pointer-events-none">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imagePreview} alt="" className="h-28 w-28 rounded-xl object-cover shadow-md" />
-                <p className="text-xs font-bold text-pink-600">Đã chọn ảnh (Nhấn để đổi)</p>
+                <p className="text-xs font-bold text-pink-600 dark:text-pink-400">Đã chọn ảnh (Nhấn để đổi)</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 pointer-events-none opacity-60 group-hover:opacity-100">
-                <span className="material-symbols-outlined text-4xl text-slate-400 group-hover:text-pink-500 transition-colors">add_photo_alternate</span>
-                <p className="text-xs font-semibold text-slate-500 group-hover:text-pink-600 text-center">Tải ảnh lên<br/>(Kéo thả hoặc click)</p>
+                <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500 group-hover:text-pink-500 transition-colors">add_photo_alternate</span>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-pink-600 dark:group-hover:text-pink-400 text-center">Tải ảnh lên<br/>(Kéo thả hoặc click)</p>
               </div>
             )}
           </div>
-          <p className="text-[11px] font-medium text-slate-400 text-center">Ảnh tải lên sẽ tự động lưu vào kho ảnh của sản phẩm.</p>
+          <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 text-center">Ảnh tải lên sẽ tự động lưu vào kho ảnh của sản phẩm.</p>
         </div>
 
         <div className="min-w-0 space-y-5 flex flex-col justify-center">
           <div className="grid gap-5 sm:grid-cols-3">
             <div className="space-y-2">
-              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="size">
+              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400" htmlFor="size">
                 <span className="material-symbols-outlined text-[16px] text-amber-500">format_size</span>
                 Size (Kích thước) <span className="text-rose-500 ml-0.5">*</span>
               </label>
@@ -175,7 +175,7 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
                 name="size"
                 required
                 maxLength={64}
-                className={`w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm font-medium outline-none transition-all focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-500/15 ${sizeInvalid ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-200" : ""}`}
+                className={sizeClass}
                 placeholder="Ví dụ: M, L, XL, 42..."
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
@@ -184,7 +184,7 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
               />
             </div>
             <div className="space-y-2">
-              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="color">
+              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400" htmlFor="color">
                 <span className="material-symbols-outlined text-[16px] text-cyan-500">palette</span>
                 Color (Màu sắc) <span className="text-rose-500 ml-0.5">*</span>
               </label>
@@ -193,7 +193,7 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
                 name="color"
                 required
                 maxLength={64}
-                className={`w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm font-medium outline-none transition-all focus:border-cyan-400 focus:bg-white focus:ring-4 focus:ring-cyan-500/15 ${colorInvalid ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-200" : ""}`}
+                className={colorClass}
                 placeholder="Ví dụ: Đen, Trắng..."
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
@@ -202,7 +202,7 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
               />
             </div>
             <div className="space-y-2">
-              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="variantPrice">
+              <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400" htmlFor="variantPrice">
                 <span className="material-symbols-outlined text-[16px] text-emerald-500">payments</span>
                 Giá (VND) <span className="text-rose-500 ml-0.5">*</span>
               </label>
@@ -215,17 +215,17 @@ export function VariantFormLiveCheck({ action, fieldClass, existingVariants, def
                 step={1}
                 required
                 defaultValue={String(Math.max(1, Math.round(defaultPrice) || 1))}
-                className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm font-bold outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/15"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-5 py-3 text-sm font-bold text-slate-800 dark:text-white outline-none transition-all focus:border-emerald-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-emerald-500/15"
               />
             </div>
           </div>
           {duplicate ? (
-            <div id="variant-duplicate-error" className="flex items-center gap-2 rounded-2xl border border-rose-200/80 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 animate-in fade-in slide-in-from-top-1">
+            <div id="variant-duplicate-error" className="flex items-center gap-2 rounded-2xl border border-rose-200/80 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 px-4 py-3 text-sm font-semibold text-rose-700 dark:text-rose-400 animate-in fade-in slide-in-from-top-1">
               <span className="material-symbols-outlined text-[18px]">error</span>
               Biến thể với Size & Màu này đã tồn tại.
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-[12px] font-semibold text-slate-500">
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 px-4 py-3 text-[12px] font-semibold text-slate-500 dark:text-slate-400">
               <span className="material-symbols-outlined text-[16px] text-indigo-400">info</span>
               Tồn kho ban đầu là 0. Hãy làm thủ tục Nhập kho sau khi thêm.
             </div>

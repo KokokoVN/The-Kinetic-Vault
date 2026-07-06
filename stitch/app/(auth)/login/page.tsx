@@ -84,7 +84,7 @@ export default async function LoginPage({
   else if (reset) noticeMessage = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.";
 
   return (
-    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low overflow-hidden relative">
+    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden relative">
       {noticeMessage ? <FloatingNotice message={noticeMessage} variant={noticeVariant} /> : null}
       
       {/* Background Orbs */}
@@ -104,35 +104,35 @@ export default async function LoginPage({
               <span className="material-symbols-outlined font-bold text-[48px]">bolt</span>
             </div>
             <div className="text-center">
-              <span className="font-headline text-5xl font-black text-slate-900 tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
-              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-blue-600 mt-2 block">Hệ thống quản trị</span>
+              <span className="font-headline text-5xl font-black text-slate-900 dark:text-white tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
+              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400 mt-2 block">Hệ thống quản trị</span>
             </div>
           </div>
 
           {/* Glass Card */}
-          <div className="relative rounded-[3rem] bg-white/70 backdrop-blur-3xl border border-white p-10 sm:p-14 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] animate-in zoom-in-95 duration-700">
+          <div className="relative rounded-[3rem] bg-white/70 dark:bg-slate-900/50 backdrop-blur-3xl border border-white dark:border-slate-800 p-10 sm:p-14 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-700">
             <div className="mb-10 text-center">
-              <h1 className="mb-3 font-headline text-4xl font-extrabold tracking-tight text-slate-900">Chào mừng trở lại</h1>
-              <p className="text-lg text-slate-600 font-medium">Vui lòng đăng nhập để tiếp tục</p>
+              <h1 className="mb-3 font-headline text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Chào mừng trở lại</h1>
+              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Vui lòng đăng nhập để tiếp tục</p>
             </div>
 
             <LoginLiveForm action={loginAction} rememberContext="user" extraFields={safeNext ? <input type="hidden" name="next" value={safeNext} /> : null} />
 
-            <div className="mt-8 text-center text-sm text-on-surface-variant">
+            <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
               Chưa có tài khoản?{" "}
-              <Link className="font-bold text-secondary transition-all hover:text-blue-800 hover:underline" href="/register">
+              <Link className="font-bold text-blue-600 dark:text-blue-400 transition-all hover:text-blue-800 dark:hover:text-blue-300 hover:underline" href="/register">
                 Đăng ký ngay
               </Link>
             </div>
             
             <div className="mt-10 flex items-center justify-center gap-4">
-               <div className="h-px flex-1 bg-slate-300"></div>
-               <span className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400">Khu vực riêng</span>
-               <div className="h-px flex-1 bg-slate-300"></div>
+               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
+               <span className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Khu vực riêng</span>
+               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
             </div>
             
             <div className="mt-6 text-center">
-              <Link href="/admin/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white border border-outline-variant/20 w-full py-4 text-sm font-bold text-on-surface transition-all hover:bg-slate-50 hover:text-kinetic hover:border-kinetic/30 hover:shadow-sm">
+              <Link href="/admin/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full py-4 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md">
                 <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
                 Đăng nhập với tư cách Quản trị viên
               </Link>

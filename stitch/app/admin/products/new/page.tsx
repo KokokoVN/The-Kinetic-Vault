@@ -135,7 +135,7 @@ export default async function AdminNewProductPage({ searchParams }: { searchPara
         <Link
           prefetch
           href="/admin/products"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-105 hover:bg-slate-50 dark:hover:bg-slate-700"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-105 hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700"
         >
           <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">arrow_back</span>
         </Link>

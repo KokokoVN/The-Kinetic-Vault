@@ -79,7 +79,7 @@ export function ProductNameAutoCheckField(props: { defaultValue?: string; exclud
       ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-200"
       : state === "available"
         ? "border-emerald-300 bg-emerald-50/30 focus:border-emerald-400 focus:ring-emerald-200"
-        : "border-outline-variant/20 bg-surface-container-lowest focus:border-secondary focus:ring-secondary/10";
+        : "border-outline-variant/20 bg-surface-container-lowest dark:bg-slate-900 focus:border-secondary focus:ring-secondary/10";
 
   return (
     <div className="space-y-2">

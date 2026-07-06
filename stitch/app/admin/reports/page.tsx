@@ -207,19 +207,35 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-headline text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-          Xuất Báo Cáo
-        </h1>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">
-          Chọn các loại dữ liệu và định dạng file bạn muốn xuất.
-        </p>
-      </div>
+    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* HEADER SECTION */}
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-white/70 dark:bg-slate-900/70 p-8 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-2xl md:p-10 transition-colors duration-300">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-blue-50/30 to-cyan-50/50 dark:from-indigo-900/20 dark:via-blue-900/10 dark:to-cyan-900/20" />
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-400/20 dark:bg-indigo-500/10 blur-[80px]" />
+        <div className="absolute -bottom-32 left-10 h-64 w-64 rounded-full bg-cyan-400/20 dark:bg-cyan-500/10 blur-[80px]" />
+        
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/80 dark:bg-indigo-500/10 px-4 py-1.5 shadow-sm backdrop-blur-md">
+            <span className="material-symbols-outlined text-sm text-indigo-600 dark:text-indigo-400">analytics</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-indigo-300">Xuất Báo Cáo</span>
+          </div>
+          <h1 className="mt-5 font-headline text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">Report Generator</h1>
+          <p className="mt-3 max-w-2xl text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            Chọn các loại dữ liệu và định dạng file bạn muốn xuất. Báo cáo sẽ được tổng hợp tự động dựa trên thời gian được chọn.
+          </p>
+        </div>
+      </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="space-y-4">
-          <h2 className="font-headline text-lg font-bold text-slate-900 dark:text-white">1. Dữ liệu báo cáo</h2>
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        {/* LEFT COLUMN: Data Types */}
+        <section className="flex flex-col gap-6">
+          <div className="flex items-center gap-3 px-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm backdrop-blur-md">
+              <span className="material-symbols-outlined">data_object</span>
+            </span>
+            <h2 className="font-headline text-2xl font-black text-slate-800 dark:text-white">1. Dữ liệu báo cáo</h2>
+          </div>
+          
           <div className="grid gap-4 sm:grid-cols-2">
             {reportTypes.map((item) => {
               const isSelected = selectedTypes.includes(item.id);
@@ -227,124 +243,142 @@ export default function ReportsPage() {
                 <div
                   key={item.id}
                   onClick={() => toggleType(item.id)}
-                  className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-4 transition-all ${
+                  className={`group relative cursor-pointer overflow-hidden rounded-3xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                     isSelected
-                      ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-md shadow-blue-500/10"
-                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
+                      ? "border-blue-300 dark:border-blue-500/50 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-500/10 dark:to-cyan-500/10 shadow-md shadow-blue-500/10 dark:shadow-blue-500/5"
+                      : "border-white dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-xl hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/80"
                   }`}
                 >
                   <div className="flex items-start gap-4">
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                         isSelected
-                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30"
-                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"
-                      } transition-colors`}
+                          ? "bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/30 dark:shadow-blue-500/20"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 group-hover:text-blue-500 dark:group-hover:text-blue-400"
+                      } transition-all duration-300`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                      <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
                     </div>
                     <div>
-                      <h3 className={`font-bold ${isSelected ? "text-blue-700 dark:text-blue-400" : "text-slate-900 dark:text-white"}`}>
+                      <h3 className={`font-headline text-lg font-black ${isSelected ? "text-blue-700 dark:text-blue-400" : "text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"} transition-colors`}>
                         {item.title}
                       </h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <p className={`mt-1 text-xs font-medium leading-relaxed ${isSelected ? "text-blue-600/70 dark:text-blue-300/70" : "text-slate-500 dark:text-slate-400"}`}>
                         {item.description}
                       </p>
                     </div>
                   </div>
-                  {isSelected && (
-                    <div className="absolute right-4 top-4 text-blue-500">
-                      <span className="material-symbols-outlined text-[20px] font-black">check_circle</span>
-                    </div>
-                  )}
+                  <div className={`absolute right-4 top-4 transition-all duration-300 ${isSelected ? "opacity-100 scale-100" : "opacity-0 scale-50"}`}>
+                    <span className="material-symbols-outlined text-[24px] text-blue-500 dark:text-blue-400 font-bold">check_circle</span>
+                  </div>
                 </div>
               );
             })}
           </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="font-headline text-lg font-bold text-slate-900 dark:text-white">2. Định dạng file</h2>
-          <div className="flex flex-col gap-3">
-            {formats.map((item) => {
-              const isSelected = selectedFormat === item.id;
-              return (
-                <label
-                  key={item.id}
-                  className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all ${
-                    isSelected
-                      ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 shadow-md shadow-indigo-500/10"
-                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`material-symbols-outlined text-[24px] ${
-                        isSelected ? "text-indigo-500 dark:text-indigo-400" : "text-slate-400"
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
-                    <span className={`font-bold ${isSelected ? "text-indigo-700 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300"}`}>
-                      {item.title}
-                    </span>
-                  </div>
-                  <input
-                    type="radio"
-                    name="format"
-                    value={item.id}
-                    checked={isSelected}
-                    onChange={(e) => setSelectedFormat(e.target.value)}
-                    className="h-5 w-5 border-slate-300 text-indigo-600 focus:ring-indigo-600 dark:border-slate-600 dark:bg-slate-800"
-                  />
+        {/* RIGHT COLUMN: Format & Options */}
+        <section className="flex flex-col gap-6">
+          <div className="flex items-center gap-3 px-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 shadow-sm backdrop-blur-md">
+              <span className="material-symbols-outlined">settings</span>
+            </span>
+            <h2 className="font-headline text-2xl font-black text-slate-800 dark:text-white">2. Cấu hình xuất</h2>
+          </div>
+
+          <div className="rounded-[2.5rem] border border-white dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-xl p-6 sm:p-8 transition-colors duration-300">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Định dạng file</h3>
+            <div className="flex flex-col gap-3">
+              {formats.map((item) => {
+                const isSelected = selectedFormat === item.id;
+                return (
+                  <label
+                    key={item.id}
+                    className={`group flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all duration-300 ${
+                      isSelected
+                        ? "border-indigo-300 dark:border-indigo-500/50 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 shadow-md shadow-indigo-500/10 dark:shadow-indigo-500/5"
+                        : "border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${isSelected ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"}`}>
+                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                      </div>
+                      <span className={`font-headline text-base font-black ${isSelected ? "text-indigo-700 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-300"}`}>
+                        {item.title}
+                      </span>
+                    </div>
+                    <div className={`relative flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all ${isSelected ? "border-indigo-500 bg-indigo-500" : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"}`}>
+                      <input
+                        type="radio"
+                        name="format"
+                        value={item.id}
+                        checked={isSelected}
+                        onChange={(e) => setSelectedFormat(e.target.value)}
+                        className="peer absolute h-full w-full opacity-0 cursor-pointer"
+                      />
+                      {isSelected && <span className="material-symbols-outlined text-[14px] text-white font-bold">check</span>}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4 mt-8">Khoảng thời gian</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="group/field relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 transition-all focus-within:border-blue-400 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm">
+                <label className="absolute -top-3 left-4 bg-white dark:bg-slate-900 px-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors group-focus-within/field:text-blue-600 dark:group-focus-within/field:text-blue-400">
+                  Từ ngày
                 </label>
-              );
-            })}
-          </div>
-
-          <h2 className="font-headline text-lg font-bold text-slate-900 dark:text-white pt-4">3. Thời gian</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-bold text-slate-700 dark:text-slate-300">Từ ngày</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
+                <div className="flex items-center px-2">
+                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 mr-2 group-focus-within/field:text-blue-500 dark:group-focus-within/field:text-blue-400">calendar_today</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full bg-transparent py-2 text-sm font-bold text-slate-800 dark:text-slate-100 outline-none cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+              </div>
+              <div className="group/field relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 transition-all focus-within:border-blue-400 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:focus-within:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm">
+                <label className="absolute -top-3 left-4 bg-white dark:bg-slate-900 px-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors group-focus-within/field:text-blue-600 dark:group-focus-within/field:text-blue-400">
+                  Đến ngày
+                </label>
+                <div className="flex items-center px-2">
+                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 mr-2 group-focus-within/field:text-blue-500 dark:group-focus-within/field:text-blue-400">event</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full bg-transparent py-2 text-sm font-bold text-slate-800 dark:text-slate-100 outline-none cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-bold text-slate-700 dark:text-slate-300">Đến ngày</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
 
-          <div className="pt-6">
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 font-headline text-base font-black text-white shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-70 disabled:hover:translate-y-0"
-            >
-              {isExporting ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                  Đang xuất...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">download</span>
-                  Xuất Báo Cáo
-                </>
-              )}
-            </button>
-            <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-              Quá trình này có thể mất vài giây tuỳ thuộc vào lượng dữ liệu thực tế.
-            </p>
+            <div className="pt-8">
+              <button
+                onClick={handleExport}
+                disabled={isExporting}
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 font-headline text-base font-black text-white shadow-lg shadow-blue-500/30 dark:shadow-blue-900/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/40 dark:hover:shadow-indigo-900/50 disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              >
+                {isExporting ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                    Đang tổng hợp dữ liệu...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">download</span>
+                    Bắt đầu xuất báo cáo
+                  </>
+                )}
+              </button>
+              <p className="mt-4 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span className="material-symbols-outlined inline align-middle text-[14px] mr-1">info</span>
+                Quá trình này có thể mất vài giây tuỳ thuộc vào lượng dữ liệu thực tế.
+              </p>
+            </div>
           </div>
         </section>
       </div>

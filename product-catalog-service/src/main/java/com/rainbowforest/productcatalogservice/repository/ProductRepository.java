@@ -93,4 +93,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("UPDATE Product p SET p.hidden = :hidden WHERE p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id")
     int updateHiddenByCategory(@Param("id") Long id, @Param("hidden") Boolean hidden);
 
+    @Modifying
+    @Query("UPDATE Product p SET p.brand = null WHERE p.brand IS NOT NULL AND p.brand.id = :id")
+    int clearBrandReference(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.hidden = true, p.brand = null WHERE p.brand IS NOT NULL AND p.brand.id = :id")
+    int hideAndClearBrandReference(@Param("id") Long id);
+
 }

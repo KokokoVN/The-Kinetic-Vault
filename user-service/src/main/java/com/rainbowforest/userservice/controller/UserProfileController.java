@@ -49,6 +49,14 @@ public class UserProfileController {
         this.userRepository = userRepository;
     }
 
+    private Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve(subDir).toAbsolutePath().normalize();
+    }
+
     @GetMapping("/users/{id}/profile")
     public ResponseEntity<User> getProfile(@PathVariable Long id) {
         User user = userService.getUserProfile(id);
@@ -226,7 +234,7 @@ public class UserProfileController {
             return new ResponseEntity<>(HttpStatus.PAYLOAD_TOO_LARGE);
         }
         try {
-            Path root = Paths.get(avatarUploadDir).toAbsolutePath().normalize();
+            Path root = getRootUploadPath(avatarUploadDir);
             Path userDir = root.resolve(String.valueOf(id)).normalize();
             Files.createDirectories(userDir);
             String ext = extensionFrom(file.getOriginalFilename());
@@ -260,7 +268,7 @@ public class UserProfileController {
             @PathVariable("fileName") String fileName
     ) {
         try {
-            Path root = Paths.get(avatarUploadDir).toAbsolutePath().normalize();
+            Path root = getRootUploadPath(avatarUploadDir);
             Path file = root.resolve(String.valueOf(id)).resolve(fileName).normalize();
             if (!Files.exists(file) || !file.startsWith(root)) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);

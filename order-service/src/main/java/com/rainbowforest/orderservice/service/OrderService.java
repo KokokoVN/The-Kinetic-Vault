@@ -13,4 +13,6 @@ public interface OrderService {
     List<Order> listOrders(Long userId, String status, String paymentStatus, String q, String startDate, String endDate);
     Page<Order> searchOrders(Long userId, String status, String paymentStatus, String q, String startDate, String endDate, int page, int size);
     Order updateOrderStatus(Long id, String status, String paymentStatus, String shippingAddress, String performedBy);
+    void deductInventoryForOrder(Order order, String performedBy);
+    byte[] exportOrdersToPdf(String status, String paymentStatus, String q, String startDate, String endDate) throws Exception;
 }

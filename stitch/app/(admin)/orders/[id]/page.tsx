@@ -12,6 +12,7 @@ import {
   viPaymentStatusLabel,
 } from "@/lib/order-status";
 import { KineticSelect } from "@/components/kinetic-select";
+import { OrderInvoiceButton } from "@/components/order-invoice-button";
 
 export const dynamic = "force-dynamic";
 
@@ -128,9 +129,12 @@ export default async function AdminOrderDetailPage({
               Mã đơn: <strong className="font-mono text-fuchsia-300">{order.orderNumber ?? `#${order.id}`}</strong>
             </p>
           </div>
-          <div className="flex flex-col items-end rounded-2xl border border-white/20 bg-white/10 px-6 py-4 backdrop-blur-md">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-200">Tổng giá trị</p>
-            <p className="font-headline text-2xl font-black text-white">{asMoneyVnd(order.total)}</p>
+          <div className="flex flex-col items-end gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 backdrop-blur-md">
+            <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-200">Tổng giá trị</p>
+              <p className="font-headline text-2xl font-black text-white">{asMoneyVnd(order.total)}</p>
+            </div>
+            <OrderInvoiceButton orderId={order.id!} />
           </div>
         </div>
       </section>

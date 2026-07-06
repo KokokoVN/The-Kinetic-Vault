@@ -30,7 +30,7 @@ export function HeaderDateTime() {
   }, []);
 
   return (
-    <span className="whitespace-nowrap rounded-full border border-blue-200/60 bg-blue-50/80 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm backdrop-blur-md" suppressHydrationWarning>
+    <span className="whitespace-nowrap rounded-full border border-blue-200/60 bg-blue-50/80 dark:border-blue-500/20 dark:bg-blue-950/40 px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-400 shadow-sm backdrop-blur-md" suppressHydrationWarning>
       {mounted ? label : "Đang tải..."}
     </span>
   );

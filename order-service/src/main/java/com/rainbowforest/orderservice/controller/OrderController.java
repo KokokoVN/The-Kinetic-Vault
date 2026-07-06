@@ -99,6 +99,7 @@ public class OrderController {
         	Order order = this.createOrder(cart, user);
         	try{
                 orderService.saveOrder(order);
+                deductInventoryAndSaleQuantity(order, user.getUserName());
                 try {
                     cartClient.clearCart(cartId);
                 } catch (Exception ignored) {
@@ -397,6 +398,7 @@ public class OrderController {
                 }
             }
             orderService.saveOrder(order);
+            deductInventoryAndSaleQuantity(order, user.getUserName());
             Map<String, Object> after = new LinkedHashMap<>();
             after.put("orderId", order.getId());
             after.put("orderNumber", order.getOrderNumber());
@@ -470,6 +472,7 @@ public class OrderController {
             Order order = buildCodOrder(items, user, req.getShippingAddress(), req.getPhoneNumber());
             applyVoucherIfAny(order, req.getVoucherCode(), user.getId());
             Order saved = orderService.saveOrder(order);
+            deductInventoryAndSaleQuantity(saved, user.getUserName());
             createCodPayment(saved);
             if (cartId != null && !cartId.trim().isEmpty()) {
                 CartClient.RemoveSelectedRequest removeSelectedRequest = new CartClient.RemoveSelectedRequest();
@@ -536,6 +539,7 @@ public class OrderController {
             Order order = buildCodOrder(selectedItems, user, req.getShippingAddress(), req.getPhoneNumber());
             applyVoucherIfAny(order, req.getVoucherCode(), user.getId());
             Order saved = orderService.saveOrder(order);
+            deductInventoryAndSaleQuantity(saved, user.getUserName());
             createCodPayment(saved);
             CartClient.RemoveSelectedRequest removeSelectedRequest = new CartClient.RemoveSelectedRequest();
             removeSelectedRequest.items = normalizeSelectedForCartRemoval(req.getSelectedCartItems());
@@ -644,6 +648,28 @@ public class OrderController {
         }
     }
     
+    private void deductInventoryAndSaleQuantity(Order order, String performedBy) {
+        try {
+            orderService.deductInventoryForOrder(order, performedBy != null ? performedBy : "system");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (order.getItems() != null) {
+            for (Item item : order.getItems()) {
+                if (item.getProductId() != null && item.getQuantity() > 0) {
+                    try {
+                        Map<String, Object> req = new java.util.HashMap<>();
+                        req.put("productId", item.getProductId());
+                        req.put("variantId", item.getVariantId());
+                        req.put("quantity", item.getQuantity());
+                        saleClient.consumeSaleQty(req);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
 
     private void applyVoucherIfAny(Order order, String voucherCode, Long userId) {
         if (voucherCode == null || voucherCode.trim().isEmpty()) {
@@ -809,8 +835,10 @@ public class OrderController {
                     for (com.rainbowforest.orderservice.dto.SaleProgramItem pi : program.getItems()) {
                         if (pi.getProductId() != null && pi.getProductId().equals(productId)) {
                             if (pi.getVariantId() == null || (variantId != null && pi.getVariantId().equals(variantId))) {
-                                hasProduct = true;
-                                break;
+                                if (pi.getPromoQtyLimit() == null || pi.getPromoQtyLimit() > 0) {
+                                    hasProduct = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1219,6 +1247,43 @@ public class OrderController {
             }).start();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    @GetMapping(value = "/orders/export")
+    public ResponseEntity<byte[]> exportOrders(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "paymentStatus", required = false) String paymentStatus,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate
+    ) {
+        try {
+            byte[] pdfData = orderService.exportOrdersToPdf(status, paymentStatus, q, startDate, endDate);
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.add("Content-Disposition", "attachment; filename=Orders_Export.pdf");
+            headers.add("Content-Type", "application/pdf");
+            return new ResponseEntity<byte[]>(pdfData, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/orders/{id}/invoice")
+    public ResponseEntity<byte[]> exportOrderInvoice(@PathVariable("id") Long id) {
+        try {
+            Optional<Order> orderOpt = orderService.getOrderById(id);
+            if (!orderOpt.isPresent()) {
+                return new ResponseEntity<byte[]>(HttpStatus.NOT_FOUND);
+            }
+            byte[] pdfData = com.rainbowforest.orderservice.utilities.PdfOrderGenerator.generateInvoicePdf(orderOpt.get());
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.add("Content-Disposition", "attachment; filename=Invoice_" + id + ".pdf");
+            headers.add("Content-Type", "application/pdf");
+            return new ResponseEntity<byte[]>(pdfData, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

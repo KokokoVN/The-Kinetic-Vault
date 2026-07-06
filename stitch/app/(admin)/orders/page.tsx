@@ -3,6 +3,7 @@ import { getAdminSession } from "@/lib/auth-server";
 import { searchAdminOrdersPage, type AdminOrder } from "@/lib/api";
 import { orderStatusTone, viAdminOrderPipelineLabel } from "@/lib/order-status";
 import { SoftNavigateForm } from "@/components/soft-navigate-form";
+import { OrderExportButton } from "@/components/order-export-button";
 
 export const dynamic = "force-dynamic";
 
@@ -252,6 +253,14 @@ export default async function OrdersPage({
               <span className="material-symbols-outlined text-[20px]">refresh</span>
               Đặt lại
             </Link>
+            <OrderExportButton
+              status={status}
+              paymentStatus={paymentStatus}
+              q={q}
+              startDate={startDate}
+              endDate={endDate}
+              accessToken={session.token}
+            />
             <div className="ml-auto hidden items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 px-4 py-2 sm:flex">
               <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm">database</span>
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tổng số:</span>

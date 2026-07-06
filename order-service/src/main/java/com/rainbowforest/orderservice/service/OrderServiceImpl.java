@@ -9,6 +9,7 @@ import com.rainbowforest.orderservice.feignclient.UserClient;
 import com.rainbowforest.orderservice.feignclient.ProductClient;
 import com.rainbowforest.orderservice.repository.OrderRepository;
 import com.rainbowforest.orderservice.utilities.OrderEtaCalculator;
+import com.rainbowforest.orderservice.utilities.PdfOrderGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -143,10 +144,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // Tự động xuất kho khi đơn hàng bắt đầu giao (SHIPPED)
-        if (targetOrderStatus == OrderStatus.SHIPPED && currentOrderStatus != OrderStatus.SHIPPED) {
-            deductInventory(row, performedBy);
-        }
+        // Trừ kho giờ đây được gọi riêng khi đơn hàng được tạo thành công, không gọi tự động khi chuyển sang SHIPPED nữa.
 
         // Cập nhật thanh toán và lượt bán khi đơn hàng hoàn thành (DELIVERED)
         if (targetOrderStatus == OrderStatus.DELIVERED && currentOrderStatus != OrderStatus.DELIVERED) {
@@ -187,7 +185,15 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(row);
     }
 
-    private void deductInventory(Order order, String performedBy) {
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportOrdersToPdf(String status, String paymentStatus, String q, String startDate, String endDate) throws Exception {
+        List<Order> orders = listOrders(null, status, paymentStatus, q, startDate, endDate);
+        return PdfOrderGenerator.generateOrderListPdf(orders);
+    }
+
+    @Override
+    public void deductInventoryForOrder(Order order, String performedBy) {
         if (order.getItems() != null) {
             for (Item item : order.getItems()) {
                 InventoryClient.StockOperationRequest req = new InventoryClient.StockOperationRequest();
@@ -253,7 +259,7 @@ public class OrderServiceImpl implements OrderService {
                         case CONFIRMED:
                             return EnumSet.of(OrderStatus.PACKING, OrderStatus.PROCESSING, OrderStatus.READY_TO_SHIP, OrderStatus.SHIPPED, OrderStatus.CANCELLED);
                         case PAYMENT_EXPECTED:
-                            return EnumSet.of(OrderStatus.PAID, OrderStatus.CANCELLED);
+                            return EnumSet.of(OrderStatus.PAID, OrderStatus.CONFIRMED, OrderStatus.CANCELLED);
                         case PAID:
                             return EnumSet.of(OrderStatus.CONFIRMED, OrderStatus.PROCESSING, OrderStatus.CANCELLED);
                         case PROCESSING:

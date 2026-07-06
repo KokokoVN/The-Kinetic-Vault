@@ -23,7 +23,7 @@ export function ActivityLogRestoreForms({
             className={
               b.variant === "primary"
                 ? "rounded-xl bg-kinetic px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:brightness-110"
-                : "rounded-xl border border-outline-variant/40 bg-surface-container-high px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-surface-container-highest"
+                : "rounded-xl border border-outline-variant/40 bg-surface-container dark:bg-slate-800-high px-5 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-surface-container dark:bg-slate-800-highest"
             }
           >
             {b.label}

@@ -1,0 +1,267 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Danh Sach Chuc Nang 25 Muc Sieu Chi Tiet V9</title></head>
+<body style='font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.5;'>
+
+<h2 style='color: #2c3e50; text-align: center; text-transform: uppercase;'>4.4. Mô tả chi tiết 25 Chức năng Độc lập trên Giao diện</h2>
+<p>Để đánh giá sâu sát nhất hệ thống <b>The Kinetic Vault</b>, toàn bộ nền tảng được bóc tách thành 25 chức năng đơn lẻ. Mỗi chức năng đều được thiết kế giao diện riêng biệt, quy trình xử lý độc lập và tích hợp các công nghệ tối ưu nhất nhằm mang lại trải nghiệm hoàn hảo.</p>
+
+<hr style='border-top: 2px solid #2980b9;'>
+
+<h3 style='color: #2980b9; text-transform: uppercase;'>I. PHÂN HỆ KHÁCH HÀNG (STOREFRONT)</h3>
+
+<p><b>1. Chức năng Đăng ký Tài khoản và Xác thực OTP</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cấp tài khoản định danh cho người dùng mới, đồng thời ngăn chặn các hành vi tạo tài khoản ảo (Spam/Bot) phá hoại hệ thống.</li>
+    <li><b>Giao diện:</b> Form nhập thông tin cơ bản gồm Họ tên, Email. Khu vực Mật khẩu có thanh màu sắc báo động độ mạnh/yếu của mật khẩu. Tiếp đến là giao diện 6 ô vuông chờ nhập mã OTP.</li>
+    <li><b>Quy trình:</b> Người dùng điền đủ thông tin và nhấn "Đăng ký". Ngay lập tức, Notification Service sẽ gửi một mã OTP ngẫu nhiên gồm 6 chữ số vào địa chỉ Email đã đăng ký. Khách hàng có đúng 5 phút để mở Email, lấy mã và nhập lên Web để kích hoạt tài khoản thành công.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 1:</b> Chụp toàn màn hình form đăng ký khi đã điền đầy đủ thông tin (để lộ thanh báo mật khẩu mạnh màu xanh). Chụp thêm 1 ảnh nhỏ (Crop) lúc mở Email thấy có thư chứa mã OTP 6 số do hệ thống gửi.
+</div>
+
+<p><b>2. Chức năng Lựa chọn Phương thức Xác thực và Đăng nhập (2FA)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cung cấp tính linh hoạt trong bảo mật 2 lớp, bảo vệ chặt chẽ tài khoản khách hàng khi phát hiện dấu hiệu xâm nhập từ thiết bị lạ.</li>
+    <li><b>Giao diện:</b> Màn hình 1 hiển thị cảnh báo "Phát hiện đăng nhập từ thiết bị lạ" kèm bảng danh sách các phương thức xác thực. Màn hình 2 là ô vuông nhập mã xác thực bảo mật.</li>
+    <li><b>Quy trình:</b> Khi khách hàng đăng nhập từ một máy tính hoặc IP chưa từng sử dụng, hệ thống lập tức tạm khóa phiên đăng nhập. Màn hình tự động chuyển sang trang Lựa chọn phương thức xác thực. Nếu khách chọn "Nhận mã qua Email", hệ thống sẽ phát hành mã OTP để xác minh. Chỉ khi nhập đúng mã OTP này, thiết bị mới được cấp phép truy cập.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 2:</b> Chụp màn hình cảnh báo "Phát hiện thiết bị lạ" có các nút chọn phương thức xác thực. Chụp màn hình ô điền mã OTP bảo mật.
+</div>
+
+<p><b>3. Chức năng Khôi phục Mật khẩu (Forgot Password)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Giúp khách hàng lấy lại quyền truy cập khi quên mật khẩu một cách bảo mật và hoàn toàn tự động không cần nhân viên hỗ trợ.</li>
+    <li><b>Giao diện:</b> Form nhập địa chỉ Email. Sau đó là màn hình thiết lập Mật khẩu mới yêu cầu nhập 2 lần để đối chiếu trùng khớp.</li>
+    <li><b>Quy trình:</b> Khách hàng gõ Email, hệ thống kiểm tra sự tồn tại trong Database. Nếu hợp lệ, hệ thống gửi một đường Link chứa Token bảo mật mã hóa có thời hạn 15 phút. Bấm vào Link này, khách hàng sẽ được đưa tới trang cài đặt lại mật khẩu mới.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 3:</b> Chụp màn hình form "Quên mật khẩu" đang nhập email. Chụp màn hình giao diện Đặt lại mật khẩu mới.
+</div>
+
+<p><b>4. Chức năng Quản lý Trang cá nhân và Avatar (User Profile)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Nơi lưu trữ thông tin cá nhân của khách hàng, tạo tính cá nhân hóa cho trải nghiệm người dùng.</li>
+    <li><b>Giao diện:</b> Giao diện Sidebar chứa Tab Thông tin chung. Có khu vực tải lên Ảnh đại diện (Upload Avatar) với khung cắt ảnh hình tròn.</li>
+    <li><b>Quy trình:</b> Khách hàng có thể thay đổi Họ tên, Số điện thoại. Mỗi khi có sự thay đổi về hồ sơ cá nhân, hệ thống ngầm lưu vết lại vào nhật ký Audit để theo dõi bảo mật. Khi tải Avatar mới, ảnh được lưu tự động lên server và hiển thị hình thu nhỏ ở thanh Navbar.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 4:</b> Chụp màn hình tab "Thông tin cá nhân", lúc đang click vào nút "Đổi ảnh đại diện" (có hộp thoại chọn file hiện lên).
+</div>
+
+<p><b>5. Chức năng Quản lý Sổ địa chỉ thông minh (Address Book)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Tiết kiệm thời gian cho khách hàng bằng cách lưu sẵn nhiều địa chỉ nhận hàng (Ví dụ: Địa chỉ nhà, Địa chỉ công ty).</li>
+    <li><b>Giao diện:</b> Nút Thêm địa chỉ mới, mở ra cửa sổ Popup (Modal). Các trường Tỉnh/Thành, Quận/Huyện được thiết kế dạng Dropdown List xổ xuống.</li>
+    <li><b>Quy trình:</b> Hệ thống tích hợp sẵn API danh sách Tỉnh/Thành Việt Nam. Khi khách chọn "Hà Nội", ô Quận tự động chỉ hiện các Quận thuộc Hà Nội. Khách có quyền gạt nút (Toggle) để biến địa chỉ này thành "Địa chỉ mặc định".</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 5:</b> Chụp form "Thêm địa chỉ mới" lúc đang bấm xổ xuống để chọn Tỉnh/Thành phố.
+</div>
+
+<p><b>6. Chức năng Trang chủ và Trình chiếu Banner (Home Carousel)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Tạo ấn tượng thị giác mạnh mẽ, điều hướng sự chú ý của khách hàng vào các chiến dịch khuyến mãi trọng điểm.</li>
+    <li><b>Giao diện:</b> Slide ảnh ngang toàn màn hình (Full-width), tự động chuyển ảnh sau 5 giây. Phía dưới là các khối dải sản phẩm cuộn ngang (Slider).</li>
+    <li><b>Quy trình:</b> Khách truy cập sẽ thấy ngay các Banner sự kiện (Ví dụ: Black Friday). Bấm vào ảnh Banner, hệ thống tự động điều hướng (Redirect) khách hàng tới ngay danh sách các sản phẩm đang được giảm giá của sự kiện đó.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 6:</b> Chụp toàn màn hình Trang chủ rộng rãi, lộ rõ thanh Header, Banner lớn đang chạy và một dải sản phẩm nổi bật bên dưới.
+</div>
+
+<p><b>7. Chức năng Hiển thị Chiến dịch Flash Sale đếm ngược</b></p>
+<ul>
+    <li><b>Mục đích:</b> Tạo cảm giác khan hiếm, thúc đẩy quyết định mua hàng nhanh chóng (Hiệu ứng FOMO).</li>
+    <li><b>Giao diện:</b> Khối sản phẩm có nền đỏ nổi bật, kèm theo cụm <b>Đồng hồ đếm ngược (Countdown Timer)</b> hiển thị (Giờ : Phút : Giây).</li>
+    <li><b>Quy trình:</b> Dữ liệu về ngày giờ kết thúc chiến dịch được cung cấp từ Sale Service. Frontend tự động chạy thuật toán trừ lùi thời gian thực tế để đồng hồ nhảy số. Khi đồng hồ đếm về 0, giao diện tự động ẩn khối Flash Sale này đi.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 7:</b> Chụp cắt ngang (Crop) riêng khối Flash Sale, focus rõ vào cái đồng hồ đang đếm ngược (VD: 02:45:10) và giá tiền cũ bị gạch chéo.
+</div>
+
+<p><b>8. Chức năng Tra cứu và Lọc Sản phẩm thông minh</b></p>
+<ul>
+    <li><b>Mục đích:</b> Giúp khách hàng tìm ra đúng món đồ mong muốn giữa hàng ngàn sản phẩm trong thời gian ngắn nhất.</li>
+    <li><b>Giao diện:</b> Thanh tìm kiếm (Search Bar) ở trên cùng và cột bộ lọc đa chiều (Check-box) ở phía bên trái màn hình.</li>
+    <li><b>Quy trình:</b> Khách gõ từ khóa, kết quả trả về tức thì. Khách có thể tick chọn kết hợp nhiều bộ lọc như "Thương hiệu Apple", "Mức giá dưới 10 triệu". Giao diện sẽ tự động cập nhật danh sách hiển thị Real-time mà không cần bấm nút Submit.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 8:</b> Chụp màn hình trang Danh sách sản phẩm, con chuột đang tick vào ô lọc "Thương hiệu" ở cột bên trái.
+</div>
+
+<p><b>9. Chức năng Tương tác Đa Biến thể Sản phẩm (Product Variants)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Trình bày thông số, hình ảnh chi tiết và mức giá chênh lệch của từng cấu hình cụ thể (Màu sắc, RAM, ROM).</li>
+    <li><b>Giao diện:</b> Hình ảnh sản phẩm lớn bên trái. Khu vực bên phải là các nút bấm nổi khối chọn cấu hình (Ví dụ: "Đỏ", "Đen", "256GB").</li>
+    <li><b>Quy trình:</b> Khi khách bấm vào cấu hình "Đen - 256GB", giao diện lập tức gọi API (Fetch) tải ảnh màu Đen, điều chỉnh giá tiền tương ứng, và đặc biệt là <b>truy xuất tồn kho thực tế</b> (Từ Inventory Service) để hiển thị dòng chữ "Còn 5 sản phẩm".</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 9:</b> Chụp màn hình Trang chi tiết, focus vào nút "Màu Đỏ" đang được viền nổi bật (đã click chọn) và dòng chữ "Còn 5 sản phẩm trong kho".
+</div>
+
+<p><b>10. Chức năng Gợi ý Sản phẩm (Product Recommendations)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Ứng dụng thuật toán Gợi ý để thúc đẩy hành vi bán chéo (Cross-sell) hoặc bán gia tăng (Upsell), nhằm tăng doanh thu.</li>
+    <li><b>Giao diện:</b> Một dải các thẻ (Cards) sản phẩm nằm ngang ở cuối trang chi tiết với tiêu đề "Sản phẩm tương tự" hoặc "Có thể bạn sẽ thích".</li>
+    <li><b>Quy trình:</b> Dựa trên danh mục hiện tại và lịch sử xem của khách hàng, Product Recommendation Service sẽ phân tích và trả về danh sách các sản phẩm có độ liên quan cao nhất để tự động gắn vào cuối trang.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 10:</b> Cuộn xuống cuối trang chi tiết sản phẩm, chụp khối "Sản phẩm tương tự / Có thể bạn sẽ thích".
+</div>
+
+<p><b>11. Chức năng Giỏ hàng Thời gian thực (Redis Cart)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Lưu trữ tạm thời các mặt hàng khách muốn mua trước khi thanh toán mà không làm suy giảm hiệu năng server.</li>
+    <li><b>Giao diện:</b> Màn hình chứa bảng danh sách sản phẩm, các nút bấm Tăng/Giảm số lượng, cột Đơn giá và Tổng cộng.</li>
+    <li><b>Quy trình:</b> Mỗi khi bấm nút "+" hoặc "-" để thay đổi số lượng, dữ liệu được đẩy thẳng lên RAM (Redis In-memory). Nhờ đó, tổng tiền của giỏ hàng được hệ thống tính toán và nảy số cập nhật lập tức mà không có độ trễ tải trang.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 11:</b> Chụp màn hình Giỏ hàng lúc có 2-3 món đồ khác nhau, thấy rõ nút Tăng/Giảm (+/-) số lượng.
+</div>
+
+<p><b>12. Chức năng Thanh toán Điện tử & Mã QR (SePay/VNPay/PayOS)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cung cấp hình thức thanh toán phi tiền mặt hiện đại, minh bạch, giảm tỷ lệ bom hàng qua phương thức COD.</li>
+    <li><b>Giao diện:</b> Màn hình lựa chọn phương thức thanh toán. Sau khi chọn SePay/PayOS, màn hình tự động bật ra <b>Mã QR VietQR</b> hiển thị rõ logo ngân hàng.</li>
+    <li><b>Quy trình:</b> Mã QR được hệ thống tự động chèn sẵn Số tiền cần chuyển và Nội dung chuyển khoản theo mã đơn. Khách dùng App ngân hàng quét. Ngay khi tiền vào, Webhook từ ngân hàng dội về hệ thống, tự động điều hướng khách sang giao diện "Thanh toán thành công" cực kỳ mượt mà.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 12:</b> Chụp màn hình giao diện có hiển thị Logo ngân hàng/Mã QR to ở giữa màn hình đang chờ khách quét.
+</div>
+
+<p><b>13. Chức năng Áp dụng Mã Khuyến mãi (Voucher)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Triển khai các chiến dịch Marketing, kích cầu mua sắm bằng việc giảm giá trực tiếp vào hóa đơn.</li>
+    <li><b>Giao diện:</b> Ô Textbox nhập mã giảm giá nằm gọn trong trang Thanh toán, kèm nút "Áp dụng". Bên dưới có phần hiển thị số tiền được giảm màu xanh.</li>
+    <li><b>Quy trình:</b> Khách hàng gõ mã "GIAM50K". Frontend gọi API gửi lên Sale Service để đối soát (Validate) về thời hạn, mức hóa đơn tối thiểu, số lượng mã còn lại. Nếu hợp lệ, một dòng "Giảm giá: -50.000đ" được chèn vào và Tổng tiền tự động được trừ đi.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 13:</b> Chụp khu vực ô nhập Voucher, thấy rõ dòng chữ màu xanh báo "Áp dụng thành công" và cột Tổng tiền bị gạch trừ đi 1 khoản.
+</div>
+
+<p><b>14. Chức năng Quản lý Đơn hàng Cá nhân (My Orders)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Nơi khách hàng theo dõi sát sao tình hình xử lý hóa đơn, gia tăng tính minh bạch của quy trình vận chuyển.</li>
+    <li><b>Giao diện:</b> Danh sách (List View) các đơn hàng. Tích hợp thanh chia Tab để phân loại theo Trạng thái (Ví dụ: Chờ xác nhận, Đang đóng gói, Đang giao).</li>
+    <li><b>Quy trình:</b> Khi Admin thao tác thay đổi trạng thái đơn, màn hình của khách hàng cũng sẽ được cập nhật tương ứng. Giao diện cũng cho phép khách bấm xem chi tiết từng món đồ bên trong hóa đơn đó.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 14:</b> Chụp danh sách các đơn hàng ở Tab "Đang giao", thấy được Trạng thái đơn hàng nổi bật.
+</div>
+
+<p><b>15. Chức năng Hủy đơn & Hoàn tiền (Order Cancellation)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Hỗ trợ người dùng thay đổi quyết định mua sắm (đổi món, sai địa chỉ) nếu cửa hàng chưa kịp giao hàng.</li>
+    <li><b>Giao diện:</b> Một nút "Hủy đơn hàng" màu đỏ hiển thị khi đơn đang ở trạng thái "Chờ xác nhận". Bấm vào hiện ra Hộp thoại Modal chọn lý do hủy.</li>
+    <li><b>Quy trình:</b> Khách chọn lý do và bấm xác nhận. Hệ thống ghi nhận trạng thái Đã hủy. Nếu đơn hàng này khách đã thanh toán tiền trước qua VNPay/SePay, hệ thống tự động ghi nhận luồng trạng thái "Chờ Hoàn Tiền" để kế toán xử lý.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 15:</b> Chụp lúc cửa sổ Popup (Modal) "Bạn có chắc chắn muốn hủy đơn hàng này không?" hiện ra với các tùy chọn lý do.
+</div>
+
+<p><b>16. Chức năng Tra cứu Vận đơn (Shipment Tracker)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Giải tỏa tâm lý chờ đợi của khách hàng, giúp họ nắm rõ vị trí hàng hóa, đồng thời giảm tải khối lượng công việc cho bộ phận chăm sóc khách hàng.</li>
+    <li><b>Giao diện:</b> Một thanh Textbox nhập "Mã đơn hàng" (Tracking ID). Kết quả trả về là biểu đồ sơ đồ cây tiến trình (Timeline).</li>
+    <li><b>Quy trình:</b> Khách nhập mã hóa đơn, màn hình tự vẽ ra Timeline từ trên xuống dưới mô tả chi tiết: "8:00 - Bưu cục phát hàng", "9:00 - Hàng đang trên đường giao", giúp khách hàng yên tâm tuyệt đối.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 16:</b> Chụp màn hình có cột Timeline dọc (Ví dụ: 8:00 Rời kho -> 9:00 Đang giao hàng).
+</div>
+
+<p><b>17. Chức năng Đánh giá & Tải ảnh Thực tế (Review Media Upload)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Xây dựng uy tín gian hàng dựa trên các Feedback (Phản hồi) chân thực từ chính người đã mua, đẩy mạnh niềm tin của khách hàng mới.</li>
+    <li><b>Giao diện:</b> Form tương tác chọn số Sao (từ 1 đến 5), khung soạn thảo nội dung chữ, và nút đính kèm Hình ảnh thực tế (Image Upload).</li>
+    <li><b>Quy trình:</b> Hệ thống kiểm tra nghiêm ngặt, khách hàng <b>chỉ được phép viết đánh giá</b> khi hóa đơn đã được xác nhận là "Giao hàng thành công". Hình ảnh khách tải lên được hệ thống tự động tối ưu hóa dung lượng (Compress) trước khi lưu trữ vào server để tăng tốc độ tải trang.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 17:</b> Chụp Form đang viết đánh giá, có hiển thị các ngôi sao sáng vàng và 1 tấm ảnh nhỏ vừa được tải lên đính kèm vào Form.
+</div>
+
+<p><b>18. Chức năng Trợ lý Ảo AI (Chatbot AI Assistant)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Tự động hóa quá trình chăm sóc khách hàng 24/7 mà không cần nhân lực thường trực.</li>
+    <li><b>Giao diện:</b> Một nút chat hình bong bóng nổi ở góc phải màn hình. Khi bấm vào sẽ mở ra giao diện nhắn tin y hệt Messenger/Zalo.</li>
+    <li><b>Quy trình:</b> Khách hàng gõ câu hỏi tự nhiên (Ví dụ: "Cửa hàng có ship hỏa tốc không?"), Chatbot tích hợp thuật toán AI lập tức phân tích ngữ nghĩa, trích xuất dữ liệu từ cơ sở tri thức (Knowledge base) và phản hồi tin nhắn một cách trôi chảy ngay tức thì.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 18:</b> Chụp bong bóng Chatbot đang mở ở góc phải, có hiển thị rõ vài dòng hội thoại (Tin nhắn của khách màu xám và tin trả lời của Bot màu xanh).
+</div>
+
+<hr style='border-top: 2px solid #27ae60;'>
+
+<h3 style='color: #27ae60; text-transform: uppercase;'>II. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN WORKSPACE)</h3>
+
+<p><b>19. Chức năng Bảng Thống kê & Biểu đồ (Dashboard Analytics)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cung cấp tầm nhìn chiến lược bao quát (Bird-eye view) về tình hình kinh doanh cho Ban Giám đốc và Quản lý cấp cao.</li>
+    <li><b>Giao diện:</b> Màn hình đầu tiên (Index) khi Admin đăng nhập thành công. Chứa các ô thẻ số liệu tổng nhanh (Quick Stats), biểu đồ đường (Line chart) biểu diễn Doanh thu theo thời gian, và biểu đồ tròn (Pie chart) cho Danh mục.</li>
+    <li><b>Quy trình:</b> Dữ liệu được Backend tổng hợp Real-time (Thời gian thực) từ rất nhiều Microservices (Order, Product) để render lên biểu đồ bằng các thư viện Chart JS cực kỳ sinh động và chính xác.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 19:</b> Chụp toàn màn hình Admin Dashboard thấy rõ sự nhấp nhô của biểu đồ Doanh thu và các khối màu Thống kê tổng đơn.
+</div>
+
+<p><b>20. Chức năng Xuất Báo cáo Dữ liệu (Export Excel/PDF)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Số hóa dữ liệu ra các định dạng chuẩn (File) để phục vụ cho Phòng Kế toán kiểm toán hoặc báo cáo tổng kết cuối tháng.</li>
+    <li><b>Giao diện:</b> Nút "Xuất Excel" (Export) được đặt trang trọng trên các trang danh sách hóa đơn, khách hàng, sản phẩm.</li>
+    <li><b>Quy trình:</b> Admin bấm "Export", hệ thống backend tiến hành tổng hợp số liệu, định dạng (Format) thành file chuẩn <code>.xlsx</code> với các dòng cột đã được căn lề, sau đó tải thẳng xuống bộ nhớ máy tính của Admin.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 20:</b> Chụp màn hình có nút "Export Excel" và chụp thêm ảnh file Excel báo cáo vừa được tải về đang được mở trên ứng dụng Microsoft Excel thực tế.
+</div>
+
+<p><b>21. Chức năng Khởi tạo Sản phẩm Đa Biến thể (Product Configurator)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Đưa thông tin hàng hóa lên Web với mô tả đa phương tiện, tối ưu SEO, hỗ trợ các mặt hàng có quá nhiều cấu hình (Quần áo, Đồ công nghệ).</li>
+    <li><b>Giao diện:</b> Form nhập liệu siêu dài chứa <b>Rich Text Editor (WYSIWYG)</b> để soạn thảo mô tả như trong Word. Bên dưới là khu vực thêm hàng loạt cấu hình (Variants) động.</li>
+    <li><b>Quy trình:</b> Thay vì tạo nhiều sản phẩm, Admin chỉ cần bấm "Thêm biến thể", nhập Màu (Trắng), Size (XL), Giá (100k). Có thể thiết lập đồng thời hàng chục SKU có mức giá riêng biệt chỉ trong 1 thao tác Lưu duy nhất.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 21:</b> Chụp Form thêm mới sản phẩm, kéo xuống đúng khu vực đang nhập Thông số Biến thể (Variants) có nhiều ô nhập liệu màu sắc/kích thước khác nhau.
+</div>
+
+<p><b>22. Chức năng Quản lý Tồn Kho Hàng hóa (Inventory Inbound)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Quản lý nghiêm ngặt vòng đời và quy trình di chuyển của hàng hóa trong kho. Ngăn chặn tuyệt đối việc nhân viên tự ý sửa đổi số lượng tồn kho tùy tiện.</li>
+    <li><b>Giao diện:</b> Màn hình tạo Phiếu Nhập Kho (Inbound Ticket). Hiển thị lịch sử xuất/nhập chi tiết.</li>
+    <li><b>Quy trình:</b> Thay vì vào Data sửa thẳng <code>Tồn = 100</code> thành <code>150</code>, Admin bắt buộc phải tạo lệnh "Nhập kho 50 cái". Hệ thống sau đó tự động tính toán cộng dồn và lưu lại dấu vết (Audit Trail) ngày giờ nhập, người thực hiện nhập kho để có bằng chứng đối soát.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 22:</b> Chụp bảng Danh sách Tồn kho (Có cảnh báo màu đỏ nếu số lượng sắp hết). Và 1 ảnh lúc đang ở giao diện điền thông tin "Tạo Phiếu Nhập Kho".
+</div>
+
+<p><b>23. Chức năng Xét duyệt và Điều phối Đơn hàng (Order Fulfillment)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Quản trị tập trung toàn bộ vòng đời của hóa đơn, giúp quy trình giao nhận diễn ra trơn tru.</li>
+    <li><b>Giao diện:</b> Bảng danh sách đơn hàng có hệ thống bộ lọc đa chiều theo trạng thái. Trang chi tiết hiển thị thanh tiến trình đồ họa (Progress Bar) (Chờ Duyệt -> Đang Đóng Gói -> Đang Giao -> Hoàn Thành).</li>
+    <li><b>Quy trình:</b> Sau khi nhân viên kho đóng gói hàng xong, lên Web bấm Click để chuyển thanh trạng thái sang "Đang giao". Ngay lập tức, Notification Service được đánh thức và tự động bắn 1 Email "Đơn hàng của bạn đang trên đường tới" cho khách hàng.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 23:</b> Chụp trang Chi tiết Đơn hàng của Admin, thấy thanh Progress Bar có mũi tên chỉ báo trạng thái đơn hàng nằm ngang.
+</div>
+
+<p><b>24. Chức năng Cấu hình Mã Khuyến mãi Động (Voucher Setup)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Cung cấp công cụ mạnh mẽ và linh hoạt cho đội ngũ Marketing triển khai các chiêu thức giảm giá kích cầu.</li>
+    <li><b>Giao diện:</b> Form tạo Voucher chứa hàng loạt tham số ràng buộc phức tạp (Validation rules).</li>
+    <li><b>Quy trình:</b> Admin không chỉ tạo mã đơn thuần, mà có quyền thiết lập <b>Giảm giá theo %</b>, thiết lập ràng buộc <b>"Giảm tối đa 50k"</b>, yêu cầu điều kiện <b>"Áp dụng cho đơn trên 200k"</b>, giới hạn <b>"Chỉ cho phép sử dụng đúng 100 lượt"</b>, và cài đặt chính xác ngày hết hạn. Bất kỳ điều kiện nào sai lệch, mã sẽ lập tức vô hiệu hóa.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 24:</b> Chụp Form tạo mới Voucher, thấy rõ được các ô nhập liệu ràng buộc như "Giảm tối đa (Max discount)" và "Đơn tối thiểu".
+</div>
+
+<p><b>25. Chức năng Cấu hình Kênh Thông báo Telegram (Telegram Webhook Bot)</b></p>
+<ul>
+    <li><b>Mục đích:</b> Một tính năng nâng cao (Advanced Feature) giúp Ban điều hành theo dõi sức khỏe hệ thống và cập nhật doanh số Real-time mọi lúc mọi nơi mà không cần mở Website.</li>
+    <li><b>Giao diện:</b> Màn hình Cài đặt Hệ thống có khu vực nhập chuỗi bảo mật <code>Bot Token</code> và <code>Chat ID</code> của nền tảng Telegram.</li>
+    <li><b>Quy trình:</b> Sau khi Admin khai báo đúng mã Token bảo mật, kết nối Webhook được hệ thống kích hoạt. Từ lúc này, bất cứ khi nào có khách ấn "Đặt hàng" trên web, một tin nhắn thông báo đẩy (Push Notification) sẽ tự động nổ ngay lập tức trên ứng dụng Telegram được cài trên điện thoại di động của Ban Giám đốc.</li>
+</ul>
+<div style='background-color: #f1f2f6; padding: 10px; border-left: 4px solid #e1b12c;'>
+    <b>📷 Hướng dẫn chụp ảnh 25:</b> Chụp màn hình trang Cấu hình Bot (chỗ điền Token Telegram). Quan trọng nhất: Chụp thêm ảnh màn hình điện thoại đang nhận được tin nhắn tự động có nội dung "Có đơn đặt hàng mới...".
+</div>
+
+</body>
+</html>

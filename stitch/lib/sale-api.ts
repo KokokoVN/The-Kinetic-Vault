@@ -23,6 +23,7 @@ export type SaleProgram = {
 
 export type SaleProgramRequest = Omit<SaleProgram, "id" | "items"> & {
   items: SaleProgramItem[];
+  sendEmailNotification?: boolean;
 };
 
 export async function listAdminSalePrograms(

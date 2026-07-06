@@ -36,7 +36,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
     return existingSpecs.some((s) => normalize(s.specKey) === nk);
   }, [specKey, existingSpecs]);
 
-  const inputClass = `${fieldClass} ${duplicate ? "border-rose-400 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-200" : ""}`;
+  const inputClass = `${fieldClass} ${duplicate ? "border-rose-400 bg-rose-50/40 dark:bg-rose-950/20 focus:border-rose-500 focus:ring-rose-200" : ""}`;
 
   return (
     <form
@@ -51,7 +51,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
       }}
       className="mt-4 w-full min-w-0 space-y-4"
     >
-      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/60 bg-white/60 p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/60 p-5 shadow-sm sm:p-6">
         <div className="space-y-2">
           <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="specKey">
             <span className="material-symbols-outlined text-[16px] text-indigo-500">key</span>
@@ -62,7 +62,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
             name="specKey"
             required
             maxLength={120}
-            className={`w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm font-medium outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 ${duplicate ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-200" : ""}`}
+            className={`w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm font-medium outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 ${duplicate ? "border-rose-400 bg-rose-50/50 dark:bg-rose-950/30 focus:border-rose-500 focus:ring-rose-200" : ""}`}
             placeholder="Ví dụ: Kích thước"
             value={specKey}
             onChange={(e) => setSpecKey(e.target.value)}
@@ -78,7 +78,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
             <span className="material-symbols-outlined text-[16px] text-indigo-500">notes</span>
             Giá trị chi tiết <span className="text-rose-500 ml-0.5">*</span>
           </label>
-          <textarea id="specValue" name="specValue" required maxLength={1000} rows={1} className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15" placeholder="Ví dụ: 15x20x10 cm" />
+          <textarea id="specValue" name="specValue" required maxLength={1000} rows={1} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15" placeholder="Ví dụ: 15x20x10 cm" />
         </div>
         <div className="grid gap-4 sm:grid-cols-12">
           <div className="space-y-2 sm:col-span-6">
@@ -94,7 +94,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
                     setIsNewGroup(!isNewGroup);
                     setSpecGroup("");
                   }}
-                  className="shrink-0 ml-2 text-[10px] text-sky-600 hover:text-sky-800 transition-colors bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 font-bold whitespace-nowrap"
+                  className="shrink-0 ml-2 text-[10px] text-sky-600 dark:text-sky-400 hover:text-sky-800 transition-colors bg-sky-50 dark:bg-sky-950/20 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800 font-bold whitespace-nowrap"
                 >
                   {isNewGroup ? "CÓ SẴN" : "+ MỚI"}
                 </button>
@@ -106,7 +106,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
                 name="specGroup"
                 value={specGroup}
                 onChange={(e) => setSpecGroup(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm outline-none transition-all focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-500/15"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm outline-none transition-all focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-500/15"
               >
                 <option value="" disabled>-- Chọn nhóm --</option>
                 {existingGroups.map((g) => (
@@ -120,7 +120,7 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
                 maxLength={120}
                 value={specGroup}
                 onChange={(e) => setSpecGroup(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm outline-none transition-all focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-500/15"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm outline-none transition-all focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-500/15"
                 placeholder="Ví dụ: Màn hình, Pin..."
               />
             )}
@@ -130,14 +130,14 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
               <span className="material-symbols-outlined text-[16px] text-emerald-500">straighten</span>
               Đơn vị đo lường
             </label>
-            <input id="unit" name="unit" maxLength={64} className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/15" placeholder="Ví dụ: g, mm, inch" />
+            <input id="unit" name="unit" maxLength={64} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/15" placeholder="Ví dụ: g, mm, inch" />
           </div>
           <div className="space-y-2 sm:col-span-3">
             <label className="flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="sortOrder">
               <span className="material-symbols-outlined text-[16px] text-violet-500">sort</span>
               Vị trí sắp xếp
             </label>
-            <input id="sortOrder" name="sortOrder" type="number" min={0} step={1} className="w-full rounded-2xl border border-slate-200 bg-white/60 px-5 py-3 text-sm outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-500/15" placeholder="0" />
+            <input id="sortOrder" name="sortOrder" type="number" min={0} step={1} className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-500/15" placeholder="0" />
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ export function VariantImageUploadField({
             className="h-12 w-12 rounded-lg object-cover ring-1 ring-outline-variant/15"
           />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-container dark:bg-slate-800-high text-on-surface-variant">
             <span className="material-symbols-outlined">image</span>
           </div>
         )}

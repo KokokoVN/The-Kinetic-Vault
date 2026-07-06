@@ -18,6 +18,7 @@ export function CategoryNameAutoCheckField(props: {
   defaultValue?: string;
   excludeId?: number;
   label?: string;
+  onChangeOverride?: (val: string) => void;
 }) {
   const [value, setValue] = useState(props.defaultValue ?? "");
   const [state, setState] = useState<CheckState>("idle");
@@ -98,30 +99,35 @@ export function CategoryNameAutoCheckField(props: {
   useEffect(() => {
     const timer = setTimeout(() => {
       void checkName(value);
-    }, 5000);
+    }, 1500); // reduced delay for snappier checks
     return () => clearTimeout(timer);
   }, [value]);
 
   const statusClass =
     state === "exists"
-      ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-200"
+      ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-200 dark:border-rose-500/30 dark:bg-rose-950/20 dark:focus:ring-rose-900/30"
       : state === "available"
-        ? "border-emerald-300 bg-emerald-50/30 focus:border-emerald-400 focus:ring-emerald-200"
-        : "border-outline-variant/20 bg-surface-container-lowest focus:border-secondary focus:ring-secondary/10";
+        ? "border-emerald-300 bg-emerald-50/30 focus:border-emerald-400 focus:ring-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:focus:ring-emerald-900/30"
+        : "border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 focus:border-blue-500 dark:focus:border-blue-600 focus:ring-blue-500/10 dark:focus:ring-blue-600/10";
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">{props.label ?? "Tên danh mục *"}</label>
+      <label className="block text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+        {props.label ?? "Tên danh mục *"}
+      </label>
       <input
         ref={inputRef}
         name="name"
-        className={`w-full rounded-xl border px-4 py-3.5 text-base outline-none transition-all focus:ring-2 ${statusClass}`}
+        className={`w-full rounded-2xl border px-4 py-3.5 text-sm sm:text-base outline-none transition-all focus:ring-4 backdrop-blur-md text-slate-800 dark:text-slate-200 ${statusClass}`}
         placeholder="Ví dụ: Thiết bị điện tử"
         type="text"
         required
         defaultValue={props.defaultValue}
         onChange={(e) => {
           setValue(e.target.value);
+          if (props.onChangeOverride) {
+            props.onChangeOverride(e.target.value);
+          }
           setState("idle");
           setMessage("");
           applyValidity("idle");
@@ -132,17 +138,21 @@ export function CategoryNameAutoCheckField(props: {
       />
       {state !== "idle" && (
         <p
-          className={`inline-flex min-h-6 items-center rounded-lg px-2 py-1 text-sm font-medium ${
+          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold ${
             state === "exists"
-              ? "bg-rose-50 text-rose-700"
+              ? "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
               : state === "available"
-                ? "bg-emerald-50 text-emerald-700"
+                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                 : state === "checking"
-                  ? "bg-slate-100 text-on-surface-variant"
-                  : "bg-amber-50 text-amber-700"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 animate-pulse"
+                  : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
           }`}
         >
-          {message}
+          {state === "exists" && <span className="material-symbols-outlined text-sm">cancel</span>}
+          {state === "available" && <span className="material-symbols-outlined text-sm">check_circle</span>}
+          {state === "checking" && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
+          {state === "error" && <span className="material-symbols-outlined text-sm">warning</span>}
+          <span>{message}</span>
         </p>
       )}
     </div>

@@ -74,7 +74,7 @@ export function PhoneLast4Inputs({ d1 = "", d2 = "", d3 = "", d4 = "" }: Props) 
         required
         onInput={(e) => handleInput(1, e)}
         onKeyDown={(e) => handleKeyDown(1, e)}
-        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low text-center text-xl font-black text-primary outline-none focus:border-secondary"
+        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 text-center text-xl font-black text-primary outline-none focus:border-secondary"
       />
       <input
         name="d2"
@@ -86,7 +86,7 @@ export function PhoneLast4Inputs({ d1 = "", d2 = "", d3 = "", d4 = "" }: Props) 
         required
         onInput={(e) => handleInput(2, e)}
         onKeyDown={(e) => handleKeyDown(2, e)}
-        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low text-center text-xl font-black text-primary outline-none focus:border-secondary"
+        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 text-center text-xl font-black text-primary outline-none focus:border-secondary"
       />
       <input
         name="d3"
@@ -98,7 +98,7 @@ export function PhoneLast4Inputs({ d1 = "", d2 = "", d3 = "", d4 = "" }: Props) 
         required
         onInput={(e) => handleInput(3, e)}
         onKeyDown={(e) => handleKeyDown(3, e)}
-        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low text-center text-xl font-black text-primary outline-none focus:border-secondary"
+        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 text-center text-xl font-black text-primary outline-none focus:border-secondary"
       />
       <input
         name="d4"
@@ -110,7 +110,7 @@ export function PhoneLast4Inputs({ d1 = "", d2 = "", d3 = "", d4 = "" }: Props) 
         required
         onInput={(e) => handleInput(4, e)}
         onKeyDown={(e) => handleKeyDown(4, e)}
-        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low text-center text-xl font-black text-primary outline-none focus:border-secondary"
+        className="h-14 w-12 rounded-xl border border-outline-variant/20 bg-surface-container-low dark:bg-slate-800 text-center text-xl font-black text-primary outline-none focus:border-secondary"
       />
     </div>
   );

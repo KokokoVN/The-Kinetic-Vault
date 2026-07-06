@@ -19,7 +19,14 @@ public class PublicSaleController {
     @Autowired
     private SaleServiceImpl saleService;
 
-    private static final java.nio.file.Path BANNER_UPLOAD_DIR = java.nio.file.Paths.get("uploads", "banner-images");
+    private static java.nio.file.Path getRootUploadPath(String subDir) {
+        java.nio.file.Path path = java.nio.file.Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final java.nio.file.Path BANNER_UPLOAD_DIR = getRootUploadPath("banner-images");
 
     @GetMapping({"/banners/image/{filename:.+}", "/sales/banners/image/{filename:.+}"})
     public ResponseEntity<org.springframework.core.io.Resource> serveBannerImage(@PathVariable String filename) {
@@ -97,6 +104,22 @@ public class PublicSaleController {
         }
         try {
             saleService.consumeVoucher(code, userId, orderId);
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Trừ số lượng khuyến mãi sau khi tạo đơn hàng thành công.
+     */
+    @PostMapping({"/programs/consume-qty", "/sales/programs/consume-qty"})
+    public ResponseEntity<Map<String, Object>> consumeSaleQty(@RequestBody com.rainbowforest.saleservice.dto.ConsumeSaleQtyRequest req) {
+        if (req == null || req.getProductId() == null || req.getQuantity() == null || req.getQuantity() <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Thiếu productId hoặc quantity không hợp lệ."));
+        }
+        try {
+            saleService.consumeSaleQty(req.getProductId(), req.getVariantId(), req.getQuantity());
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));

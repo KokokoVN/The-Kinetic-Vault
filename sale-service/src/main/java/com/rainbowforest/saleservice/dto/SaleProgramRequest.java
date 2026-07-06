@@ -12,6 +12,7 @@ public class SaleProgramRequest {
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private Boolean active = true;
+    private Boolean sendEmailNotification = false;
     private List<ItemRequest> items;
 
     public static class ItemRequest {
@@ -40,6 +41,8 @@ public class SaleProgramRequest {
     public void setEndAt(LocalDateTime endAt) { this.endAt = endAt; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public Boolean getSendEmailNotification() { return sendEmailNotification; }
+    public void setSendEmailNotification(Boolean sendEmailNotification) { this.sendEmailNotification = sendEmailNotification; }
     public List<ItemRequest> getItems() { return items; }
     public void setItems(List<ItemRequest> items) { this.items = items; }
 }

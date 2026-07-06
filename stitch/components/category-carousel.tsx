@@ -12,7 +12,7 @@ export function CategoryCarousel({ categories }: { categories: BackendCategory[]
   const duplicatedCategories = [...topCategories, ...topCategories, ...topCategories, ...topCategories];
 
   return (
-    <div className="group/carousel relative flex w-full overflow-hidden pb-4">
+    <div className="group/carousel relative flex w-full overflow-hidden pb-8 pt-4">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes marquee {
           0% { transform: translateX(0%); }
@@ -26,7 +26,7 @@ export function CategoryCarousel({ categories }: { categories: BackendCategory[]
           animation-play-state: paused;
         }
       `}} />
-      <div className="animate-marquee flex gap-4 pr-4">
+      <div className="animate-marquee flex gap-4 md:gap-6 pr-4 md:pr-6">
         {duplicatedCategories.map((cat, index) => {
           const nameLower = cat.name.toLowerCase();
           let icon = "category";
@@ -42,12 +42,12 @@ export function CategoryCarousel({ categories }: { categories: BackendCategory[]
             <Link
               key={`${cat.id}-${index}`}
               href={`/?category=${cat.id}`}
-              className="group relative flex min-w-[160px] max-w-[180px] flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 text-center transition-all hover:-translate-y-1 hover:border-primary/40 hover:bg-primary-container/20 hover:shadow-lg"
+              className="group relative flex min-w-[140px] max-w-[160px] md:min-w-[160px] md:max-w-[180px] flex-col items-center justify-center gap-4 overflow-hidden rounded-[2rem] border border-slate-200/60 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 p-6 text-center transition-all duration-300 hover:-translate-y-2 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:bg-gradient-to-b hover:from-white hover:to-indigo-50/50 dark:hover:from-slate-900 dark:hover:to-indigo-900/20 hover:shadow-xl hover:shadow-indigo-500/10 backdrop-blur-xl"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-container text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                <span className="material-symbols-outlined text-3xl">{icon}</span>
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-cyan-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-indigo-500/30 group-hover:scale-110">
+                <span className="material-symbols-outlined text-[32px]">{icon}</span>
               </div>
-              <span className="font-semibold text-on-surface group-hover:text-primary">
+              <span className="font-headline font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 {cat.name}
               </span>
             </Link>

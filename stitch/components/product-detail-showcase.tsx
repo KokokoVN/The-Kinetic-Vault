@@ -93,19 +93,18 @@ export function ProductDetailShowcase({
       {/* ─── FLOATING BUY BAR ─── */}
       {showFloatingBar && (
         <div
-          className="slide-up fixed bottom-0 left-0 right-0 z-[100] border-t"
-          style={{ background:"rgba(255,255,255,0.9)", backdropFilter:"blur(20px) saturate(180%)", borderColor:"rgba(99,102,241,.15)", boxShadow:"0 -8px 32px rgba(0,0,0,.1)" }}
+          className="slide-up fixed bottom-0 left-0 right-0 z-[100] border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-lg"
         >
           <div className="mx-auto flex max-w-screen-2xl items-center gap-4 px-6 py-3">
-            <img src={activeImage} alt={productName} className="h-12 w-12 rounded-xl object-cover" style={{ border:"2px solid rgba(99,102,241,.2)" }} />
+            <img src={activeImage} alt={productName} className="h-12 w-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-black" style={{color:"#0f0f23"}}>{productName}</p>
+              <p className="truncate text-sm font-black text-slate-800 dark:text-white">{productName}</p>
               <div className="flex items-center gap-2">
-                <p className="text-xs font-bold" style={{color: (effectivePrice != null && effectivePrice < basePrice) ? "#FF4D4D" : "#6366f1"}}>
+                <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
                   {new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(effectivePrice ?? basePrice)}
                 </p>
                 {(effectivePrice ?? basePrice) < basePrice && (
-                  <p className="text-[10px] text-on-surface-variant line-through opacity-70">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 line-through opacity-70">
                     {new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(basePrice)}
                   </p>
                 )}
@@ -113,8 +112,7 @@ export function ProductDetailShowcase({
             </div>
             <button
               onClick={() => showcaseRef.current?.scrollIntoView({behavior:"smooth"})}
-              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black text-white"
-              style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", boxShadow:"0 4px 16px rgba(99,102,241,.4)" }}
+              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black text-white bg-gradient-to-r from-indigo-500 to-purple-650 hover:brightness-110 shadow-md shadow-indigo-500/20"
             >
               <span className="material-symbols-outlined" style={{fontSize:"18px"}}>shopping_bag</span>
               Mua ngay
@@ -126,21 +124,18 @@ export function ProductDetailShowcase({
       {/* ─── FULLSCREEN LIGHTBOX ─── */}
       {showFullscreen && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center"
-          style={{background:"rgba(3,3,15,0.94)", backdropFilter:"blur(16px)"}}
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/95 backdrop-blur-md"
           onClick={() => setShowFullscreen(false)}
         >
           <img
             src={activeImage}
             alt={productName}
-            className="max-h-[90vh] max-w-[90vw] select-none rounded-3xl object-contain"
-            style={{boxShadow:"0 32px 80px rgba(0,0,0,.5)"}}
+            className="max-h-[90vh] max-w-[90vw] select-none rounded-3xl object-contain shadow-2xl border border-slate-800"
             onClick={e => e.stopPropagation()}
           />
           <button
             onClick={() => setShowFullscreen(false)}
-            className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110"
-            style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)"}}
+            className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110 bg-white/10 dark:bg-slate-900/40 border border-white/25 dark:border-slate-800 backdrop-blur-sm"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -148,13 +143,11 @@ export function ProductDetailShowcase({
           {gallery.length > 1 && (
             <>
               <button onClick={e=>{e.stopPropagation();setActiveThumb(t=>(t-1+gallery.length)%gallery.length)}}
-                className="absolute left-6 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110"
-                style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)"}}>
+                className="absolute left-6 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110 bg-white/10 dark:bg-slate-900/40 border border-white/20 dark:border-slate-800 backdrop-blur-sm">
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
               <button onClick={e=>{e.stopPropagation();setActiveThumb(t=>(t+1)%gallery.length)}}
-                className="absolute right-20 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110"
-                style={{background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)"}}>
+                className="absolute right-20 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:scale-110 bg-white/10 dark:bg-slate-900/40 border border-white/20 dark:border-slate-800 backdrop-blur-sm">
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
             </>
@@ -176,11 +169,10 @@ export function ProductDetailShowcase({
           {/* ── Main image with 3D tilt ── */}
           <div
             ref={imgRef}
-            className="relative select-none overflow-hidden"
+            className="relative select-none overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-850 dark:to-slate-900/60 border border-slate-200/60 dark:border-slate-800"
             style={{
               borderRadius:"2.25rem",
               aspectRatio:"1/1",
-              background:"linear-gradient(135deg,#e0e7ff 0%,#ede9fe 50%,#ddd6fe 100%)",
               boxShadow: "0 12px 48px rgba(99,102,241,.12), 0 4px 16px rgba(0,0,0,.06)",
               cursor: isVideo ? "default" : "pointer",
             }}
@@ -277,12 +269,12 @@ export function ProductDetailShowcase({
               {icon:"replay",label:"Đổi trả 7 ngày",sub:"Không điều kiện",from:"#f59e0b",to:"#fbbf24"},
               {icon:"verified_user",label:"Chính hãng 100%",sub:"Cam kết xác thực",from:"#6366f1",to:"#818cf8"},
             ].map(b => (
-              <div key={b.label} className="group flex flex-col items-center rounded-2xl p-3.5 text-center transition-all hover:-translate-y-0.5"
-                style={{background:`linear-gradient(145deg,${b.from}10,${b.from}1a)`,border:`1.5px solid ${b.from}25`}}>
+              <div key={b.label} className="group flex flex-col items-center rounded-2xl p-3.5 text-center transition-all hover:-translate-y-0.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800"
+              >
                 <span className="material-symbols-outlined transition-transform group-hover:scale-110"
                   style={{fontSize:"22px",color:b.from}}>{b.icon}</span>
-                <p className="mt-1.5 text-[11px] font-black leading-tight" style={{color:"rgba(0,0,0,.75)"}}>{b.label}</p>
-                <p className="mt-0.5 text-[10px] font-medium" style={{color:"rgba(0,0,0,.4)"}}>{b.sub}</p>
+                <p className="mt-1.5 text-[11px] font-black leading-tight text-slate-700 dark:text-slate-300">{b.label}</p>
+                <p className="mt-0.5 text-[10px] font-medium text-slate-400 dark:text-slate-500">{b.sub}</p>
               </div>
             ))}
           </div>
@@ -293,21 +285,22 @@ export function ProductDetailShowcase({
 
           {/* Breadcrumb pill */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest"
-              style={{background:"rgba(129,140,248,.1)",color:"#818cf8",border:"1px solid rgba(129,140,248,.2)"}}>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50"
+            >
               <span className="material-symbols-outlined" style={{fontSize:"12px"}}>category</span>
               {category}
             </span>
             {baseStock <= 10 && baseStock > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest"
-                style={{background:"rgba(239,68,68,.08)",color:"#dc2626",border:"1px solid rgba(239,68,68,.2)"}}>
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest bg-rose-50 dark:bg-rose-950/40 text-rose-650 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50"
+              >
                 🔥 Chỉ còn {baseStock} sản phẩm
               </span>
             )}
           </div>
 
           {/* Title */}
-          <h1 className="text-[1.9rem] font-extrabold leading-tight" style={{color:"#0f0f23",letterSpacing:"-0.03em"}}>
+          <h1 className="text-[1.9rem] font-extrabold leading-tight text-slate-800 dark:text-white tracking-tight"
+          >
             {productName}
           </h1>
 
@@ -319,21 +312,16 @@ export function ProductDetailShowcase({
                   style={{fontSize:"17px",color:s<=averageRating?"#f59e0b":"#e2e8f0",fontVariationSettings:"'FILL' 1"}}>star</span>
               ))}
             </div>
-            <span className="text-sm font-black" style={{color:"#f59e0b"}}>{averageRating > 0 ? averageRating.toFixed(1) : "5.0"}</span>
-            <span className="text-sm" style={{color:"rgba(0,0,0,.35)"}}>|</span>
-            <span className="text-sm font-semibold" style={{color:"rgba(0,0,0,.5)"}}>{reviewCount} đánh giá</span>
-            <span className="text-sm" style={{color:"rgba(0,0,0,.35)"}}>|</span>
-            <span className="text-sm font-semibold" style={{color:"rgba(0,0,0,.5)"}}>{salesCount > 0 ? salesCount : 0} đã bán</span>
+            <span className="text-sm font-black text-amber-500 dark:text-amber-400">{averageRating > 0 ? averageRating.toFixed(1) : "5.0"}</span>
+            <span className="text-sm text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{reviewCount} đánh giá</span>
+            <span className="text-sm text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{salesCount > 0 ? salesCount : 0} đã bán</span>
           </div>
 
           {/* Purchase card — with rainbow top border */}
-          <div style={{
-            borderRadius:"1.75rem",
-            background:"linear-gradient(145deg,#ffffff,#fafbff)",
-            border:"1.5px solid rgba(129,140,248,.15)",
-            boxShadow:"0 12px 48px rgba(79,70,229,.08),0 2px 12px rgba(0,0,0,.04)",
-            overflow:"hidden",
-          }}>
+          <div className="rounded-[1.75rem] bg-gradient-to-br from-white to-slate-50/5 dark:from-slate-900 dark:to-slate-950/60 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
+          >
             {/* Animated top bar */}
             <div style={{
               height:"3px",
@@ -358,16 +346,19 @@ export function ProductDetailShowcase({
           </div>
 
           {/* Description */}
-          <div style={{borderRadius:"1.5rem",background:"#fff",border:"1.5px solid rgba(0,0,0,.06)",boxShadow:"0 2px 12px rgba(0,0,0,.04)",overflow:"hidden"}}>
-            <div className="flex items-center gap-3 px-5 py-4" style={{borderBottom:"1px solid rgba(0,0,0,.06)"}}>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl"
-                style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)"}}>
+          <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+          >
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200/60 dark:border-slate-800"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-650"
+              >
                 <span className="material-symbols-outlined text-white" style={{fontSize:"16px"}}>description</span>
               </div>
-              <span className="font-black text-sm" style={{color:"#0f0f23"}}>Mô tả sản phẩm</span>
+              <span className="font-black text-sm text-slate-800 dark:text-white">Mô tả sản phẩm</span>
             </div>
             <div className="px-5 py-4">
-              <p className="text-sm leading-7" style={{color:"rgba(0,0,0,.62)",whiteSpace:"pre-wrap"}}>
+              <p className="text-sm leading-7 text-slate-650 dark:text-slate-350 whitespace-pre-wrap"
+              >
                 {description || "Chưa có mô tả cho sản phẩm này."}
               </p>
             </div>

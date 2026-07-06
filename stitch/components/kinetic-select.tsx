@@ -82,14 +82,14 @@ export function KineticSelect({
         }}
         className={[
           "group w-full",
-          "h-14 bg-surface-container-lowest flex items-center justify-between px-5 rounded-xl",
+          "h-14 bg-surface-container-lowest dark:bg-slate-900 flex items-center justify-between px-5 rounded-xl",
           open ? "outline outline-2 outline-secondary shadow-lg shadow-secondary/10" : "outline outline-2 outline-outline-variant/20",
           "cursor-pointer transition-all",
           "hover:bg-surface-bright",
           "disabled:cursor-not-allowed disabled:opacity-60",
         ].join(" ")}
       >
-        <span className={selected ? "text-on-surface font-bold" : "text-on-surface-variant font-medium"}>
+        <span className={selected ? "text-on-surface dark:text-white font-bold" : "text-on-surface-variant dark:text-slate-400 font-medium"}>
           {selected?.label ?? placeholder ?? "Chọn..."}
         </span>
         <span className={["material-symbols-outlined text-secondary transition-transform", open ? "rotate-180" : "", "group-hover:translate-y-1"].join(" ")}>
@@ -109,7 +109,7 @@ export function KineticSelect({
       ) : null}
 
       {open ? (
-        <div className="absolute left-0 top-[82px] z-50 w-full overflow-hidden rounded-xl border border-white/40 bg-white/85 shadow-2xl shadow-primary/20 backdrop-blur-[20px]">
+        <div className="absolute left-0 top-[82px] z-50 w-full overflow-hidden rounded-xl border border-white/40 dark:border-slate-700 bg-white/85 dark:bg-slate-800/95 shadow-2xl shadow-primary/20 backdrop-blur-[20px]">
           <div className="p-2">
             {grouped.map(([group, opts]) => (
               <div key={group || "__"} className="space-y-1">
@@ -133,7 +133,7 @@ export function KineticSelect({
                         setSelectedValue(opt.value);
                       }}
                     >
-                      <span className={isActive ? "text-sm font-bold text-primary" : "text-sm font-semibold text-on-surface"}>
+                      <span className={isActive ? "text-sm font-bold text-primary dark:text-fuchsia-400" : "text-sm font-semibold text-on-surface dark:text-slate-200"}>
                         {opt.label}
                       </span>
                       {isActive ? (

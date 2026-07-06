@@ -37,6 +37,10 @@ export function OrderRepaySepay({
     const s = String(status ?? "").toUpperCase();
     const ps = String(paymentStatus ?? "").toUpperCase();
     const pm = String(paymentMethod ?? "").toUpperCase();
+    
+    if (ps === "PAID" || ps === "COMPLETED") return false;
+    if (s === "CANCELLED" || s === "DELIVERED") return false;
+    
     return (s === "PAYMENT_EXPECTED" || ps === "PENDING") && pm === "SEPAY";
   }, [status, paymentStatus, paymentMethod]);
 

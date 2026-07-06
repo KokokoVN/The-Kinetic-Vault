@@ -71,7 +71,7 @@ export function VariantMultiForm({ productId, action, existingVariants = [] }: V
   return (
     <form
       action={action}
-      className="grid gap-3 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4"
+      className="grid gap-3 rounded-2xl border border-outline-variant/10 bg-surface-container-low dark:bg-slate-800 p-4"
       onSubmit={(e) => {
         for (let i = 0; i < rows.length; i += 1) {
           const r = rows[i];
@@ -99,7 +99,7 @@ export function VariantMultiForm({ productId, action, existingVariants = [] }: V
       <input type="hidden" name="_productId" value={productId} />
 
       {rows.map((row, idx) => (
-        <div key={row.id} className="grid gap-2 rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-3">
+        <div key={row.id} className="grid gap-2 rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-3">
           <div className="grid gap-2 md:grid-cols-3">
             <input
               name="size"
@@ -152,7 +152,7 @@ export function VariantMultiForm({ productId, action, existingVariants = [] }: V
             <button
               type="button"
               onClick={() => setRows((prev) => [...prev, createRow(prev.length + 1)])}
-              className="min-w-[88px] flex-1 whitespace-nowrap rounded-lg bg-surface-container-high px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-surface-container-highest"
+              className="min-w-[88px] flex-1 whitespace-nowrap rounded-lg bg-surface-container dark:bg-slate-800-high px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-surface-container dark:bg-slate-800-highest"
             >
               + Dòng
             </button>

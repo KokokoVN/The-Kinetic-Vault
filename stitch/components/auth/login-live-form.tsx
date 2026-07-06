@@ -109,7 +109,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
         <input
           id="identity"
           name="username"
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
           placeholder=" "
           type="text"
           required
@@ -121,11 +121,11 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
         />
         <label
           htmlFor="identity"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
         >
           {loginMode === "otp" ? "Địa chỉ Email của bạn" : "Username / Email / Số điện thoại"}
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
           person
         </span>
         {identity.trim() ? (
@@ -152,12 +152,12 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
         ) : null}
       </div>
 
-      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 p-1.5 shadow-inner mt-6">
+      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 dark:bg-slate-800 p-1.5 shadow-inner mt-6">
         <button
           type="button"
           onClick={() => setLoginMode("password")}
           className={`relative z-10 flex-1 rounded-xl py-3.5 text-base font-extrabold transition-all duration-300 ${
-            loginMode === "password" ? "text-white" : "text-slate-600 hover:text-slate-900"
+            loginMode === "password" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Mật khẩu
@@ -169,7 +169,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
             setOtpSent(false);
           }}
           className={`relative z-10 flex-1 rounded-xl py-3.5 text-base font-extrabold transition-all duration-300 ${
-            loginMode === "otp" ? "text-white" : "text-slate-600 hover:text-slate-900"
+            loginMode === "otp" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
           Mã OTP
@@ -188,7 +188,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
               id="password"
               name="password"
               type="password"
-              className="peer w-full rounded-[1.25rem] border-2 border-slate-300 bg-slate-50/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+              className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
               placeholder=" "
               required
               value={password}
@@ -196,17 +196,17 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
             />
             <label
               htmlFor="password"
-              className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600"
+              className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
             >
               Mật khẩu
             </label>
-            <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 transition-colors peer-focus:text-blue-600">
+            <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
               key
             </span>
           </div>
           <div className="flex items-center justify-between px-2 pt-1">
-            <p className="text-sm text-slate-500 font-medium">Bảo mật: <span className="font-extrabold text-blue-600">{pwd.label}</span></p>
-            <Link className="text-sm font-extrabold text-blue-600 transition-all hover:text-indigo-800 hover:underline" href="/forgot-password">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Bảo mật: <span className="font-extrabold text-blue-600 dark:text-blue-400">{pwd.label}</span></p>
+            <Link className="text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline" href="/forgot-password">
               Quên mật khẩu?
             </Link>
           </div>
@@ -214,13 +214,13 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
       )}
 
       {loginMode === "otp" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4 rounded-3xl border-2 border-blue-100 bg-blue-50/50 p-6 mt-2">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4 rounded-3xl border-2 border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 p-6 mt-2">
           {!otpSent ? (
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
                 <span className="material-symbols-outlined text-[32px]">mark_email_read</span>
               </div>
-              <p className="mb-6 text-base font-medium text-slate-700">
+              <p className="mb-6 text-base font-medium text-slate-700 dark:text-slate-300">
                 Hệ thống sẽ gửi một mã OTP 8 số qua Email được liên kết với tài khoản của bạn.
               </p>
               <button
@@ -262,12 +262,12 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
                   maxLength={8}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                  className="peer w-full rounded-2xl border-2 border-blue-200 bg-white pb-3 pt-8 pl-4 text-center text-3xl font-black tracking-[0.5em] text-blue-700 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20"
+                  className="peer w-full rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 pb-3 pt-8 pl-4 text-center text-3xl font-black tracking-[0.5em] text-blue-700 dark:text-blue-400 outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-600/20"
                   placeholder=" "
                 />
                 <label
                   htmlFor="otpCode"
-                  className="pointer-events-none absolute left-1/2 top-5 origin-[0] -translate-x-1/2 -translate-y-3 scale-75 transform text-base font-extrabold text-slate-500 duration-300 peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-bold peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:font-extrabold peer-focus:text-blue-600"
+                  className="pointer-events-none absolute left-1/2 top-5 origin-[0] -translate-x-1/2 -translate-y-3 scale-75 transform text-base font-extrabold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-bold peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:font-extrabold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
                 >
                   Nhập mã 8 số
                 </label>
@@ -276,7 +276,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
                 <button
                   type="button"
                   onClick={() => setOtpSent(false)}
-                  className="text-sm font-extrabold text-blue-600 transition-all hover:text-indigo-800 hover:underline"
+                  className="text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline"
                 >
                   Gửi lại mã OTP
                 </button>
@@ -287,8 +287,8 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
       )}
 
       <label className="flex w-fit cursor-pointer items-center gap-3 mt-4">
-        <input className="h-6 w-6 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-600" type="checkbox" />
-        <span className="text-base font-semibold text-slate-700">Giữ đăng nhập trong 30 ngày</span>
+        <input className="h-6 w-6 rounded-lg border-slate-300 dark:border-slate-700 text-blue-600 dark:text-blue-500 focus:ring-blue-600 dark:focus:ring-blue-500" type="checkbox" />
+        <span className="text-base font-semibold text-slate-700 dark:text-slate-300">Giữ đăng nhập trong 30 ngày</span>
       </label>
 
       <button 

@@ -1,0 +1,1456 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Dac Ta CSDL</title></head><body style='font-family: Arial, sans-serif;'>
+<h1 style='color: #2c3e50;'>3.3.5. Đặc tả chi tiết Cơ sở dữ liệu theo từng Microservice</h1>
+<br>
+<p>Dưới đây là đặc tả toàn bộ 37 bảng cơ sở dữ liệu của 11 Microservices trong hệ thống The Kinetic Vault. Hầu hết các bảng dữ liệu lõi đều kế thừa thuộc tính vết (AuditableEntity) bao gồm: `created_at`, `updated_at`, `created_by`, `updated_by`.</p>
+<br>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>A. Dịch vụ Người dùng (user-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>1. Bảng Users (Tài khoản)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>email</td>
+<td>VARCHAR(255)</td>
+<td>Not Null, Unique</td>
+<td>Email đăng nhập</td>
+</tr>
+<tr>
+<td>password</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Mật khẩu băm (Bcrypt)</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>BOOLEAN</td>
+<td>Default FALSE</td>
+<td>Trạng thái kích hoạt tài khoản</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian tạo tài khoản</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>Nullable</td>
+<td>Thời gian cập nhật</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>2. Bảng UserDetails (Thông tin chi tiết)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK, Unique</td>
+<td>Trỏ về Users (1-1)</td>
+</tr>
+<tr>
+<td>full_name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Họ và tên đầy đủ</td>
+</tr>
+<tr>
+<td>phone_number</td>
+<td>VARCHAR(20)</td>
+<td>Nullable</td>
+<td>Số điện thoại liên hệ</td>
+</tr>
+<tr>
+<td>avatar_url</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Ảnh đại diện</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>3. Bảng UserRole (Phân quyền)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>role_name</td>
+<td>VARCHAR(50)</td>
+<td>Not Null, Unique</td>
+<td>Tên quyền hạn (ROLE_USER, ROLE_ADMIN)</td>
+</tr>
+<tr>
+<td>description</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Mô tả quyền hạn</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>4. Bảng UserAddress (Sổ địa chỉ)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về Users (1-N)</td>
+</tr>
+<tr>
+<td>street_address</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Địa chỉ chi tiết</td>
+</tr>
+<tr>
+<td>city</td>
+<td>VARCHAR(100)</td>
+<td>Not Null</td>
+<td>Thành phố/Tỉnh</td>
+</tr>
+<tr>
+<td>is_default</td>
+<td>BOOLEAN</td>
+<td>Default FALSE</td>
+<td>Cờ địa chỉ mặc định</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>5. Bảng UserPasswordResetToken (Khôi phục mật khẩu)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về Users</td>
+</tr>
+<tr>
+<td>token</td>
+<td>VARCHAR(255)</td>
+<td>Not Null, Unique</td>
+<td>Chuỗi token ngẫu nhiên</td>
+</tr>
+<tr>
+<td>expiry_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Hạn sử dụng token</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>6. Bảng UserActivationToken (Kích hoạt tài khoản)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về Users</td>
+</tr>
+<tr>
+<td>token</td>
+<td>VARCHAR(255)</td>
+<td>Not Null, Unique</td>
+<td>Mã kích hoạt qua Email</td>
+</tr>
+<tr>
+<td>expiry_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Hạn kích hoạt</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>7. Bảng UserLoginDevice (Thiết bị đăng nhập)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về Users</td>
+</tr>
+<tr>
+<td>device_name</td>
+<td>VARCHAR(100)</td>
+<td>Not Null</td>
+<td>Tên thiết bị truy cập</td>
+</tr>
+<tr>
+<td>ip_address</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Địa chỉ IP đăng nhập</td>
+</tr>
+<tr>
+<td>last_login</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Lần cuối đăng nhập</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>8. Bảng UserLoginDeviceApprovalToken (Phê duyệt thiết bị)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>device_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về UserLoginDevice</td>
+</tr>
+<tr>
+<td>token</td>
+<td>VARCHAR(255)</td>
+<td>Not Null, Unique</td>
+<td>Mã xác nhận thiết bị lạ</td>
+</tr>
+<tr>
+<td>expiry_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Hạn sử dụng mã</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>9. Bảng UserProfileChangeLog (Nhật ký sửa hồ sơ)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về Users</td>
+</tr>
+<tr>
+<td>changed_field</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Tên trường bị thay đổi</td>
+</tr>
+<tr>
+<td>old_value</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Giá trị cũ trước khi đổi</td>
+</tr>
+<tr>
+<td>new_value</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Giá trị mới</td>
+</tr>
+<tr>
+<td>change_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời điểm thay đổi</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>B. Dịch vụ Sản phẩm (product-catalog-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>10. Bảng Category (Danh mục)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tên danh mục</td>
+</tr>
+<tr>
+<td>slug</td>
+<td>VARCHAR(255)</td>
+<td>Not Null, Unique</td>
+<td>URL thân thiện</td>
+</tr>
+<tr>
+<td>parent_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Danh mục cha</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>11. Bảng Brand (Thương hiệu)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tên thương hiệu</td>
+</tr>
+<tr>
+<td>logo_url</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Link ảnh logo thương hiệu</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>12. Bảng Product (Sản phẩm gốc)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>sku</td>
+<td>VARCHAR(64)</td>
+<td>Unique, Nullable</td>
+<td>Mã tham chiếu duy nhất</td>
+</tr>
+<tr>
+<td>product_name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tên hiển thị</td>
+</tr>
+<tr>
+<td>price</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Giá bán gốc</td>
+</tr>
+<tr>
+<td>discription</td>
+<td>TEXT</td>
+<td>Nullable</td>
+<td>Mô tả chi tiết</td>
+</tr>
+<tr>
+<td>brand_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Khóa ngoại Thương hiệu</td>
+</tr>
+<tr>
+<td>category_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Khóa ngoại Danh mục</td>
+</tr>
+<tr>
+<td>availability</td>
+<td>INT</td>
+<td>Not Null, Default 0</td>
+<td>Cờ trạng thái Tồn kho</td>
+</tr>
+<tr>
+<td>is_hidden</td>
+<td>BOOLEAN</td>
+<td>Default 0</td>
+<td>Cờ Ẩn/Hiện trên web</td>
+</tr>
+<tr>
+<td>view_count</td>
+<td>BIGINT</td>
+<td>Default 0</td>
+<td>Tổng lượt xem</td>
+</tr>
+<tr>
+<td>sales_count</td>
+<td>BIGINT</td>
+<td>Default 0</td>
+<td>Tổng lượt mua</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian tạo (Auditable)</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>Nullable</td>
+<td>Thời gian sửa (Auditable)</td>
+</tr>
+<tr>
+<td>created_by</td>
+<td>VARCHAR(50)</td>
+<td>Nullable</td>
+<td>Người tạo (Auditable)</td>
+</tr>
+<tr>
+<td>updated_by</td>
+<td>VARCHAR(50)</td>
+<td>Nullable</td>
+<td>Người sửa (Auditable)</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>13. Bảng ProductVariant (Biến thể SKU)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK, Not Null</td>
+<td>Trỏ về Product</td>
+</tr>
+<tr>
+<td>size</td>
+<td>VARCHAR(64)</td>
+<td>Not Null</td>
+<td>Kích thước / Dung lượng</td>
+</tr>
+<tr>
+<td>color</td>
+<td>VARCHAR(64)</td>
+<td>Not Null</td>
+<td>Màu sắc</td>
+</tr>
+<tr>
+<td>variant_image_url</td>
+<td>VARCHAR(1024)</td>
+<td>Nullable</td>
+<td>Hình ảnh riêng của biến thể</td>
+</tr>
+<tr>
+<td>price</td>
+<td>DECIMAL(15,2)</td>
+<td>Nullable</td>
+<td>Giá bán riêng</td>
+</tr>
+<tr>
+<td>availability</td>
+<td>INT</td>
+<td>Default 0</td>
+<td>Cờ trạng thái Tồn kho riêng</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian tạo (Auditable)</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>Nullable</td>
+<td>Thời gian sửa (Auditable)</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>14. Bảng ProductImage (Hình ảnh thư viện)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Trỏ về Product</td>
+</tr>
+<tr>
+<td>image_url</td>
+<td>VARCHAR(1024)</td>
+<td>Not Null</td>
+<td>Đường dẫn ảnh</td>
+</tr>
+<tr>
+<td>is_primary</td>
+<td>BOOLEAN</td>
+<td>Default FALSE</td>
+<td>Ảnh đại diện chính</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>INT</td>
+<td>Default 0</td>
+<td>Thứ tự sắp xếp</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>15. Bảng ProductTechnicalSpec (Thông số kỹ thuật)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Trỏ về Product</td>
+</tr>
+<tr>
+<td>spec_name</td>
+<td>VARCHAR(100)</td>
+<td>Not Null</td>
+<td>Tên thông số (CPU, RAM...)</td>
+</tr>
+<tr>
+<td>spec_value</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Giá trị thông số</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>16. Bảng ProductChangeLog (Nhật ký sửa đổi)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Mã sản phẩm</td>
+</tr>
+<tr>
+<td>action</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Hành động (VD: Đổi giá)</td>
+</tr>
+<tr>
+<td>change_time</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời điểm sửa đổi</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>C. Dịch vụ Tồn kho (inventory-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>17. Bảng InventoryBalance (Tồn kho hiện hành)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>variant_id</td>
+<td>BIGINT</td>
+<td>FK, Unique</td>
+<td>Mã biến thể sản phẩm</td>
+</tr>
+<tr>
+<td>stock_quantity</td>
+<td>INT</td>
+<td>Default 0</td>
+<td>Số lượng đang có thực tế</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian tạo (Auditable)</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>Nullable</td>
+<td>Thời gian cập nhật (Auditable)</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>18. Bảng StockMovement (Lịch sử Nhập/Xuất)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>variant_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Mã biến thể sản phẩm</td>
+</tr>
+<tr>
+<td>movement_type</td>
+<td>VARCHAR(20)</td>
+<td>Not Null</td>
+<td>Phân loại (IN - Nhập / OUT - Xuất)</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>INT</td>
+<td>Not Null</td>
+<td>Số lượng nhập/xuất</td>
+</tr>
+<tr>
+<td>reason</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Lý do (Nhập hàng, Khách mua)</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>D. Dịch vụ Đơn hàng (order-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>19. Bảng Order (Hóa đơn)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Khách mua hàng</td>
+</tr>
+<tr>
+<td>total_amount</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Tổng tiền</td>
+</tr>
+<tr>
+<td>status</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Trạng thái (PENDING, PAID, SHIPPED)</td>
+</tr>
+<tr>
+<td>shipping_address</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Địa chỉ nhận hàng</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian tạo (Auditable)</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>Nullable</td>
+<td>Thời gian sửa (Auditable)</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>20. Bảng Item (Chi tiết Hóa đơn)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Thuộc về Hóa đơn nào</td>
+</tr>
+<tr>
+<td>variant_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Mã hàng hóa (Biến thể)</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>INT</td>
+<td>Min 1</td>
+<td>Số lượng đặt mua</td>
+</tr>
+<tr>
+<td>unit_price</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Giá chốt thời điểm mua</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>E. Dịch vụ Thanh toán (payment-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>21. Bảng Payment (Giao dịch Thanh toán)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>BIGINT</td>
+<td>FK, Unique</td>
+<td>Thuộc về Đơn hàng nào</td>
+</tr>
+<tr>
+<td>payment_gateway</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Cổng thanh toán (COD, SEPAY)</td>
+</tr>
+<tr>
+<td>transaction_id</td>
+<td>VARCHAR(100)</td>
+<td>Unique</td>
+<td>Mã giao dịch ngân hàng</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Số tiền giao dịch</td>
+</tr>
+<tr>
+<td>payment_status</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Trạng thái (SUCCESS, FAILED)</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>F. Dịch vụ Khuyến mãi & Quảng cáo (sale-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>22. Bảng Voucher (Mã giảm giá)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>code</td>
+<td>VARCHAR(50)</td>
+<td>Not Null, Unique</td>
+<td>Mã Voucher (Ví dụ: MEGA2024)</td>
+</tr>
+<tr>
+<td>discount_value</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Giá trị giảm</td>
+</tr>
+<tr>
+<td>discount_type</td>
+<td>VARCHAR(20)</td>
+<td>Not Null</td>
+<td>Loại giảm (PERCENT, FIXED)</td>
+</tr>
+<tr>
+<td>max_discount</td>
+<td>DECIMAL(15,2)</td>
+<td>Nullable</td>
+<td>Tiền giảm tối đa</td>
+</tr>
+<tr>
+<td>expires_at</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Hạn sử dụng</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>23. Bảng VoucherUsage (Lịch sử sử dụng)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>voucher_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Khóa ngoại trỏ đến Voucher</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Khách hàng đã dùng mã</td>
+</tr>
+<tr>
+<td>order_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Hóa đơn áp dụng mã</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>24. Bảng PromoBanner (Quảng cáo Banner)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>image_url</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Đường dẫn ảnh banner</td>
+</tr>
+<tr>
+<td>link_url</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Link điều hướng</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>BOOLEAN</td>
+<td>Default TRUE</td>
+<td>Trạng thái Ẩn/Hiện</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>25. Bảng SaleProgram (Chiến dịch Khuyến mãi)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tên chiến dịch (VD: Flash Sale)</td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian bắt đầu</td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Thời gian kết thúc</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>26. Bảng SaleProgramItem (Sản phẩm trong chiến dịch)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>program_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Trỏ về SaleProgram</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Sản phẩm tham gia sale</td>
+</tr>
+<tr>
+<td>promo_price</td>
+<td>DECIMAL(15,2)</td>
+<td>Not Null</td>
+<td>Giá khuyến mãi</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>G. Dịch vụ Đánh giá Hậu mãi (review-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>27. Bảng Review (Bình luận)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Khách hàng viết</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Đánh giá SP nào</td>
+</tr>
+<tr>
+<td>rating</td>
+<td>INT</td>
+<td>Not Null</td>
+<td>Số sao (1 đến 5)</td>
+</tr>
+<tr>
+<td>comment</td>
+<td>TEXT</td>
+<td>Nullable</td>
+<td>Nội dung chữ</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>28. Bảng ReviewResponse (Admin phản hồi)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>review_id</td>
+<td>BIGINT</td>
+<td>FK, Unique</td>
+<td>Trả lời cho bình luận nào</td>
+</tr>
+<tr>
+<td>admin_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Người trả lời</td>
+</tr>
+<tr>
+<td>response_text</td>
+<td>TEXT</td>
+<td>Not Null</td>
+<td>Nội dung trả lời</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>29. Bảng ReviewMedia (Ảnh đính kèm)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>review_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Thuộc bình luận nào</td>
+</tr>
+<tr>
+<td>image_url</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Link ảnh đính kèm</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>30. Bảng ReviewEditHistory (Lịch sử sửa đổi)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>review_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Thuộc bình luận nào</td>
+</tr>
+<tr>
+<td>old_content</td>
+<td>TEXT</td>
+<td>Nullable</td>
+<td>Bình luận cũ trước khi bị sửa</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>H. Dịch vụ Gợi ý Sản phẩm (product-recommendation-service)</h2>
+<br>
+<h3 style='color: #e67e22;'>31. Bảng Product (Bản sao lưu RecommendationDB)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tên sản phẩm</td>
+</tr>
+<tr>
+<td>tags</td>
+<td>VARCHAR(255)</td>
+<td>Nullable</td>
+<td>Từ khóa gợi ý</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>32. Bảng Recommendation (Lịch sử Gợi ý AI)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Gợi ý cho ai</td>
+</tr>
+<tr>
+<td>recommended_product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Mã SP được gọi ý</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>33. Bảng ManualProductRecommendation (Gợi ý Cấu hình tay)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>Khách mua Sản phẩm A...</td>
+</tr>
+<tr>
+<td>target_product_id</td>
+<td>BIGINT</td>
+<td>FK</td>
+<td>...Sẽ gợi ý mua thêm Sản phẩm B</td>
+</tr>
+<br>
+</table>
+<hr>
+<br>
+<h2 style='color: #2c3e50;'>I. Các Dịch vụ Hỗ trợ Hệ thống</h2>
+<br>
+<h3 style='color: #e67e22;'>34. Bảng NotificationMessage (notification-service)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>recipient_email</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Người nhận</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Tiêu đề thư</td>
+</tr>
+<tr>
+<td>content</td>
+<td>TEXT</td>
+<td>Not Null</td>
+<td>Nội dung thư</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>35. Bảng TelegramUser (telegram-service)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>telegram_chat_id</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>ID phòng chat Telegram</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Liên kết với tài khoản web</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>36. Bảng TelegramToken (telegram-service)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>INT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>token</td>
+<td>VARCHAR(100)</td>
+<td>Not Null, Unique</td>
+<td>Mã bí mật lấy từ BotFather</td>
+</tr>
+<br>
+</table>
+<h3 style='color: #e67e22;'>37. Bảng WebActivity (activity-log-service)</h3>
+<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%; margin-bottom: 20px;'>
+<tr>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Thuộc tính</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Kiểu dữ liệu</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Ràng buộc</b></th>
+<th style='background-color: #f2f2f2; text-align: left;'><b>Mô tả</b></th>
+</tr>
+<tr>
+<td>id</td>
+<td>BIGINT</td>
+<td>PK, Auto Inc</td>
+<td>Khóa chính</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>INT</td>
+<td>FK</td>
+<td>Tài khoản thực hiện hành động</td>
+</tr>
+<tr>
+<td>action</td>
+<td>VARCHAR(255)</td>
+<td>Not Null</td>
+<td>Hành động (Ví dụ: Thay đổi giá hàng loạt)</td>
+</tr>
+<tr>
+<td>ip_address</td>
+<td>VARCHAR(50)</td>
+<td>Not Null</td>
+<td>Địa chỉ IP</td>
+</tr>
+<tr>
+<td>timestamp</td>
+<td>TIMESTAMP</td>
+<td>Not Null</td>
+<td>Lần thực hiện thao tác</td>
+</tr>
+</table>
+</body></html>

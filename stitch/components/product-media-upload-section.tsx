@@ -52,27 +52,27 @@ function UploadProgressOverlay({
 }) {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl space-y-6">
+      <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-2xl space-y-6">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-3xl text-indigo-600 animate-bounce">
             cloud_upload
           </span>
           <div>
-            <h3 className="font-headline text-lg font-black text-slate-900">
+            <h3 className="font-headline text-lg font-black text-slate-900 dark:text-white">
               {label}
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Vui lòng không đóng trình duyệt hoặc tải lại trang.
             </p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm font-bold text-slate-700">
+          <div className="flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-350">
             <span>Tiến trình</span>
             <span>{progress.percent}%</span>
           </div>
-          <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
+          <div className="h-3 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 transition-all duration-200"
               style={{ width: `${progress.percent}%` }}
@@ -80,7 +80,7 @@ function UploadProgressOverlay({
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-slate-500 font-semibold border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-between text-xs text-slate-500 font-semibold border-t border-slate-100 dark:border-slate-800 pt-4">
           <div className="flex items-center gap-1 font-mono">
             <span className="material-symbols-outlined text-[16px]">speed</span>
             <span>{progress.speed}</span>
@@ -274,18 +274,18 @@ function UploadPanel({
 
   const colorMap: Record<string, { border: string; bg: string; text: string; btn: string; btnHover: string; ring: string; badge: string }> = {
     indigo: {
-      border: "border-indigo-100",
-      bg: "bg-indigo-50",
-      text: "text-indigo-700",
+      border: "border-indigo-100 dark:border-indigo-900/30",
+      bg: "bg-indigo-50/50 dark:bg-indigo-950/30",
+      text: "text-indigo-700 dark:text-indigo-350",
       btn: "bg-gradient-to-r from-indigo-600 to-blue-600 shadow-indigo-500/30",
       btnHover: "hover:brightness-110",
       ring: "ring-indigo-500/20",
       badge: "bg-indigo-600",
     },
     violet: {
-      border: "border-violet-100",
-      bg: "bg-violet-50",
-      text: "text-violet-700",
+      border: "border-violet-100 dark:border-violet-900/30",
+      bg: "bg-violet-50/50 dark:bg-violet-950/30",
+      text: "text-violet-700 dark:text-violet-350",
       btn: "bg-gradient-to-r from-violet-600 to-purple-600 shadow-violet-500/30",
       btnHover: "hover:brightness-110",
       ring: "ring-violet-500/20",
@@ -303,20 +303,20 @@ function UploadPanel({
         />
       )}
 
-      <div className={`rounded-2xl border ${c.border} ${c.bg}/30 p-6 space-y-4`}>
+      <div className={`rounded-2xl border ${c.border} ${c.bg} p-6 space-y-4`}>
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.bg} ${c.text}`}>
             <span className="material-symbols-outlined text-[22px]">{icon}</span>
           </div>
           <div>
-            <p className="font-bold text-slate-800 text-sm">{label}</p>
-            <p className="text-xs text-slate-500">{hint}</p>
+            <p className="font-bold text-slate-800 dark:text-white text-sm">{label}</p>
+            <p className="text-xs text-slate-550 dark:text-slate-400">{hint}</p>
           </div>
         </div>
 
         {/* File Input */}
         <div>
-          <label className="mb-1 block text-xs font-bold text-slate-600 uppercase tracking-wider">
+          <label className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
             Chọn file
           </label>
           <input
@@ -325,7 +325,7 @@ function UploadPanel({
             accept={acceptAttr}
             multiple={type === "images"}
             onChange={handleFileChange}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-indigo-700 hover:file:bg-indigo-100"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm text-slate-700 dark:text-white outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 dark:file:bg-indigo-900/50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900"
           />
           {errorMsg && (
             <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-rose-600">
@@ -337,7 +337,7 @@ function UploadPanel({
 
         {/* Preview Grid */}
         {hasFiles && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Xem trước ({previews.length} file)
               {type === "images" && <span className="ml-1 font-normal text-slate-400">— Click để chọn ảnh chính</span>}

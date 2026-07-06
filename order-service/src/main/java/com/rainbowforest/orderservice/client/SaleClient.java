@@ -23,4 +23,7 @@ public interface SaleClient {
 
     @GetMapping(value = "/sales/active")
     List<SaleProgram> getActivePrograms();
+
+    @PostMapping("/sales/programs/consume-qty")
+    Map<String, Object> consumeSaleQty(@RequestBody Map<String, Object> request);
 }

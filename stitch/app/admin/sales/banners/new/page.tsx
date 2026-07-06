@@ -13,15 +13,15 @@ export default async function NewBannerPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/sales/banners"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white/60 dark:bg-slate-900/60 shadow-sm border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl transition-transform hover:scale-105 hover:bg-white dark:hover:bg-slate-800"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-sm border border-white/10 backdrop-blur-xl transition-transform hover:scale-105 hover:bg-white/5 backdrop-blur-xl text-slate-200 dark:hover:bg-slate-800"
         >
-          <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">arrow_back</span>
+          <span className="material-symbols-outlined text-slate-400">arrow_back</span>
         </Link>
         <div>
           <h1 className="font-headline text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-indigo-700 dark:from-purple-400 dark:to-indigo-400">
             Thêm Banner mới
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-400">
             Tạo banner quảng cáo mới và thiết lập vị trí hiển thị.
           </p>
         </div>

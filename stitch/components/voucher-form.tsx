@@ -269,23 +269,23 @@ export function VoucherForm({
   if (importStep === "preview") {
     return (
       <div className="w-full">
-        <div className="rounded-[2.5rem] border border-slate-200 bg-white p-10 shadow-xl">
+        <div className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl text-slate-200 p-10 shadow-xl">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-black text-slate-800">Xác nhận Import Voucher</h2>
-              <p className="mt-2 text-base text-slate-500">Vui lòng kiểm tra lại thông tin các mã Voucher trước khi lưu vào hệ thống.</p>
+              <h2 className="text-3xl font-black text-white">Xác nhận Import Voucher</h2>
+              <p className="mt-2 text-base text-slate-400">Vui lòng kiểm tra lại thông tin các mã Voucher trước khi lưu vào hệ thống.</p>
             </div>
             <div className="flex gap-4">
               <button
                 onClick={() => setImportStep("form")}
-                className="rounded-xl bg-slate-100 px-8 py-4 font-bold text-slate-600 text-base transition-all hover:bg-slate-200"
+                className="rounded-xl bg-white/10 px-8 py-4 font-bold text-slate-400 text-base transition-all hover:bg-slate-200"
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleConfirmImport}
                 disabled={isImporting || previewRows.some(r => !r.valid)}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 font-bold text-white text-base transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 rounded-xl bg-purple-600 px-8 py-4 font-bold text-white text-base transition-all hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isImporting && <span className="material-symbols-outlined animate-spin">sync</span>}
                 {isImporting ? "Đang xử lý..." : "Xác nhận Import"}
@@ -293,9 +293,9 @@ export function VoucherForm({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
             <table className="w-full text-left text-base">
-              <thead className="bg-slate-50 text-slate-600">
+              <thead className="bg-white/10 border-white/10 text-white text-slate-400">
                 <tr>
                   <th className="p-5 font-bold">Dòng</th>
                   <th className="p-5 font-bold">Mã Voucher</th>
@@ -307,16 +307,16 @@ export function VoucherForm({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {previewRows.map((row, i) => (
-                  <tr key={i} className={!row.valid ? "bg-rose-50" : "bg-white"}>
-                    <td className="p-5 font-medium text-slate-900">{row.rowId}</td>
+                  <tr key={i} className={!row.valid ? "bg-rose-50" : "bg-white/5 backdrop-blur-xl text-slate-200"}>
+                    <td className="p-5 font-medium text-white">{row.rowId}</td>
                     <td className="p-5 font-mono font-bold text-blue-700 text-lg">{row.code || "-"}</td>
                     <td className="p-5 font-semibold text-emerald-600">
                       {row.discountValue > 0 ? (row.discountType === "PERCENT" ? `${row.discountValue}%` : `${row.discountValue.toLocaleString()}đ`) : "-"}
                     </td>
-                    <td className="p-5 text-slate-600">
+                    <td className="p-5 text-slate-400">
                       {row.startsAt ? new Date(row.startsAt).toLocaleString("vi-VN") : "Ngay lập tức"}
                     </td>
-                    <td className="p-5 text-slate-600">
+                    <td className="p-5 text-slate-400">
                       {row.expiresAt ? new Date(row.expiresAt).toLocaleString("vi-VN") : "Không giới hạn"}
                     </td>
                     <td className="p-5">
@@ -350,17 +350,17 @@ export function VoucherForm({
   }
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 shadow-xl shadow-purple-900/5 dark:shadow-none backdrop-blur-xl relative">
+    <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-xl shadow-purple-900/40 shadow-2xl backdrop-blur-xl relative">
       <div className="h-2 w-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500" />
       <form onSubmit={handleSubmit} className="p-8 space-y-12">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/50 dark:border-slate-800/50 pb-6">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-blue-500/30">
               <span className="material-symbols-outlined text-3xl">local_activity</span>
             </div>
             <div>
-              <h2 className="font-headline text-2xl font-black text-slate-800 dark:text-white">{isEdit ? "Cập nhật Voucher" : "Tạo Voucher Mới"}</h2>
-              <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">Thiết lập mã giảm giá, giới hạn sử dụng và thời hạn</p>
+              <h2 className="font-headline text-2xl font-black text-white">{isEdit ? "Cập nhật Voucher" : "Tạo Voucher Mới"}</h2>
+              <p className="mt-1 text-sm font-medium text-slate-400">Thiết lập mã giảm giá, giới hạn sử dụng và thời hạn</p>
             </div>
           </div>
           
@@ -369,7 +369,7 @@ export function VoucherForm({
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-base font-bold text-slate-700 transition-all hover:bg-slate-200"
+                className="flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-base font-bold text-slate-300 transition-all hover:bg-slate-200"
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
                 Tải Template
@@ -403,21 +403,21 @@ export function VoucherForm({
 
         <div className="relative z-10 grid gap-10 sm:grid-cols-2">
           {/* Nhóm Thông tin chung */}
-          <div className="col-span-2 space-y-6 rounded-[2rem] border border-white/60 bg-white/40 p-8 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-200/50 pb-4">
+          <div className="col-span-2 space-y-6 rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-sm">
+            <div className="flex items-center gap-3 border-b border-white/10/50 pb-4">
               <span className="material-symbols-outlined text-emerald-600 text-2xl">info</span>
-              <h3 className="font-headline text-xl font-bold text-slate-800">Thông tin chung</h3>
+              <h3 className="font-headline text-xl font-bold text-white">Thông tin chung</h3>
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-emerald-600">Mã Voucher <span className="text-rose-500">*</span></label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-emerald-600">Mã Voucher <span className="text-rose-500">*</span></label>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="relative flex-1">
                   <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-emerald-500">sell</span>
                   <input
                     required
                     type="text"
-                    className={`w-full uppercase rounded-2xl border ${codeError ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-500/20' : 'border-white/80 bg-white/60 focus:border-emerald-400 focus:ring-emerald-400/20'} py-4 pl-14 pr-5 font-mono text-lg text-emerald-700 outline-none ring-4 ring-transparent transition-all placeholder:text-slate-400 focus:bg-white`}
+                    className={`w-full uppercase rounded-2xl border ${codeError ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-500/20' : 'border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 focus:border-emerald-400 focus:ring-emerald-400/20'} py-4 pl-14 pr-5 font-mono text-lg text-emerald-700 outline-none ring-4 ring-transparent transition-all placeholder:text-slate-400 focus:bg-white/5 backdrop-blur-xl text-slate-200`}
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                     placeholder="VD: SUMMER2024"
@@ -446,9 +446,9 @@ export function VoucherForm({
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-emerald-600">Mô tả (Tùy chọn)</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-emerald-600">Mô tả (Tùy chọn)</label>
               <textarea
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-medium text-slate-700 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-emerald-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-medium text-slate-300 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-emerald-400/20"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Ví dụ: Giảm giá mùa hè cho đơn từ 500k..."
@@ -458,17 +458,17 @@ export function VoucherForm({
           </div>
 
           {/* Nhóm Cấu hình ưu đãi */}
-          <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/40 p-8 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-200/50 pb-4">
-              <span className="material-symbols-outlined text-blue-600 text-2xl">settings_suggest</span>
-              <h3 className="font-headline text-xl font-bold text-slate-800">Cấu hình ưu đãi</h3>
+          <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-sm">
+            <div className="flex items-center gap-3 border-b border-white/10/50 pb-4">
+              <span className="material-symbols-outlined text-purple-400 text-2xl">settings_suggest</span>
+              <h3 className="font-headline text-xl font-bold text-white">Cấu hình ưu đãi</h3>
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-blue-600">Loại giảm giá</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Loại giảm giá</label>
               <div className="relative">
                 <select
-                  className="w-full appearance-none rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all focus:border-blue-400 focus:bg-white focus:ring-blue-400/20"
+                  className="w-full appearance-none rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-blue-400/20"
                   value={formData.discountType}
                   onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
                 >
@@ -480,14 +480,14 @@ export function VoucherForm({
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-blue-600">Mức giảm <span className="text-rose-500">*</span></label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Mức giảm <span className="text-rose-500">*</span></label>
               <div className="relative">
                 <input
                   required
                   type="number"
                   min="0"
                   step="0.01"
-                  className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-blue-400/20"
+                  className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-blue-400/20"
                   value={formData.discountValue}
                   onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                   placeholder={formData.discountType === "PERCENT" ? "VD: 20" : "VD: 50000"}
@@ -500,11 +500,11 @@ export function VoucherForm({
 
             {formData.discountType === "PERCENT" && (
               <div className="group">
-                <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-blue-600">Giảm tối đa (VNĐ)</label>
+                <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Giảm tối đa (VNĐ)</label>
                 <input
                   type="number"
                   min="0"
-                  className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-blue-400/20"
+                  className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-blue-400/20"
                   value={formData.maxDiscountAmount}
                   onChange={(e) => setFormData({ ...formData, maxDiscountAmount: e.target.value })}
                   placeholder="Để trống nếu không giới hạn"
@@ -513,11 +513,11 @@ export function VoucherForm({
             )}
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-blue-600">Đơn tối thiểu (VNĐ)</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Đơn tối thiểu (VNĐ)</label>
               <input
                 type="number"
                 min="0"
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-blue-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-blue-400/20"
                 value={formData.minOrderAmount}
                 onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
                 placeholder="VD: 150000"
@@ -526,18 +526,18 @@ export function VoucherForm({
           </div>
 
           {/* Nhóm Giới hạn sử dụng & Thời gian */}
-          <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/40 p-8 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-200/50 pb-4">
+          <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-sm">
+            <div className="flex items-center gap-3 border-b border-white/10/50 pb-4">
               <span className="material-symbols-outlined text-purple-600 text-2xl">rule</span>
-              <h3 className="font-headline text-xl font-bold text-slate-800">Giới hạn & Thời gian</h3>
+              <h3 className="font-headline text-xl font-bold text-white">Giới hạn & Thời gian</h3>
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-purple-600">Số lượng mã tối đa</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-600">Số lượng mã tối đa</label>
               <input
                 type="number"
                 min="1"
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-purple-400 focus:bg-white focus:ring-purple-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-purple-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-purple-400/20"
                 value={formData.maxUsage}
                 onChange={(e) => setFormData({ ...formData, maxUsage: e.target.value })}
                 placeholder="Để trống nếu không giới hạn"
@@ -545,11 +545,11 @@ export function VoucherForm({
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-purple-600">Lượt dùng / 1 Người</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-600">Lượt dùng / 1 Người</label>
               <input
                 type="number"
                 min="1"
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-purple-400 focus:bg-white focus:ring-purple-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-purple-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-purple-400/20"
                 value={formData.maxUsagePerUser}
                 onChange={(e) => setFormData({ ...formData, maxUsagePerUser: e.target.value })}
                 placeholder="Để trống = 1 lần/người"
@@ -557,26 +557,26 @@ export function VoucherForm({
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-purple-600">Ngày bắt đầu</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-600">Ngày bắt đầu</label>
               <input
                 type="datetime-local"
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all focus:border-purple-400 focus:bg-white focus:ring-purple-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-purple-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-purple-400/20"
                 value={formData.startsAt}
                 onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
               />
             </div>
 
             <div className="group">
-              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-500 transition-colors group-focus-within:text-purple-600">Ngày kết thúc</label>
+              <label className="mb-2 block text-sm font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-600">Ngày kết thúc</label>
               <input
                 type="datetime-local"
-                className="w-full rounded-2xl border border-white/80 bg-white/60 px-5 py-4 text-base font-bold text-slate-800 outline-none ring-4 ring-transparent transition-all focus:border-purple-400 focus:bg-white focus:ring-purple-400/20"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 text-base font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-purple-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:ring-purple-400/20"
                 value={formData.expiresAt}
                 onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
               />
             </div>
 
-            <div className="flex items-center gap-4 rounded-2xl border border-white/80 bg-white/60 px-5 py-4 transition-all hover:bg-white/90">
+            <div className="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/60 px-5 py-4 transition-all hover:bg-white/5 backdrop-blur-xl text-slate-200/90">
               <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
@@ -587,22 +587,22 @@ export function VoucherForm({
                 />
                 <span className="material-symbols-outlined pointer-events-none absolute text-[16px] text-white opacity-0 transition-opacity peer-checked:opacity-100">check</span>
               </div>
-              <label htmlFor="active" className="cursor-pointer text-base font-bold text-slate-700">Kích hoạt ngay</label>
+              <label htmlFor="active" className="cursor-pointer text-base font-bold text-slate-300">Kích hoạt ngay</label>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 pt-6 mt-8 border-t border-slate-200/50 dark:border-slate-800/50">
+        <div className="flex items-center justify-end gap-4 pt-6 mt-8 border-t border-white/10">
           <Link
             href="/admin/sales/vouchers"
-            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-400 transition-colors hover:bg-white/10 dark:hover:bg-slate-800"
           >
             Hủy bỏ
           </Link>
           <button
             type="submit"
             disabled={loading || !!codeError}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-blue-600/30 disabled:opacity-50 disabled:hover:scale-100"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-purple-600/30 disabled:opacity-50 disabled:hover:scale-100"
           >
             {loading ? (
               <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>

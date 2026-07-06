@@ -229,7 +229,7 @@ export function ActivityLogListClient({ logs }: Props) {
       doc.text(wrapped, 40, y);
       y += wrapped.length * 12 + 10;
     });
-    doc.save("nhat-ky-hoat-dong.pdf");
+doc.save("nhat-ky-hoat-dong.pdf");
     try {
       await removeExportedRows(exportedIds);
     } catch {
@@ -240,137 +240,191 @@ export function ActivityLogListClient({ logs }: Props) {
   const pageAllSelected = pageRows.length > 0 && pageRows.every((r) => selectedIds.has(Number(r.id)));
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end">
-          <div className="min-w-[220px] flex-1">
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tìm kiếm</label>
-            <input
-              value={q}
-              onChange={(e) => onFilterChanged({ q: e.target.value })}
-              placeholder="Action, user, resource, path, detail..."
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            />
+    <div className="space-y-6">
+      <section className="rounded-3xl border border-white/10 bg-black/40 p-6 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end">
+          <div className="min-w-[260px] flex-1">
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Tìm kiếm nâng cao</label>
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-cyan-400">search</span>
+              <input
+                value={q}
+                onChange={(e) => onFilterChanged({ q: e.target.value })}
+                placeholder="Action, user, resource, path..."
+                className="w-full rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-12 pr-4 text-sm font-medium text-white outline-none transition-all focus:border-cyan-400/50 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 placeholder:text-slate-500"
+              />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">HTTP</label>
-            <select
-              value={methodFilter}
-              onChange={(e) => onFilterChanged({ method: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            >
-              <option value="all">Tất cả</option>
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="PATCH">PATCH</option>
-              <option value="DELETE">DELETE</option>
-            </select>
+          <div className="w-full md:w-auto">
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Giao thức HTTP</label>
+            <div className="relative group">
+              <select
+                value={methodFilter}
+                onChange={(e) => onFilterChanged({ method: e.target.value })}
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-5 pr-12 text-sm font-bold text-white outline-none transition-all focus:border-purple-400/50 focus:bg-white/10 focus:ring-4 focus:ring-purple-500/10 cursor-pointer"
+              >
+                <option value="all" className="bg-slate-900">Tất cả phương thức</option>
+                <option value="GET" className="bg-slate-900">GET</option>
+                <option value="POST" className="bg-slate-900">POST</option>
+                <option value="PUT" className="bg-slate-900">PUT</option>
+                <option value="PATCH" className="bg-slate-900">PATCH</option>
+                <option value="DELETE" className="bg-slate-900">DELETE</option>
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-purple-400">expand_more</span>
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dòng / trang</label>
-            <select
-              value={String(pageSize)}
-              onChange={(e) => onFilterChanged({ size: Number(e.target.value) })}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
+          <div className="w-full md:w-auto">
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400">Hiển thị</label>
+            <div className="relative group">
+              <select
+                value={String(pageSize)}
+                onChange={(e) => onFilterChanged({ size: Number(e.target.value) })}
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-5 pr-12 text-sm font-bold text-white outline-none transition-all focus:border-fuchsia-400/50 focus:bg-white/10 focus:ring-4 focus:ring-fuchsia-500/10 cursor-pointer"
+              >
+                <option value="10" className="bg-slate-900">10 dòng</option>
+                <option value="20" className="bg-slate-900">20 dòng</option>
+                <option value="50" className="bg-slate-900">50 dòng</option>
+                <option value="100" className="bg-slate-900">100 dòng</option>
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-fuchsia-400">expand_more</span>
+            </div>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <p className="text-slate-500 dark:text-slate-400">
-            Kết quả: <span className="font-bold text-slate-900 dark:text-white">{totalFiltered}</span> bản ghi · đã chọn{" "}
-            <span className="font-bold text-slate-900 dark:text-white">{selectedRows.length}</span> dòng để xuất
-          </p>
-          <div className="flex flex-wrap gap-2">
+        
+        <div className="mt-6 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-5 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2 backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"></span>
+            </span>
+            <p className="text-xs text-slate-300">
+              Tìm thấy <span className="font-black text-white">{totalFiltered}</span> kết quả · Đã chọn{" "}
+              <span className="font-black text-cyan-400">{selectedRows.length}</span> mục
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={exportExcel}
               disabled={!hasSelections}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] hover:shadow-emerald-500/40 disabled:pointer-events-none disabled:opacity-40"
             >
-              Xuất Excel
+              <span className="material-symbols-outlined text-[18px]">table_chart</span>
+              Excel
             </button>
             <button
               type="button"
               onClick={exportTxt}
               disabled={!hasSelections}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
             >
-              Xuất TXT
+              <span className="material-symbols-outlined text-[18px]">description</span>
+              TXT
             </button>
             <button
               type="button"
               onClick={exportPdf}
               disabled={!hasSelections}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-bold text-rose-400 transition-all hover:bg-white/10 hover:text-rose-300 disabled:pointer-events-none disabled:opacity-40"
             >
-              Xuất PDF
+              <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+              PDF
             </button>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-xl">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="w-full border-collapse text-left whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/70">
-                <th className="border-b border-slate-200 px-4 py-4 text-center dark:border-slate-700">
-                  <input type="checkbox" checked={pageAllSelected} onChange={(e) => toggleSelectPage(e.target.checked)} aria-label="Chọn tất cả dòng trong trang" />
+              <tr className="border-b border-white/10 bg-white/5 backdrop-blur-md">
+                <th className="px-5 py-5 text-center">
+                  <div className="inline-flex items-center justify-center">
+                    <input 
+                      type="checkbox" 
+                      className="peer sr-only"
+                      checked={pageAllSelected} 
+                      onChange={(e) => toggleSelectPage(e.target.checked)} 
+                    />
+                    <div className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border-2 border-slate-500 bg-transparent transition-all peer-checked:border-cyan-500 peer-checked:bg-cyan-500">
+                      <span className="material-symbols-outlined text-[14px] text-white opacity-0 transition-opacity peer-checked:opacity-100">check</span>
+                    </div>
+                  </div>
                 </th>
-                <th className="border-b border-slate-200 px-6 py-5 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Thời gian</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Hành động</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Tài nguyên</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-center text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">HTTP</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Người thực hiện</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Chi tiết</th>
-                <th className="border-b border-slate-200 px-6 py-5 text-right text-xs font-bold uppercase tracking-[0.25em] text-slate-500 dark:border-slate-700 dark:text-slate-400">Xem</th>
+                <th className="px-5 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Thời gian</th>
+                <th className="px-5 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Hành động</th>
+                <th className="px-5 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Tài nguyên</th>
+                <th className="px-5 py-5 text-center text-xs font-black uppercase tracking-[0.2em] text-slate-400">HTTP</th>
+                <th className="px-5 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Thực hiện bởi</th>
+                <th className="px-5 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Chi tiết</th>
+                <th className="px-5 py-5 text-right text-xs font-black uppercase tracking-[0.2em] text-slate-400">View</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-white/5">
               {pageRows.map((row) => (
-                <tr key={row.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                  <td className="px-4 py-4 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(Number(row.id))}
-                      onChange={(e) => toggleRow(Number(row.id), e.target.checked)}
-                      aria-label={`Chọn log ${row.id}`}
-                    />
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-300">{formatWebActivityTime(row.createdAt)}</td>
-                  <td className="px-6 py-4">
-                    <span className="font-headline text-sm font-bold text-slate-900 dark:text-white">{displayOrDash(row.action)}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className="font-medium text-slate-800 dark:text-slate-100">{displayOrDash(row.resourceType)}</span>
-                    <span className="mt-0.5 block font-mono text-xs text-slate-500 dark:text-slate-400">#{displayOrDash(row.resourceId)}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">{methodBadge(row.httpMethod)}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <div className="font-medium text-slate-900 dark:text-white">{row.actorUsername ?? row.createdBy ?? "—"}</div>
-                    {row.actorUserId != null && row.actorUserId !== "" && (
-                      <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">uid {row.actorUserId}</div>
-                    )}
-                  </td>
-                  <td className="max-w-md px-6 py-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                    <div className="line-clamp-2 break-words" title={row.detailJson ?? undefined}>
-                      {detailPreview(row.detailJson)}
-                    </div>
-                    {row.requestPath != null && row.requestPath !== "" && (
-                      <div className="mt-1 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400" title={row.requestPath}>
-                        {row.requestPath}
+                <tr key={row.id} className="group transition-colors hover:bg-white/5">
+                  <td className="px-5 py-4 text-center">
+                    <div className="inline-flex items-center justify-center">
+                      <input 
+                        type="checkbox" 
+                        className="peer sr-only"
+                        checked={selectedIds.has(Number(row.id))}
+                        onChange={(e) => toggleRow(Number(row.id), e.target.checked)}
+                      />
+                      <div className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border-2 border-slate-600 bg-transparent transition-all peer-checked:border-cyan-500 peer-checked:bg-cyan-500 group-hover:border-slate-400">
+                        <span className="material-symbols-outlined text-[14px] text-white opacity-0 transition-opacity peer-checked:opacity-100">check</span>
                       </div>
-                    )}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/admin/activity-log/${row.id}`} className="inline-flex rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-700 dark:hover:bg-slate-800 dark:hover:text-blue-300" title="Chi tiết log">
-                      <span className="material-symbols-outlined text-lg">open_in_new</span>
+                  <td className="px-5 py-4 font-mono text-[11px] text-slate-400 group-hover:text-cyan-300 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[14px] opacity-50">schedule</span>
+                      {formatWebActivityTime(row.createdAt)}
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="font-headline text-sm font-bold text-white drop-shadow-sm">{displayOrDash(row.action)}</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-200">{displayOrDash(row.resourceType)}</span>
+                      <span className="mt-0.5 font-mono text-[10px] text-slate-500">#{displayOrDash(row.resourceId)}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-center">{methodBadge(row.httpMethod)}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-md">
+                        {(row.actorUsername ?? row.createdBy ?? "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-white">{row.actorUsername ?? row.createdBy ?? "—"}</span>
+                        {row.actorUserId != null && row.actorUserId !== "" && (
+                          <span className="font-mono text-[10px] text-slate-400">UID: {row.actorUserId}</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-col max-w-[250px]">
+                      <span className="truncate text-xs font-medium text-slate-300" title={row.detailJson ?? undefined}>
+                        {detailPreview(row.detailJson)}
+                      </span>
+                      {row.requestPath != null && row.requestPath !== "" && (
+                        <span className="mt-1 truncate font-mono text-[10px] text-purple-400" title={row.requestPath}>
+                          {row.requestPath}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link 
+                      href={`/admin/activity-log/${row.id}`} 
+                      className="inline-flex items-center justify-center rounded-xl bg-white/5 p-2 text-slate-400 transition-all hover:scale-110 hover:bg-cyan-500 hover:text-white hover:shadow-lg hover:shadow-cyan-500/30" 
+                      title="Xem chi tiết"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">visibility</span>
                     </Link>
                   </td>
                 </tr>
@@ -378,26 +432,29 @@ export function ActivityLogListClient({ logs }: Props) {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/40 sm:flex-row">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Trang <span className="font-bold text-slate-900 dark:text-white">{safePage}</span> / {totalPages}
+        
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 bg-white/5 px-6 py-4 backdrop-blur-md sm:flex-row">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Trang <span className="rounded-md bg-white/10 px-2 py-1 text-white mx-1">{safePage}</span> / {totalPages}
           </span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="flex items-center gap-1 rounded-xl bg-white/5 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
             >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
               Trước
             </button>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="flex items-center gap-1 rounded-xl bg-white/5 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
             >
               Sau
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
         </div>

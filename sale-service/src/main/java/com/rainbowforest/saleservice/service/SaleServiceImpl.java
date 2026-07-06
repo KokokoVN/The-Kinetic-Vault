@@ -119,13 +119,9 @@ public class SaleServiceImpl {
         }
 
         // 2. Kiểm tra promoQtyLimit <= tồn kho thực tế (từ inventory-service)
-        if (itemReq.getPromoQtyLimit() != null && itemReq.getPromoQtyLimit() > 0) {
-            int actualStock = fetchActualStock(itemReq.getProductId(), itemReq.getVariantId());
-            if (itemReq.getPromoQtyLimit() > actualStock) {
-                throw new IllegalArgumentException("Số lượng khuyến mãi (" + itemReq.getPromoQtyLimit()
-                        + ") vượt quá tồn kho thực tế (" + actualStock + ") của sản phẩm #"
-                        + itemReq.getProductId() + ".");
-            }
+        // Validate that limit > 0 if provided. Removed check against actual stock to allow admins to set limits before importing inventory.
+        if (itemReq.getPromoQtyLimit() != null && itemReq.getPromoQtyLimit() <= 0) {
+            throw new IllegalArgumentException("Số lượng khuyến mãi phải lớn hơn 0.");
         }
 
         SaleProgramItem item = new SaleProgramItem();
@@ -135,6 +131,26 @@ public class SaleServiceImpl {
         item.setPromoQtyLimit(itemReq.getPromoQtyLimit());
         item.setCreatedBy(performedBy);
         program.getItems().add(item);
+    }
+
+    public void consumeSaleQty(Long productId, Long variantId, Integer qty) {
+        if (qty == null || qty <= 0) return;
+        List<SaleProgramItem> overlapping = saleProgramItemRepo.findOverlapping(
+                productId,
+                variantId,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                -1L
+        );
+        if (overlapping.isEmpty()) return;
+
+        SaleProgramItem item = overlapping.get(0);
+        if (item.getPromoQtyLimit() != null && item.getPromoQtyLimit() > 0) {
+            int newLimit = item.getPromoQtyLimit() - qty;
+            if (newLimit < 0) newLimit = 0;
+            item.setPromoQtyLimit(newLimit);
+            saleProgramItemRepo.save(item);
+        }
     }
 
     private int fetchActualStock(Long productId, Long variantId) {

@@ -31,7 +31,14 @@ import java.util.Map;
 @RequestMapping("/admin/products")
 public class AdminProductVariantController {
     private static final Logger log = LoggerFactory.getLogger(AdminProductVariantController.class);
-    private static final Path PRODUCT_UPLOAD_DIR = Paths.get("uploads", "product-images");
+    private static Path getRootUploadPath(String subDir) {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        if (path.getFileName().toString().endsWith("-service")) {
+            path = path.getParent();
+        }
+        return path.resolve("uploads").resolve(subDir);
+    }
+    private static final Path PRODUCT_UPLOAD_DIR = getRootUploadPath("product-images");
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final ProductChangeLogRepository changeLogRepository;

@@ -17,6 +17,7 @@ import { StorefrontLayout } from "@/components/storefront-layout";
 import { StorefrontHeroBanner } from "@/components/storefront-hero-banner";
 import { CategoryCarousel } from "@/components/category-carousel";
 import { listActiveBanners, listActivePrograms } from "@/lib/sale-api";
+import { CountdownTimer } from "@/components/countdown-timer";
 
 export default async function HomePage({
   searchParams,
@@ -80,7 +81,7 @@ export default async function HomePage({
     let finalMaxPrice = p.maxPrice;
 
     activeSalePrograms.forEach(program => {
-      const hasProduct = program.items.some(item => item.productId === Number(p.id));
+      const hasProduct = program.items.some(item => item.productId === Number(p.id) && (item.promoQtyLimit == null || item.promoQtyLimit > 0));
       if (hasProduct) {
         let currentDiscountValue = 0;
         let currentSalePrice = originalPrice;
@@ -140,6 +141,7 @@ export default async function HomePage({
   const [rawSaleProducts, products] = await Promise.all([rawSaleProductsPromise, productsPromise]);
 
   const saleProducts = rawSaleProducts.map(p => applySaleInfo(p, []));
+  const earliestEndAt = activeSalePrograms.reduce((min, p) => !min || new Date(p.endAt) < new Date(min) ? p.endAt : min, null as string | null);
   const newProductsMapped = newestProducts.map(p => applySaleInfo(p, ["MỚI"]));
   const hotProductsMapped = hotProducts.map(p => applySaleInfo(p, ["HOT"]));
 
@@ -162,36 +164,40 @@ export default async function HomePage({
   return (
     <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="home">
       {noticeMessage ? <FloatingNotice message={noticeMessage} variant="success" /> : null}
-      <main className="min-h-screen pb-20">
+      <main className="min-h-screen pb-20 bg-white dark:bg-slate-950 transition-colors duration-300">
         <section className="px-6 py-8">
           <StorefrontHeroBanner banners={banners} />
         </section>
 
-        <section className="px-6 py-8">
+        <section className="px-6 py-12 bg-slate-50/50 dark:bg-slate-900/30 border-y border-slate-200/50 dark:border-slate-800/50">
           <div className="mx-auto max-w-screen-2xl">
-            <div className="mb-8 flex flex-col items-center justify-center gap-2 text-center">
-              <h3 className="font-headline text-3xl font-extrabold tracking-tight text-primary md:text-4xl">Danh mục nổi bật</h3>
-              <span className="rounded-full bg-surface-container px-4 py-1 text-sm font-semibold text-on-surface-variant">
-                {categories.length} danh mục
+            <div className="mb-10 flex flex-col items-center justify-center gap-3 text-center">
+              <span className="rounded-full bg-blue-100/80 dark:bg-blue-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-blue-700 dark:text-blue-400 shadow-sm border border-blue-200/50 dark:border-blue-500/20">
+                Explore Collection
               </span>
+              <h3 className="font-headline text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+                Danh mục nổi bật
+              </h3>
             </div>
             <CategoryCarousel categories={categories} />
           </div>
         </section>
 
         {/* NEW PRODUCTS */}
-        <section id="san-pham-moi" className="bg-surface px-6 py-12">
+        <section id="san-pham-moi" className="px-6 py-16">
           <div className="mx-auto max-w-screen-2xl">
-            <div className="mb-8 flex flex-col items-center justify-center gap-2 text-center">
-              <span className="rounded-full bg-primary/10 px-4 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-primary">
+            <div className="mb-12 flex flex-col items-center justify-center gap-3 text-center">
+              <span className="rounded-full bg-indigo-100 dark:bg-indigo-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-500/20">
                 New Arrivals
               </span>
-              <h3 className="font-headline text-4xl font-extrabold tracking-tighter text-primary">Sản phẩm Mới</h3>
+              <h3 className="font-headline text-4xl font-black tracking-tighter text-slate-900 dark:text-white md:text-5xl">
+                Sản phẩm <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-500">Mới</span>
+              </h3>
             </div>
             {newProductsMapped.length === 0 ? (
-              <p className="text-center text-on-surface-variant">Chưa có sản phẩm mới nào.</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 font-medium">Chưa có sản phẩm mới nào.</p>
             ) : (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 xl:gap-8">
                 {newProductsMapped.map((item) => (
                   <ProductCard
                     key={item.id}
@@ -214,18 +220,20 @@ export default async function HomePage({
         </section>
 
         {/* HOT PRODUCTS */}
-        <section id="san-pham-hot" className="bg-surface-container-lowest px-6 py-12">
+        <section id="san-pham-hot" className="px-6 py-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-950">
           <div className="mx-auto max-w-screen-2xl">
-            <div className="mb-8 flex flex-col items-center justify-center gap-2 text-center">
-              <span className="rounded-full bg-[#FF8C00]/10 px-4 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#FF8C00]">
+            <div className="mb-12 flex flex-col items-center justify-center gap-3 text-center">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-500 border border-amber-200/50 dark:border-amber-500/20">
                 Best Sellers
               </span>
-              <h3 className="font-headline text-4xl font-extrabold tracking-tighter text-[#FF8C00]">Sản phẩm Bán Chạy</h3>
+              <h3 className="font-headline text-4xl font-black tracking-tighter text-slate-900 dark:text-white md:text-5xl">
+                Sản phẩm <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">Bán Chạy</span>
+              </h3>
             </div>
             {hotProductsMapped.length === 0 ? (
-              <p className="text-on-surface-variant">Chưa có sản phẩm bán chạy nào.</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 font-medium">Chưa có sản phẩm bán chạy nào.</p>
             ) : (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 xl:gap-8">
                 {hotProductsMapped.map((item) => (
                   <ProductCard
                     key={item.id}
@@ -248,26 +256,33 @@ export default async function HomePage({
         </section>
 
         {/* SALE PRODUCTS */}
-        <section id="san-pham-sale" className="bg-surface px-6 py-12">
-          <div className="mx-auto max-w-screen-2xl">
-            <div className="mb-8 flex flex-col items-center justify-center gap-2 text-center">
-              <span className="rounded-full bg-[#FF4D4D]/10 px-4 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#FF4D4D]">
+        <section id="san-pham-sale" className="px-6 py-16 relative overflow-hidden">
+          <div className="absolute inset-0 bg-rose-50/50 dark:bg-rose-950/20" />
+          <div className="absolute -left-40 top-0 h-96 w-96 rounded-full bg-rose-400/10 blur-[100px]" />
+          <div className="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-pink-400/10 blur-[100px]" />
+
+          <div className="mx-auto max-w-screen-2xl relative z-10">
+            <div className="mb-12 flex flex-col items-center justify-center gap-3 text-center">
+              <span className="rounded-full bg-rose-100 dark:bg-rose-500/20 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-500/30 shadow-sm">
                 Hot Deal
               </span>
-              <h3 className="font-headline text-4xl font-extrabold tracking-tighter text-[#FF4D4D]">Siêu Khuyến Mãi</h3>
+              <h3 className="font-headline text-4xl font-black tracking-tighter text-slate-900 dark:text-white md:text-5xl">
+                Siêu <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">Khuyến Mãi</span>
+              </h3>
+              {earliestEndAt && saleProducts.length > 0 && <CountdownTimer endAt={earliestEndAt} />}
             </div>
             
             {saleProducts.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-lg font-medium text-on-surface-variant">
+              <div className="py-12 text-center rounded-3xl bg-white/50 dark:bg-slate-900/50 border border-white dark:border-slate-800 backdrop-blur-xl shadow-lg">
+                <p className="text-lg font-bold text-slate-800 dark:text-white">
                   Hiện chưa có chương trình Siêu Khuyến Mãi nào diễn ra.
                 </p>
-                <p className="mt-2 text-sm text-on-surface-variant/70">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
                   Bạn vui lòng quay lại sau để săn deal hời nhé!
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 xl:gap-8">
                 {saleProducts.map((item) => (
                   <ProductCard
                     key={item.id}
@@ -289,29 +304,35 @@ export default async function HomePage({
           </div>
         </section>
 
-        <section id="san-pham-noi-bat" className="bg-surface px-6 py-14">
+        <section id="san-pham-noi-bat" className="px-6 py-20 relative">
           <div className="mx-auto max-w-screen-2xl">
-            <div className="mb-10 rounded-3xl border border-outline-variant/10 bg-gradient-to-br from-surface-container-lowest via-surface-container-low to-surface-container p-6 shadow-lg shadow-primary/5 md:p-8">
-              <div className="flex flex-col items-center justify-center text-center">
-                <p className="inline-flex items-center gap-2 rounded-full border border-outline-variant/20 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
+            <div className="mb-12 rounded-[2.5rem] border border-white/60 dark:border-slate-800/60 bg-gradient-to-br from-indigo-50/50 via-white to-cyan-50/50 dark:from-indigo-950/30 dark:via-slate-900 dark:to-cyan-950/30 p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-xl relative overflow-hidden text-center">
+              <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-indigo-500/10 blur-[60px]" />
+              <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-[60px]" />
+              
+              <div className="relative z-10 flex flex-col items-center justify-center">
+                <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200/60 dark:border-indigo-500/30 bg-indigo-50/80 dark:bg-indigo-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-indigo-400 shadow-sm backdrop-blur-md">
                   <span className="material-symbols-outlined text-sm">deployed_code</span>
                   Featured Collection
                 </p>
-                <h3 className="mt-3 text-4xl font-extrabold tracking-tighter text-primary">Sản phẩm nổi bật</h3>
-                <p className="mt-1 font-medium text-on-surface-variant">
+                <h3 className="mt-5 text-4xl font-black tracking-tighter text-slate-900 dark:text-white md:text-6xl">
+                  Sản phẩm <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Nổi Bật</span>
+                </h3>
+                <p className="mt-4 font-medium text-slate-500 dark:text-slate-400 max-w-2xl text-lg">
                   {keyword
                     ? `Kết quả tìm kiếm cho "${keyword}"`
                     : Number.isFinite(categoryId) && categoryId > 0
-                      ? "Sản phẩm theo danh mục đã chọn"
-                      : "Tất cả sản phẩm nổi bật"}
+                      ? "Khám phá các sản phẩm nổi bật nhất trong danh mục bạn chọn."
+                      : "Khám phá tất cả các sản phẩm nổi bật nhất của chúng tôi."}
                 </p>
               </div>
             </div>
-            <div className="mb-8 overflow-x-auto no-scrollbar pb-4 pt-2 px-2">
+
+            <div className="mb-10 overflow-x-auto no-scrollbar pb-4 pt-2 px-2">
               <div className="mx-auto flex w-max min-w-full justify-start md:justify-center gap-3 whitespace-nowrap">
                 <Link
                   href={keyword ? `/?q=${encodeURIComponent(keyword)}#san-pham-noi-bat` : "/#san-pham-noi-bat"}
-                  className={`inline-flex min-h-[42px] items-center justify-center rounded-full px-6 py-2 text-center text-sm font-bold transition-all shadow-sm ${!Number.isFinite(categoryId) || categoryId <= 0 ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-indigo-500/30 scale-105" : "bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"}`}
+                  className={`inline-flex min-h-[46px] items-center justify-center rounded-2xl px-6 py-2.5 text-sm font-black uppercase tracking-wider transition-all shadow-sm ${!Number.isFinite(categoryId) || categoryId <= 0 ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-white"}`}
                 >
                   Tất cả danh mục
                 </Link>
@@ -324,7 +345,7 @@ export default async function HomePage({
                     <Link
                       key={cat.id}
                       href={href}
-                      className={`inline-flex min-h-[42px] items-center justify-center rounded-full px-6 py-2 text-center text-sm font-bold transition-all shadow-sm ${active ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-indigo-500/30 scale-105" : "bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"}`}
+                      className={`inline-flex min-h-[46px] items-center justify-center rounded-2xl px-6 py-2.5 text-sm font-black uppercase tracking-wider transition-all shadow-sm ${active ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 dark:border-slate-800 dark:hover:bg-slate-800 dark:hover:text-white"}`}
                     >
                       {cat.name}
                     </Link>
@@ -332,42 +353,51 @@ export default async function HomePage({
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((item) => (
-                <ProductCard
-                  key={item.id}
-                  href={`/product/${item.id}`}
-                  image={item.heroImage}
-                  title={item.name}
-                  subtitle={item.subtitle}
-                  price={item.price}
-                  originalPrice={item.originalPrice}
-                  badges={item.badges}
-                  hasVariantPriceRange={item.hasVariantPriceRange}
-                  minPrice={item.minPrice}
-                  maxPrice={item.maxPrice}
-                  footer={<AddToCartButton productId={String(item.id)} hasVariants={Boolean(item.hasVariantPriceRange)} isLoggedIn={isLoggedIn} />}
-                />
-              ))}
-            </div>
-            <div className="mt-8 flex items-center justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => {
-                const href = `/?${new URLSearchParams({
-                  ...(keyword ? { q: keyword } : {}),
-                  ...(Number.isFinite(categoryId) && categoryId > 0 ? { category: String(categoryId) } : {}),
-                  page: String(p),
-                }).toString()}#san-pham-noi-bat`;
-                return (
-                  <Link
-                    key={p}
-                    href={href}
-                    className={`rounded-lg px-3 py-2 text-sm font-semibold ${p === currentPage ? "bg-primary text-white" : "bg-surface-container text-on-surface hover:bg-surface-container-high"}`}
-                  >
-                    {p}
-                  </Link>
-                );
-              })}
-            </div>
+
+            {featured.length === 0 ? (
+              <div className="py-20 text-center">
+                <p className="text-xl font-bold text-slate-800 dark:text-white">Không tìm thấy sản phẩm nào.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 xl:gap-8">
+                  {featured.map((item) => (
+                    <ProductCard
+                      key={item.id}
+                      href={`/product/${item.id}`}
+                      image={item.heroImage}
+                      title={item.name}
+                      subtitle={item.subtitle}
+                      price={item.price}
+                      originalPrice={item.originalPrice}
+                      badges={item.badges}
+                      hasVariantPriceRange={item.hasVariantPriceRange}
+                      minPrice={item.minPrice}
+                      maxPrice={item.maxPrice}
+                      footer={<AddToCartButton productId={String(item.id)} hasVariants={Boolean(item.hasVariantPriceRange)} isLoggedIn={isLoggedIn} />}
+                    />
+                  ))}
+                </div>
+                <div className="mt-12 flex items-center justify-center gap-2">
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => {
+                    const href = `/?${new URLSearchParams({
+                      ...(keyword ? { q: keyword } : {}),
+                      ...(Number.isFinite(categoryId) && categoryId > 0 ? { category: String(categoryId) } : {}),
+                      page: String(p),
+                    }).toString()}#san-pham-noi-bat`;
+                    return (
+                      <Link
+                        key={p}
+                        href={href}
+                        className={`flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-black transition-all ${p === currentPage ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"}`}
+                      >
+                        {p}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </section>
       </main>
