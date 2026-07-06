@@ -27,7 +27,7 @@ eureka:
 telegram:
   bot:
     username: tkvadminbot
-    token: ${TELEGRAM_BOT_TOKEN:}
+    token: 8782853565:AAGbUOE180OLfcJUmtP4LMSeuJ7SFdpf940
 
 feign:
   client:
