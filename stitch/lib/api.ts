@@ -87,7 +87,16 @@ const FALLBACK_IMAGE =
  * dùng `API_SERVER_ORIGIN` (mặc định `http://localhost:8900`) để ghép thành URL tuyệt đối.
  */
 function getResolvedApiRoot(): string {
-  const raw = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8900/api").trim();
+  const raw = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").trim();
+  if (typeof window !== "undefined") {
+    // On client-side, if it's a localhost URL or relative path, use relative path to hit Next.js rewrites
+    if (/^https?:\/\/localhost/i.test(raw) || raw.startsWith("/")) {
+      const prefix = raw.replace(/^https?:\/\/[^\/]+/i, "");
+      return (prefix || "/api").replace(/\/+$/, "");
+    }
+    return raw.replace(/\/+$/, "");
+  }
+  // On server-side, resolve relative paths using API_SERVER_ORIGIN
   if (/^https?:\/\//i.test(raw)) {
     return raw.replace(/\/+$/, "");
   }
@@ -116,7 +125,17 @@ function resolveBackendImageUrl(raw: string | null | undefined): string {
   if (/^https?:\/\//i.test(v) || v.startsWith("data:")) {
     return v;
   }
-  const base = getResolvedApiRoot();
+
+  // Image URLs must always be accessible by the browser (client-side).
+  // We cannot use the server-side localhost absolute URL here.
+  let base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").trim();
+  if (/^https?:\/\/localhost/i.test(base) || base.startsWith("/")) {
+      const prefix = base.replace(/^https?:\/\/[^\/]+/i, "");
+      base = (prefix || "/api").replace(/\/+$/, "");
+  } else {
+      base = base.replace(/\/+$/, "");
+  }
+
   if (v.startsWith("/")) {
     if (v.startsWith("/api/")) {
        return base.replace(/\/api$/, "") + v;
