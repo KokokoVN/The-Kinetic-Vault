@@ -48,6 +48,9 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paymentCreateBody),
       });
+      
+      let gatewayErrorText = "";
+
       if (createRes.ok) {
         const row = (await createRes.json().catch(() => null)) as { id?: number | null } | null;
         const pid = Number(row?.id ?? 0);
@@ -68,16 +71,22 @@ export async function POST(req: Request) {
           const pid = Number(row?.id ?? 0);
           paymentId = Number.isFinite(pid) && pid > 0 ? Math.floor(pid) : null;
         } else {
-          console.error("Gateway fetch failed:", gatewayRes.status, await gatewayRes.text());
+          gatewayErrorText = `Gateway returned ${gatewayRes.status}: ${await gatewayRes.text()}`;
+          console.error("Gateway fetch failed:", gatewayErrorText);
         }
       }
     } catch (err: any) {
       console.error("Sepay create error:", err);
+      gatewayErrorText = err.message || String(err);
       paymentId = null;
     }
 
     if (!paymentId) {
-      return NextResponse.json({ error: "UPSTREAM_ERROR", message: "Không tạo được giao dịch payment-service." }, { status: 502 });
+      return NextResponse.json({ 
+        error: "UPSTREAM_ERROR", 
+        message: "Không tạo được giao dịch payment-service.",
+        details: gatewayErrorText
+      }, { status: 502 });
     }
 
     // SePay detects payment code from transfer description (code). Keep it unique & guess-hard.

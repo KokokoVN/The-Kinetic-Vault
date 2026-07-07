@@ -10,7 +10,14 @@ export function getResolvedApiRoot(): string {
     return raw.replace(/\/+$/, "");
   }
   const prefix = raw.startsWith("/") ? raw : `/${raw}`;
-  const origin = (process.env.API_SERVER_ORIGIN ?? "http://localhost:8900").replace(/\/+$/, "");
+  let origin = (process.env.API_SERVER_ORIGIN || "").trim().replace(/\/+$/, "");
+  if (!origin) {
+    if (/^https?:\/\//i.test(raw)) {
+      origin = raw.replace(/\/api\/?$/, "");
+    } else {
+      origin = "http://127.0.0.1:8900";
+    }
+  }
   return `${origin}${prefix}`.replace(/\/+$/, "");
 }
 
