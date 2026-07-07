@@ -152,6 +152,15 @@ export async function POST(req: Request) {
 
     // Store pending transaction reference so return handler can validate it belongs to current user session.
     const jar = await cookies();
+    const accessToken = jar.get("accessToken")?.value?.trim();
+    const headers: Record<string, string> = { 
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
     const paymentBase = (process.env.PAYMENT_SERVICE_URL ?? "http://127.0.0.1:8814").trim().replace(/\/+$/, "");
     const apiRoot = getResolvedApiRoot();
     const paymentCreateBody = {
@@ -165,7 +174,7 @@ export async function POST(req: Request) {
       const createRes = await fetch(`${paymentBase}/create`, {
         method: "POST",
         cache: "no-store",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...headers },
         body: JSON.stringify(paymentCreateBody),
       });
       if (createRes.ok) {
@@ -177,7 +186,7 @@ export async function POST(req: Request) {
         const gatewayRes = await fetch(`${apiRoot}/payments/create`, {
           method: "POST",
           cache: "no-store",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(paymentCreateBody),
         });
         if (gatewayRes.ok) {

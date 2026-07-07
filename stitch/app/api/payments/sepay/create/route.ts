@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getResolvedApiRoot } from "@/app/api/cart/_shared";
 
 type CreateSepayRequest = {
@@ -40,6 +41,16 @@ export async function POST(req: Request) {
       method: "SEPAY",
     };
 
+    const jar = await cookies();
+    const accessToken = jar.get("accessToken")?.value?.trim();
+    const headers: Record<string, string> = { 
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
     let paymentId: number | null = null;
     try {
       const createRes = await fetch(`${paymentBase}/create`, {
@@ -60,10 +71,7 @@ export async function POST(req: Request) {
         const gatewayRes = await fetch(`${apiRoot}/payments/create`, {
           method: "POST",
           cache: "no-store",
-          headers: { 
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          },
+          headers,
           body: JSON.stringify(paymentCreateBody),
         });
         if (gatewayRes.ok) {
