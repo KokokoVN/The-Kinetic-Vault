@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const cancelUrl = `${siteOrigin}${normalizedCancelPath}`;
 
     // Use payment-service to create a Payment row; orderCode uses paymentId to keep uniqueness/int.
-    const paymentBase = (process.env.PAYMENT_SERVICE_URL ?? "http://localhost:8814").trim().replace(/\/+$/, "");
+    const paymentBase = (process.env.PAYMENT_SERVICE_URL ?? "http://127.0.0.1:8814").trim().replace(/\/+$/, "");
     const apiRoot = getResolvedApiRoot();
 
     const paymentCreateBody = {

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "INTERNAL", message: "Thiếu env: SEPAY_ACC_NUMBER / SEPAY_BANK" }, { status: 500 });
     }
 
-    const paymentBase = (process.env.PAYMENT_SERVICE_URL ?? "http://localhost:8814").trim().replace(/\/+$/, "");
+    const paymentBase = (process.env.PAYMENT_SERVICE_URL ?? "http://127.0.0.1:8814").trim().replace(/\/+$/, "");
     const apiRoot = getResolvedApiRoot();
 
     const paymentCreateBody = {
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
         const pid = Number(row?.id ?? 0);
         paymentId = Number.isFinite(pid) && pid > 0 ? Math.floor(pid) : null;
       } else {
+        console.error("Direct fetch failed:", createRes.status, await createRes.clone().text());
         const gatewayRes = await fetch(`${apiRoot}/payments/create`, {
           method: "POST",
           cache: "no-store",
@@ -63,9 +64,12 @@ export async function POST(req: Request) {
           const row = (await gatewayRes.json().catch(() => null)) as { id?: number | null } | null;
           const pid = Number(row?.id ?? 0);
           paymentId = Number.isFinite(pid) && pid > 0 ? Math.floor(pid) : null;
+        } else {
+          console.error("Gateway fetch failed:", gatewayRes.status, await gatewayRes.text());
         }
       }
-    } catch {
+    } catch (err: any) {
+      console.error("Sepay create error:", err);
       paymentId = null;
     }
 
