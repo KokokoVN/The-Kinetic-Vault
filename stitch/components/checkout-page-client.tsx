@@ -1125,6 +1125,7 @@ export function CheckoutPageClient() {
                 <img
                   src={sepayQr.qrImageUrl}
                   alt="SePay QR"
+                  referrerPolicy="no-referrer"
                   className="mx-auto w-full max-w-[280px] rounded-xl bg-white p-3 shadow-lg cursor-pointer transition hover:scale-105"
                   loading="lazy"
                   title="Click vào QR để giả lập thanh toán thành công (Dành cho Dev)"

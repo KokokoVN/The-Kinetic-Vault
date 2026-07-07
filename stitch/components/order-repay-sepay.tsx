@@ -128,7 +128,7 @@ export function OrderRepaySepay({
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mã thanh toán</p>
           <p className="mt-1 font-mono text-base font-black text-indigo-600 dark:text-indigo-400">{qr.code}</p>
-          <img src={qr.qrImageUrl} alt="SePay QR repay" className="mt-3 w-full max-w-[220px] rounded-lg bg-white p-2" />
+          <img src={qr.qrImageUrl} alt="SePay QR repay" referrerPolicy="no-referrer" className="mt-3 w-full max-w-[220px] rounded-lg bg-white p-2 shadow-sm" />
         </div>
       ) : null}
     </div>
