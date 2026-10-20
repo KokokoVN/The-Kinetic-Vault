@@ -43,6 +43,33 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartRedisRepository cartRedisRepository;
 
+    @Autowired(required = false)
+    private com.rainbowforest.cartservice.feignclient.ActivityLogFeignClient activityLogFeignClient;
+
+    private void sendCartActivityLog(String action, String cartId, Long productId, Long variantId, Integer quantity) {
+        if (activityLogFeignClient == null) return;
+        try {
+            Map<String, Object> after = new LinkedHashMap<>();
+            after.put("cartId", cartId);
+            after.put("productId", productId);
+            after.put("variantId", variantId);
+            after.put("quantity", quantity);
+            Map<String, Object> detail = new LinkedHashMap<>();
+            detail.put("resourceType", "CartItem");
+            detail.put("after", after);
+
+            Map<String, Object> req = new LinkedHashMap<>();
+            req.put("action", action);
+            req.put("resourceType", "CartItem");
+            req.put("resourceId", cartId + ":" + productId + (variantId != null ? ":" + variantId : ""));
+            req.put("httpMethod", "POST");
+            req.put("requestPath", "/cart/items");
+            req.put("performedBy", "user");
+            req.put("detailJson", new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(detail));
+            activityLogFeignClient.log(req);
+        } catch (Exception ignored) {}
+    }
+
     private List<com.rainbowforest.cartservice.domain.SaleProgram> getActiveSales() {
         try {
             return saleClient.getActivePrograms();
@@ -52,8 +79,12 @@ public class CartServiceImpl implements CartService {
     }
 
     private void applySaleToItem(Item item, BigDecimal originalVariantPrice) {
+        applySaleToItem(item, originalVariantPrice, getActiveSales());
+    }
+
+    private void applySaleToItem(Item item, BigDecimal originalVariantPrice, List<com.rainbowforest.cartservice.domain.SaleProgram> activeSales) {
         if (item.getProduct() == null) return;
-        List<com.rainbowforest.cartservice.domain.SaleProgram> activeSales = getActiveSales();
+        if (activeSales == null) activeSales = java.util.Collections.emptyList();
         BigDecimal basePrice = item.getProduct().getPrice();
         BigDecimal currentPrice = originalVariantPrice != null ? originalVariantPrice : basePrice;
 
@@ -148,6 +179,7 @@ public class CartServiceImpl implements CartService {
         }
         applySaleToItem(item, unitPriceOverride);
         cartRedisRepository.addItemToCart(cartId, item);
+        sendCartActivityLog("CART_ADD_ITEM", cartId, productId, variantId, quantity);
     }
 
     @Override
@@ -375,17 +407,50 @@ public class CartServiceImpl implements CartService {
     }
 
     private List<Item> enrichProductDetails(List<Item> items) {
+        if (items == null || items.isEmpty()) {
+            return items;
+        }
+
+        Set<Long> productIds = new HashSet<>();
+        for (Item item : items) {
+            if (item != null && item.getProductId() != null) {
+                productIds.add(item.getProductId());
+            }
+        }
+
+        Map<Long, Product> productMap = new LinkedHashMap<>();
+        if (!productIds.isEmpty()) {
+            try {
+                List<Product> batch = productClient.getProductsBatch(new ArrayList<>(productIds));
+                if (batch != null) {
+                    for (Product p : batch) {
+                        if (p != null && p.getId() != null) {
+                            productMap.put(p.getId(), p);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // individual fallback below
+            }
+        }
+
+        List<com.rainbowforest.cartservice.domain.SaleProgram> activeSales = getActiveSales();
+
         for (Item item : items) {
             if (item == null || item.getProductId() == null) {
                 continue;
             }
             BigDecimal unitPriceOverride = null;
-            try {
-                item.setProduct(productClient.getProductById(item.getProductId()));
-            } catch (Exception ignored) {
-                // Avoid stale product snapshot from Redis when product is hidden/deleted/not found.
-                item.setProduct(null);
+            Product p = productMap.get(item.getProductId());
+            if (p == null) {
+                try {
+                    p = productClient.getProductById(item.getProductId());
+                } catch (Exception ignored) {
+                    p = null;
+                }
             }
+            item.setProduct(p);
+
             Long vid = item.getVariantId();
             if (vid != null && vid > 0) {
                 try {
@@ -405,7 +470,7 @@ public class CartServiceImpl implements CartService {
             }
             
             if (item.getProduct() != null) {
-                applySaleToItem(item, unitPriceOverride);
+                applySaleToItem(item, unitPriceOverride, activeSales);
             }
         }
         return items;

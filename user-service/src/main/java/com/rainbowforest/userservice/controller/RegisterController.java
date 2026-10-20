@@ -5,6 +5,8 @@ import com.rainbowforest.userservice.activity.UserActivityLogSupport;
 import com.rainbowforest.userservice.entity.User;
 import com.rainbowforest.userservice.repository.UserRepository;
 import com.rainbowforest.userservice.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 @RestController
 public class RegisterController {
+    private static final Logger log = LoggerFactory.getLogger(RegisterController.class);
 
     @Autowired
     private UserService userService;
@@ -62,7 +65,7 @@ public class RegisterController {
         } catch (DataIntegrityViolationException dup) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi đăng ký người dùng: ", e);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -134,6 +137,20 @@ public class RegisterController {
         }
 
         String result = userService.resendPendingRegistrationOtp(identity);
+        if (result != null && result.startsWith("COOLDOWN_ACTIVE:")) {
+            int remaining = 30;
+            try {
+                remaining = Integer.parseInt(result.split(":")[1]);
+            } catch (Exception ignored) {
+            }
+            Map<String, Object> cooldownMap = new HashMap<>();
+            cooldownMap.put("ok", false);
+            cooldownMap.put("error", "COOLDOWN_ACTIVE");
+            cooldownMap.put("retryAfterSeconds", remaining);
+            cooldownMap.put("message", "Vui lòng chờ " + remaining + " giây trước khi gửi lại mã OTP.");
+            return new ResponseEntity<>(cooldownMap, HttpStatus.TOO_MANY_REQUESTS);
+        }
+
         String flow = "PENDING_REGISTRATION";
         if (result == null) {
             result = userService.resendActivationOtp(identity);

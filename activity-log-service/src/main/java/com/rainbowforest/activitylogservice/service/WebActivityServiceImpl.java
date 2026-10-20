@@ -77,6 +77,78 @@ public class WebActivityServiceImpl implements WebActivityService {
         return (int) Math.min(existing, Integer.MAX_VALUE);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<WebActivity> search(String action, String resourceType, String actorUserId, String q, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(Math.max(1, size), 200);
+        return webActivityRepository.search(action, resourceType, actorUserId, q, PageRequest.of(safePage, safeSize));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> stats() {
+        long totalCount = webActivityRepository.count();
+        List<WebActivity> recentList = webActivityRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 500));
+        
+        java.util.Map<String, Long> actionCounts = new java.util.HashMap<>();
+        java.util.Map<String, Long> resourceCounts = new java.util.HashMap<>();
+        
+        for (WebActivity log : recentList) {
+            if (log.getAction() != null) {
+                actionCounts.put(log.getAction(), actionCounts.getOrDefault(log.getAction(), 0L) + 1L);
+            }
+            if (log.getResourceType() != null) {
+                resourceCounts.put(log.getResourceType(), resourceCounts.getOrDefault(log.getResourceType(), 0L) + 1L);
+            }
+        }
+        
+        java.util.Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("totalLogs", totalCount);
+        out.put("actionDistribution", actionCounts);
+        out.put("resourceDistribution", resourceCounts);
+        return out;
+    }
+
+    @Override
+    public int purgeOlderThanDays(int days) {
+        int safeDays = Math.max(1, days);
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusDays(safeDays);
+        return webActivityRepository.deleteOlderThan(cutoff);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WebActivity> findByUser(String userId, int limit) {
+        if (userId == null || userId.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        int safeLimit = Math.min(Math.max(1, limit), 500);
+        return webActivityRepository.findAllByActorUserIdOrderByCreatedAtDesc(userId.trim(), PageRequest.of(0, safeLimit));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String exportCsv(int limit) {
+        List<WebActivity> logs = recent(limit);
+        StringBuilder sb = new StringBuilder();
+        sb.append("ID,CreatedAt,ActorUsername,ActorUserId,Action,ResourceType,ResourceId,HttpMethod,RequestPath,IpAddress,DetailJson\n");
+        for (WebActivity log : logs) {
+            sb.append(log.getId()).append(",")
+              .append("\"").append(log.getCreatedAt() != null ? log.getCreatedAt().toString() : "").append("\",")
+              .append("\"").append(log.getActorUsername() != null ? log.getActorUsername().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getActorUserId() != null ? log.getActorUserId().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getAction() != null ? log.getAction().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getResourceType() != null ? log.getResourceType().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getResourceId() != null ? log.getResourceId().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getHttpMethod() != null ? log.getHttpMethod().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getRequestPath() != null ? log.getRequestPath().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getIpAddress() != null ? log.getIpAddress().replace("\"", "\"\"") : "").append("\",")
+              .append("\"").append(log.getDetailJson() != null ? log.getDetailJson().replace("\"", "\"\"") : "").append("\"\n");
+        }
+        return sb.toString();
+    }
+
     private static String stripQuery(String requestPath) {
         String path = trimToNull(requestPath);
         if (path == null) {

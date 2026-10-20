@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
-@FeignClient(name = "telegram-service", url = "http://localhost:8092/")
+@FeignClient(name = "telegram-service", url = "${telegram.service.url:http://localhost:8092/}")
 public interface TelegramClient {
 
     @PostMapping("/internal/telegram/orders/notify-new")

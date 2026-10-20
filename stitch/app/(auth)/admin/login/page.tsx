@@ -101,59 +101,104 @@ export default async function AdminLoginPage({
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#0a0a0a] overflow-hidden text-white">
+    <div className="flex min-h-screen w-full bg-[#07090e] overflow-hidden text-zinc-100 relative">
+      {/* Background ambient glowing gradient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[650px] w-[650px] rounded-full bg-gradient-to-tr from-rose-600/20 via-red-600/10 to-transparent blur-[150px]" />
+        <div className="absolute top-1/3 -right-40 h-[700px] w-[700px] rounded-full bg-gradient-to-bl from-red-600/15 via-indigo-600/10 to-rose-500/15 blur-[160px]" />
+        <div className="absolute -bottom-40 left-1/3 h-[550px] w-[550px] rounded-full bg-rose-600/10 blur-[140px]" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] bg-repeat" style={{ backgroundSize: '40px' }} />
+      </div>
+
       {noticeMessage ? <FloatingNotice message={noticeMessage} variant={noticeVariant} /> : null}
       
-      {/* Cột trái: Form Đăng Nhập (Đảo bên so với User để tạo sự khác biệt) */}
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 xl:px-24 relative z-10">
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.05]">
-          <div className="absolute top-20 -left-40 h-[500px] w-[500px] rounded-full bg-red-600 blur-3xl" />
-        </div>
-
-        <div className="mx-auto w-full max-w-md relative z-10">
-          <div className="mb-12 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-red-600 to-red-900 text-white shadow-xl shadow-red-900/50">
+      {/* Cột trái: Form Đăng Nhập Quản Trị */}
+      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 xl:px-20 relative z-10">
+        <div className="mx-auto w-full max-w-md">
+          
+          {/* Logo Brand */}
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 via-red-600 to-indigo-700 text-white shadow-xl shadow-rose-500/30">
               <span className="material-symbols-outlined font-bold text-[28px]">admin_panel_settings</span>
             </div>
-            <span className="font-headline text-2xl font-black text-white tracking-tight">Vault Admin</span>
+            <div className="flex flex-col">
+              <span className="font-headline text-2xl font-black text-white tracking-tight">The Kinetic Vault</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-rose-400">Admin Command Center</span>
+            </div>
           </div>
 
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="mb-3 font-headline text-4xl font-extrabold tracking-tight text-white">Quản trị Hệ thống.</h1>
-            <p className="text-base text-gray-400 font-medium">Chỉ dành cho nhân sự có thẩm quyền truy cập.</p>
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest text-rose-400 mb-3 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+              Khu Vực Bảo Mật Cao
+            </div>
+            <h1 className="mb-2 font-headline text-4xl font-black tracking-tight text-white drop-shadow-md">
+              Đăng Nhập Quản Trị
+            </h1>
+            <p className="text-sm text-zinc-400 font-medium">Chỉ dành cho quản trị viên và nhân sự được cấp quyền.</p>
           </div>
 
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both bg-white text-black p-8 rounded-[2.5rem] shadow-2xl">
-            <LoginLiveForm action={loginAction} submitLabel="Đăng nhập Quản trị" rememberContext="admin" />
+          {/* Form Container Card - Cyber Obsidian Dark Glass */}
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both border border-white/10 bg-zinc-950/85 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl shadow-rose-950/40 text-zinc-100">
+            <LoginLiveForm action={loginAction} submitLabel="Đăng Nhập Quản Trị" rememberContext="admin" />
           </div>
 
           <div className="mt-8 text-center animate-in fade-in duration-700 delay-200 fill-mode-both">
-            <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 w-full py-4 text-sm font-bold text-gray-300 transition-all hover:bg-white/10 hover:text-white hover:border-white/20">
-              <span className="material-symbols-outlined text-[20px]">person</span>
-              Quay về khu vực Khách hàng
+            <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900/80 border border-white/10 w-full py-4 text-xs font-bold text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white hover:border-white/20 shadow-lg backdrop-blur-md">
+              <span className="material-symbols-outlined text-[18px]">person</span>
+              Quay về Trang Đăng nhập Khách hàng
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Cột phải: Hình ảnh Branding */}
-      <div className="relative hidden w-1/2 flex-col justify-end overflow-hidden bg-black lg:flex p-16 border-l border-white/5">
+      {/* Cột phải: Visual Branding Cyber Security */}
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[#0a0d14] lg:flex p-16 border-l border-white/10">
+        {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2564&auto=format&fit=crop"
             alt="Cyber Security"
-            className="h-full w-full object-cover opacity-40 transition-transform duration-1000 hover:scale-105"
+            className="h-full w-full object-cover opacity-25 mix-blend-luminosity transition-transform duration-1000 hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07090e] via-[#07090e]/80 to-transparent" />
         </div>
         
+        {/* Top Badges */}
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/80 px-4 py-2 text-xs font-bold text-zinc-300 backdrop-blur-xl">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            System Normal · Telemetry Active
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">v2.4.0 Obsidian</span>
+        </div>
+
+        {/* Bottom Hero Text */}
         <div className="relative z-10 max-w-xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <h2 className="mb-4 text-5xl font-light text-white leading-tight">
-            Absolute <span className="font-bold text-red-500">Control</span>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mb-6 backdrop-blur-md">
+            <span className="material-symbols-outlined text-[32px]">shield_lock</span>
+          </div>
+          <h2 className="mb-4 text-4xl sm:text-5xl font-black text-white leading-tight tracking-tight">
+            Absolute <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-red-500 to-indigo-400">Control</span> & Precision.
           </h2>
-          <p className="text-gray-400 text-lg font-medium leading-relaxed">
-            Hệ thống giám sát và quản lý dữ liệu toàn diện. Đảm bảo an toàn, bảo mật và hiệu suất tối đa.
+          <p className="text-zinc-400 text-base font-medium leading-relaxed mb-8">
+            Hệ thống quản trị đa dịch vụ microservices. Giám sát thời gian thực, quản lý kho hàng và đơn hàng toàn diện với tính bảo mật tối đa.
           </p>
+
+          <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
+            <div>
+              <p className="text-2xl font-black text-white">99.9%</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-1">Uptime Service</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-rose-400">2FA / OTP</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-1">Security Enabled</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black text-cyan-400">100ms</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mt-1">Latency API</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

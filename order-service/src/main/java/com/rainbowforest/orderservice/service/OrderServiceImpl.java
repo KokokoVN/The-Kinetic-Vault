@@ -88,8 +88,9 @@ public class OrderServiceImpl implements OrderService {
         if (paymentMethod != null && !paymentMethod.trim().isEmpty()) {
             row.setPaymentMethod(paymentMethod.trim().toUpperCase(Locale.ROOT));
         }
-        // Trạng thái xử lý đơn (CREATED / PAYMENT_EXPECTED / CONFIRMED / PROCESSING / …) chỉ đổi qua
-        // PATCH /orders/{id}/status (admin). Thanh toán thành công chỉ cập nhật payment_status.
+        if (normalizedPaymentStatus == PaymentStatus.PAID && OrderStatus.PAYMENT_EXPECTED.name().equalsIgnoreCase(row.getStatus())) {
+            row.setStatus(OrderStatus.PAID.name());
+        }
         return orderRepository.save(row);
     }
 
@@ -331,12 +332,12 @@ public class OrderServiceImpl implements OrderService {
                 ));
             }
             if (q != null && !q.trim().isEmpty()) {
-                String key = "%" + q.trim().toLowerCase() + "%";
+                String key = "%" + q.trim().toLowerCase(java.util.Locale.ROOT) + "%";
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("orderNumber")), key),
                         cb.like(cb.lower(root.get("mvd")), key),
                         cb.like(cb.lower(root.get("shippingAddress")), key),
-                        cb.like(cb.lower(root.get("userName")), Objects.requireNonNull(key))
+                        cb.like(cb.lower(root.get("userName")), key)
                 ));
             }
             return cb.and(predicates.toArray(new Predicate[0]));

@@ -1,8 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { unstable_rethrow } from "next/navigation";
 import { requestForgotPassword } from "@/lib/api";
 import { FloatingNotice } from "@/components/floating-notice";
+
+export const metadata: Metadata = {
+  title: "Khôi Phục Mật Khẩu",
+};
 
 export default async function ForgotPasswordPage({
   searchParams,
@@ -39,84 +44,95 @@ export default async function ForgotPasswordPage({
   const noticeVariant: "success" | "error" = sent ? "success" : "error";
 
   return (
-    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden relative">
+    <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans">
       {noticeMessage ? <FloatingNotice message={noticeMessage} variant={noticeVariant} /> : null}
-      
-      {/* Background Orbs */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] h-[800px] w-[800px] rounded-full bg-kinetic/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute top-[20%] -right-[10%] h-[600px] w-[600px] rounded-full bg-secondary/5 blur-[100px] animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }} />
-        <div className="absolute -bottom-[20%] left-[20%] h-[700px] w-[700px] rounded-full bg-blue-400/5 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+
+      {/* Background Animated Lights */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[20%] left-[20%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-cyan-600/25 to-blue-600/20 blur-[130px] animate-pulse" style={{ animationDuration: '7s' }} />
+        <div className="absolute -bottom-[20%] right-[10%] w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-indigo-600/25 to-purple-600/20 blur-[140px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
-      {/* Form Container */}
-      <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-12 relative z-10">
-        <div className="mx-auto w-full max-w-[560px]">
-          
-          {/* Logo Header */}
-          <div className="mb-12 flex flex-col items-center justify-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000">
-            <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30">
-              <span className="material-symbols-outlined font-bold text-[48px]">lock_reset</span>
-            </div>
-            <div className="text-center">
-              <span className="font-headline text-5xl font-black text-slate-900 dark:text-white tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
-              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400 mt-2 block">Khôi phục mật khẩu</span>
-            </div>
+      {/* Main Container Card */}
+      <div className="relative z-10 w-full max-w-[540px] rounded-[2.5rem] bg-slate-900/70 backdrop-blur-2xl border border-slate-800/80 p-8 sm:p-12 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+        
+        {/* Header Icon */}
+        <div className="mb-8 flex flex-col items-center justify-center text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-cyan-500/20 mb-5">
+            <span className="material-symbols-outlined text-[40px] font-black">lock_reset</span>
           </div>
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-cyan-400 block mb-1">Khôi Phục Mật Khẩu</span>
+          <h1 className="text-3xl font-black text-white tracking-tight">Quên Mật Khẩu?</h1>
+          <p className="mt-2 text-sm text-slate-400 max-w-sm leading-relaxed font-medium">
+            Nhập Username hoặc Email của bạn. Hệ thống sẽ kiểm tra và gửi đường dẫn khôi phục qua Gmail.
+          </p>
+        </div>
 
-          {/* Glass Card */}
-          <div className="relative rounded-[3rem] bg-white/70 dark:bg-slate-900/50 backdrop-blur-3xl border border-white dark:border-slate-800 p-10 sm:p-14 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-700">
-            <div className="mb-10 text-center">
-              <h1 className="mb-3 font-headline text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Quên mật khẩu</h1>
-              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                Nhập username/email/số điện thoại. Nếu tài khoản tồn tại, hệ thống sẽ gửi link đặt lại mật khẩu qua Gmail.
-              </p>
+        {/* Sent Success State */}
+        {sent ? (
+          <div className="rounded-2xl border border-emerald-800/60 bg-emerald-950/40 p-6 text-center space-y-4 animate-in fade-in zoom-in-95">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
+              <span className="material-symbols-outlined text-[32px]">mark_email_read</span>
             </div>
-
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both">
-              <form action={forgotAction} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 ml-2 block">Tài khoản cần khôi phục</label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <span className="material-symbols-outlined text-[20px] text-slate-400 dark:text-slate-500">account_circle</span>
-                    </div>
-                    <input
-                      name="identity"
-                      required
-                      placeholder="username / email / số điện thoại"
-                      className="w-full rounded-2xl border-2 border-slate-200/60 dark:border-slate-700/60 bg-white/50 dark:bg-slate-900/50 py-4 pl-12 pr-4 text-sm font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 transition-all focus:border-blue-500 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-blue-600 px-4 py-4 text-sm font-bold text-white shadow-xl shadow-slate-900/20 dark:shadow-blue-600/20 transition-all hover:scale-[1.02] hover:bg-slate-800 dark:hover:bg-blue-700 active:scale-[0.98]"
-                >
-                  <span className="material-symbols-outlined text-[18px]">send</span>
-                  Gửi email đặt lại mật khẩu
-                </button>
-              </form>
-            </div>
-
-            <div className="mt-10 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-200 fill-mode-both">
-               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
-               <span className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Hoặc</span>
-               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
-            </div>
-            
-            <div className="mt-8 flex flex-col gap-4 animate-in fade-in duration-700 delay-300 fill-mode-both">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
+            <h3 className="text-base font-bold text-white">Đã Gửi Yêu Cầu Khôi Phục</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Vui lòng kiểm tra hộp thư Gmail (bao gồm cả mục Spam/Thư rác). Nhấp vào liên kết trong email để tiến hành đặt mật khẩu mới.
+            </p>
+            <div className="pt-2">
+              <Link 
+                href="/login" 
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-5 py-2.5 text-xs font-bold text-white transition-all"
               >
-                <span className="material-symbols-outlined text-[24px]">arrow_back</span>
-                Quay lại đăng nhập
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                Quay lại trang Đăng nhập
               </Link>
             </div>
           </div>
+        ) : (
+          /* Form Request State */
+          <form action={forgotAction} className="space-y-5">
+            <div className="space-y-1.5">
+              <label htmlFor="identity" className="text-xs font-bold text-slate-300 uppercase tracking-wider block ml-1">
+                Tài Khoản Cần Khôi Phục
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                  <span className="material-symbols-outlined text-[20px]">account_circle</span>
+                </div>
+                <input
+                  id="identity"
+                  name="identity"
+                  required
+                  placeholder="Nhập Username, Email hoặc Số điện thoại"
+                  className="w-full rounded-2xl bg-slate-950/70 border border-slate-700/80 py-3.5 pl-11 pr-4 text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 transition-all"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 py-4 font-black text-sm text-white shadow-xl shadow-cyan-500/25 transition-all hover:scale-[1.01] hover:shadow-cyan-500/40 active:scale-[0.99] flex items-center justify-center gap-2"
+            >
+              <span className="uppercase tracking-wider">Gửi Email Khôi Phục</span>
+              <span className="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">
+                send
+              </span>
+            </button>
+          </form>
+        )}
+
+        {/* Footer Redirect Link */}
+        <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            Quay lại trang Đăng Nhập
+          </Link>
         </div>
+
       </div>
     </div>
   );

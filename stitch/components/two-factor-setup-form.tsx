@@ -22,6 +22,7 @@ export function TwoFactorSetupForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [copied, setCopied] = useState(false);
   const fetchCalled = useRef(false);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function TwoFactorSetupForm({
 
   const handleEnable = async () => {
     if (code.length < 6) {
-      setError("Vui lòng nhập đủ 6 số.");
+      setError("Vui lòng nhập đủ 6 chữ số.");
       return;
     }
     setLoading(true);
@@ -76,79 +77,131 @@ export function TwoFactorSetupForm({
     }
   };
 
+  const handleCopySecret = () => {
+    if (!secret) return;
+    navigator.clipboard.writeText(secret);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (success) {
     return (
-      <div className="flex flex-col items-center p-6 text-center">
-        <span className="material-symbols-outlined text-6xl text-emerald-500 mb-4">check_circle</span>
-        <h3 className="text-xl font-bold text-slate-900">{success}</h3>
+      <div className="flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 mb-4 border border-emerald-500/40">
+          <span className="material-symbols-outlined text-4xl">check_circle</span>
+        </div>
+        <h3 className="text-xl font-black text-white">{success}</h3>
+        <p className="text-xs text-zinc-400 mt-2">Cửa sổ sẽ tự động đóng sau giây lát...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-slate-900 mb-4">
-        {is2faEnabled ? "Tắt Xác thực 2 bước (2FA)" : "Bật Xác thực 2 bước (2FA)"}
-      </h3>
-      {error && <p className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-xl">{error}</p>}
+    <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl bg-red-950/40 border border-red-500/40 p-3.5 flex items-center gap-2.5 text-xs font-bold text-red-300">
+          <span className="material-symbols-outlined text-base">error</span>
+          <span>{error}</span>
+        </div>
+      )}
 
       {!is2faEnabled ? (
         <div className="space-y-6">
-          <p className="text-sm text-slate-600">
-            Sử dụng ứng dụng Google Authenticator hoặc Authy để quét mã QR bên dưới.
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            Mở ứng dụng <strong>Google Authenticator</strong> hoặc <strong>Authy</strong> trên điện thoại để quét mã QR bên dưới:
           </p>
+
           {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <span className="material-symbols-outlined animate-spin text-4xl text-cyan-400 mb-3">sync</span>
+              <p className="text-xs font-bold text-zinc-400">Đang khởi tạo mã QR 2FA...</p>
             </div>
           ) : qrCodeUri ? (
-            <div className="flex flex-col items-center space-y-4">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <QRCodeSVG value={qrCodeUri} size={200} />
+            <div className="flex flex-col items-center space-y-5">
+              {/* White card wrapper for high-contrast QR code scanning */}
+              <div className="p-4 rounded-2xl bg-white shadow-xl shadow-cyan-950/30 border-2 border-cyan-500/40">
+                <QRCodeSVG value={qrCodeUri} size={180} />
               </div>
-              <p className="text-xs font-mono text-slate-500 bg-slate-100 p-2 rounded-lg">
-                Mã bí mật: {secret}
-              </p>
-              <div className="w-full mt-4">
+
+              {secret && (
+                <div className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-700/80 bg-zinc-900/90 p-3">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Mã bí mật (Secret Key)</span>
+                    <p className="font-mono text-xs font-bold text-cyan-300 truncate">{secret}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopySecret}
+                    className="shrink-0 flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
+                  >
+                    <span className="material-symbols-outlined text-sm">{copied ? "done" : "content_copy"}</span>
+                    <span>{copied ? "Đã chép" : "Sao chép"}</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="w-full space-y-2 pt-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 block">
+                  Nhập mã 6 chữ số từ ứng dụng
+                </label>
                 <input
                   type="text"
-                  placeholder="Nhập 6 số từ ứng dụng..."
-                  className="w-full rounded-xl border-2 border-slate-200 p-3 text-center text-xl tracking-widest outline-none focus:border-blue-500 font-mono"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000 000"
+                  className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/90 py-3.5 px-4 text-center font-mono text-2xl font-black tracking-[0.3em] text-cyan-300 outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20"
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 />
               </div>
+
               <button
+                type="button"
                 onClick={handleEnable}
                 disabled={loading || code.length < 6}
-                className="w-full rounded-xl bg-blue-600 py-3 text-white font-bold hover:bg-blue-700 disabled:opacity-50"
+                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 via-teal-600 to-indigo-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-emerald-500/20 transition-all hover:from-emerald-400 hover:via-teal-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
               >
-                Xác nhận Bật 2FA
+                <span>{loading ? "Đang bật..." : "Xác nhận & Bật 2FA"}</span>
+                <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+                  shield
+                </span>
               </button>
             </div>
           ) : null}
         </div>
       ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">
-            Để tắt Xác thực 2 bước, vui lòng nhập mật khẩu hiện tại của bạn.
+        <div className="space-y-5">
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            Để tắt Bảo mật 2 lớp (2FA), vui lòng xác nhận bằng cách nhập <strong>mật khẩu hiện tại</strong> của tài khoản:
           </p>
-          <input
-            type="password"
-            placeholder="Mật khẩu hiện tại..."
-            className="w-full rounded-xl border-2 border-slate-200 p-3 outline-none focus:border-blue-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Mật khẩu hiện tại
+            </label>
+            <input
+              type="password"
+              placeholder="Nhập mật khẩu hiện tại..."
+              className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/90 px-4 py-3.5 text-sm text-zinc-100 outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
           <button
+            type="button"
             onClick={handleDisable}
             disabled={loading || !password}
-            className="w-full rounded-xl bg-red-600 py-3 text-white font-bold hover:bg-red-700 disabled:opacity-50"
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-red-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-rose-600/20 transition-all hover:from-rose-500 hover:to-red-600 disabled:opacity-50 disabled:shadow-none"
           >
-            Xác nhận Tắt 2FA
+            <span>{loading ? "Đang tắt..." : "Xác nhận Tắt 2FA"}</span>
+            <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+              no_encryption
+            </span>
           </button>
         </div>
       )}
     </div>
   );
 }
+

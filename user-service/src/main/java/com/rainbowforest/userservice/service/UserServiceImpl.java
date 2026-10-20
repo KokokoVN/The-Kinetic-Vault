@@ -54,6 +54,32 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private final RestTemplate restTemplate;
+
+    /**
+     * Thread pool dùng cho các tác vụ async (gửi email / activity log).
+     * Tránh tạo Thread mới mỗi lần (giảm overhead, tăng throughput).
+     */
+    private static final java.util.concurrent.ExecutorService asyncExecutor =
+            java.util.concurrent.Executors.newFixedThreadPool(
+                    Math.max(2, Runtime.getRuntime().availableProcessors()),
+                    r -> {
+                        Thread t = new Thread(r, "user-service-async");
+                        t.setDaemon(true);
+                        return t;
+                    });
+
+    public UserServiceImpl() {
+        // Configure RestTemplate - 5s connect, 10s read.
+        this.restTemplate = new RestTemplate();
+        this.restTemplate.setRequestFactory(
+                new org.springframework.http.client.SimpleClientHttpRequestFactory() {{
+                    setConnectTimeout(5000);
+                    setReadTimeout(10000);
+                }});
+    }
+
     @Autowired
     private UserRepository userRepository;
 
@@ -80,6 +106,16 @@ public class UserServiceImpl implements UserService {
 
     @Autowired(required = false)
     private ActivityLogPublisher activityLogPublisher;
+
+    private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
+
+    public static String generateSecureOtp(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(SECURE_RANDOM.nextInt(10));
+        }
+        return sb.toString();
+    }
 
     private final Map<Long, PendingEmailChange> pendingEmailChanges = new ConcurrentHashMap<>();
     private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
@@ -222,9 +258,11 @@ public class UserServiceImpl implements UserService {
         }
         PendingRegistration prev = pendingRegistrations.get(identity);
         if (prev != null && !prev.isExpired()) {
-            return null;
+            if (!prev.canResend(15)) {
+                return null;
+            }
         }
-        String otp = String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000));
+        String otp = generateSecureOtp(8);
         PendingRegistration pending = new PendingRegistration(userName, email, phone, rawPassword, otp, LocalDateTime.now().plusMinutes(5));
         pendingRegistrations.put(identity, pending);
         sendPendingRegistrationOtp(identity, otp, userName);
@@ -289,6 +327,11 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         if (!pending.otp.equals(otp.trim())) {
+            pending.incrementFailedAttempts();
+            if (pending.isMaxAttemptsExceeded()) {
+                pendingRegistrations.remove(key);
+                log.warn("Pending registration for identity={} removed due to exceeding max failed OTP attempts", key);
+            }
             return false;
         }
         User user = new User();
@@ -328,12 +371,16 @@ public class UserServiceImpl implements UserService {
             return null;
         }
 
+        if (!pending.canResend(30)) {
+            return "COOLDOWN_ACTIVE:" + pending.getRemainingCooldown(30);
+        }
+
         String recipient = pending.email != null ? pending.email : pending.phoneNumber;
-        String newOtp = String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000));
+        String newOtp = generateSecureOtp(8);
         pending.refreshOtp(newOtp, LocalDateTime.now().plusMinutes(5));
         pendingRegistrations.put(key, pending);
         sendPendingRegistrationOtp(recipient, newOtp, pending.userName);
-        log.info("Resent new registration OTP for identity={}", key);
+        log.info("Resent secure registration OTP for identity={}", key);
         return "OTP_SENT";
     }
 
@@ -651,7 +698,7 @@ public class UserServiceImpl implements UserService {
         if (existing.isPresent()) {
             UserLoginDeviceApprovalToken old = existing.get();
             if (old.getExpiresAt() != null && old.getExpiresAt().isAfter(LocalDateTime.now())) {
-                old.setOtpCode(String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000)));
+                old.setOtpCode(generateSecureOtp(8));
                 old.setDeviceLabel(deviceLabel != null ? deviceLabel.trim() : null);
                 old.setIpAddress(trimToNull(ipAddress));
                 old.setLocationLabel(trimToNull(location));
@@ -668,7 +715,7 @@ public class UserServiceImpl implements UserService {
         approvalToken.setUser(user);
         approvalToken.setDeviceFingerprint(fp);
         approvalToken.setDeviceLabel(deviceLabel != null ? deviceLabel.trim() : null);
-        approvalToken.setOtpCode(String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000)));
+        approvalToken.setOtpCode(generateSecureOtp(8));
         approvalToken.setIpAddress(trimToNull(ipAddress));
         approvalToken.setLocationLabel(trimToNull(location));
         approvalToken.setTimezoneLabel(trimToNull(timeZone));
@@ -768,7 +815,7 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         UserLoginDeviceApprovalToken token = existing.get();
-        token.setOtpCode(String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000)));
+        token.setOtpCode(generateSecureOtp(8));
         token.setToken(UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", ""));
         token.setExpiresAt(LocalDateTime.now().plusMinutes(Math.max(5, loginDeviceTokenExpireMinutes)));
         userLoginDeviceApprovalTokenRepository.save(token);
@@ -1046,7 +1093,7 @@ public class UserServiceImpl implements UserService {
             recipientEmail = newEmail;
         }
 
-        String otp = String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000));
+        String otp = generateSecureOtp(8);
         PendingEmailChange existing = pendingEmailChanges.get(userId);
         if (existing != null && !existing.isExpired() && !existing.canResendNow(false)) {
             boolean isTransitionToNewEmail = existing.newEmail == null && newEmail != null && !newEmail.isEmpty() && newEmail.contains("@") && !newEmail.equals(oldEmail);
@@ -1090,7 +1137,7 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         String oldEmail = pending.oldEmail;
-        String otp = String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000));
+        String otp = generateSecureOtp(8);
         PendingEmailChange next = new PendingEmailChange(
                 oldEmail,
                 pending.newEmail,
@@ -1334,16 +1381,16 @@ public class UserServiceImpl implements UserService {
                 + "</div>"
                 + "<p style=\"margin:0;font-size:13px;line-height:1.6;color:#64748b;text-align:center;\">Mã này chỉ có hiệu lực trong thời gian ngắn. Nếu không phải bạn, hãy bỏ qua email này.</p>";
         try {
-            RestTemplate restTemplate = new RestTemplate();
+            // Sử dụng Jackson để serialize JSON an toàn.
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("channel", "EMAIL");
+            payload.put("recipient", recipientEmail.trim().toLowerCase(java.util.Locale.ROOT));
+            payload.put("subject", "Ma OTP doi Gmail");
+            payload.put("body", htmlBody);
+            payload.put("html", true);
+            String json = objectMapper.writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf("application/json;charset=UTF-8"));
-            String json = "{"
-                    + "\"channel\":\"EMAIL\","
-                    + "\"recipient\":\"" + recipientEmail.trim().replace("\\", "\\\\").replace("\"", "\\\"") + "\","
-                    + "\"subject\":\"Ma OTP doi Gmail\","
-                    + "\"body\":\"" + htmlBody.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\","
-                    + "\"html\":true"
-                    + "}";
             restTemplate.postForEntity(sendUrl, new HttpEntity<String>(json, headers), String.class);
         } catch (Exception e) {
             log.warn("Failed to send OTP email to {}: {}", recipientEmail, String.valueOf(e.getMessage()));
@@ -1368,16 +1415,16 @@ public class UserServiceImpl implements UserService {
                 + "</div>"
                 + "<p style=\"margin:0;font-size:13px;line-height:1.6;color:#ef4444;\">Nếu bạn không thực hiện thay đổi này, vui lòng liên hệ admin và đổi mật khẩu ngay lập tức!</p>";
         try {
-            RestTemplate restTemplate = new RestTemplate();
+            // Dùng Jackson cho JSON an toàn (tránh escape sai gây JSON injection).
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("channel", "EMAIL");
+            payload.put("recipient", oldEmail.trim().toLowerCase(java.util.Locale.ROOT));
+            payload.put("subject", "Thong bao thay doi Gmail");
+            payload.put("body", htmlBody);
+            payload.put("html", true);
+            String json = objectMapper.writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf("application/json;charset=UTF-8"));
-            String json = "{"
-                    + "\"channel\":\"EMAIL\","
-                    + "\"recipient\":\"" + oldEmail.trim().replace("\\", "\\\\").replace("\"", "\\\"") + "\","
-                    + "\"subject\":\"Thong bao thay doi Gmail\","
-                    + "\"body\":\"" + htmlBody.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\","
-                    + "\"html\":true"
-                    + "}";
             restTemplate.postForEntity(sendUrl, new HttpEntity<String>(json, headers), String.class);
         } catch (Exception e) {
             log.warn("Failed to send email-changed notice to {}: {}", oldEmail, String.valueOf(e.getMessage()));
@@ -1403,16 +1450,16 @@ public class UserServiceImpl implements UserService {
                 + "</div>"
                 + "<p style=\"margin:0;font-size:13px;line-height:1.6;color:#ef4444;\">Nếu bạn không thực hiện thay đổi này, tài khoản của bạn có thể đang gặp rủi ro. Vui lòng liên hệ hỗ trợ ngay lập tức!</p>";
         try {
-            RestTemplate restTemplate = new RestTemplate();
+            // Jackson cho JSON an toàn.
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("channel", "EMAIL");
+            payload.put("recipient", recipient);
+            payload.put("subject", "Thong bao thay doi mat khau");
+            payload.put("body", htmlBody);
+            payload.put("html", true);
+            String json = objectMapper.writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf("application/json;charset=UTF-8"));
-            String json = "{"
-                    + "\"channel\":\"EMAIL\"," 
-                    + "\"recipient\":\"" + recipient.replace("\\", "\\\\").replace("\"", "\\\"") + "\"," 
-                    + "\"subject\":\"Thong bao thay doi mat khau\"," 
-                    + "\"body\":\"" + htmlBody.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\"," 
-                    + "\"html\":true" 
-                    + "}";
             restTemplate.postForEntity(sendUrl, new HttpEntity<String>(json, headers), String.class);
         } catch (Exception e) {
             log.warn("Failed to send password-changed notice to {}: {}", recipient, String.valueOf(e.getMessage()));
@@ -1427,6 +1474,8 @@ public class UserServiceImpl implements UserService {
         private final String rawPassword;
         private String otp;
         private LocalDateTime expiresAt;
+        private LocalDateTime lastSentAt;
+        private int failedAttempts;
 
         private PendingRegistration(String userName, String email, String phoneNumber, String rawPassword, String otp, LocalDateTime expiresAt) {
             this.userName = userName;
@@ -1435,15 +1484,37 @@ public class UserServiceImpl implements UserService {
             this.rawPassword = rawPassword;
             this.otp = otp;
             this.expiresAt = expiresAt;
+            this.lastSentAt = LocalDateTime.now();
+            this.failedAttempts = 0;
         }
 
         private void refreshOtp(String otp, LocalDateTime expiresAt) {
             this.otp = otp;
             this.expiresAt = expiresAt;
+            this.lastSentAt = LocalDateTime.now();
+            this.failedAttempts = 0;
         }
 
         private boolean isExpired() {
             return expiresAt == null || expiresAt.isBefore(LocalDateTime.now());
+        }
+
+        private boolean canResend(int cooldownSeconds) {
+            return lastSentAt == null || lastSentAt.plusSeconds(cooldownSeconds).isBefore(LocalDateTime.now());
+        }
+
+        private int getRemainingCooldown(int cooldownSeconds) {
+            if (lastSentAt == null) return 0;
+            long elapsed = java.time.Duration.between(lastSentAt, LocalDateTime.now()).getSeconds();
+            return (int) Math.max(0, cooldownSeconds - elapsed);
+        }
+
+        private void incrementFailedAttempts() {
+            this.failedAttempts++;
+        }
+
+        private boolean isMaxAttemptsExceeded() {
+            return this.failedAttempts >= 5;
         }
     }
 
@@ -1609,6 +1680,37 @@ public class UserServiceImpl implements UserService {
         userPasswordResetTokenRepository.deleteAll(expiredTokens);
     }
 
+    /**
+     * Cleanup các pending OTP/registration/emailChange trong memory map để tránh leak.
+     * Map này chỉ dùng cho short-lived state (OTP 5 phút), nên cleanup tương đối thường xuyên.
+     */
+    @Scheduled(
+            fixedDelayString = "${app.pending-cleanup.interval-ms:120000}",
+            initialDelayString = "${app.pending-cleanup.initial-delay-ms:60000}"
+    )
+    public void cleanupExpiredPendingState() {
+        LocalDateTime now = LocalDateTime.now();
+        // pendingRegistrations - expire 5 phút
+        int beforeReg = pendingRegistrations.size();
+        pendingRegistrations.entrySet().removeIf(e -> {
+            PendingRegistration p = e.getValue();
+            return p == null || p.expiresAt == null || p.expiresAt.isBefore(now);
+        });
+        // pendingEmailChanges - expire 10 phút (mặc định)
+        int beforeEmail = pendingEmailChanges.size();
+        pendingEmailChanges.entrySet().removeIf(e -> {
+            PendingEmailChange p = e.getValue();
+            return p == null || p.expiresAt == null || p.expiresAt.isBefore(now);
+        });
+        if (beforeReg > pendingRegistrations.size() || beforeEmail > pendingEmailChanges.size()) {
+            log.info("Pending state cleanup: removedReg={}, removedEmail={}, remainingReg={}, remainingEmail={}",
+                    beforeReg - pendingRegistrations.size(),
+                    beforeEmail - pendingEmailChanges.size(),
+                    pendingRegistrations.size(),
+                    pendingEmailChanges.size());
+        }
+    }
+
     private void createActivationTokenAndNotify(User user) {
         if (user == null) {
             return;
@@ -1617,7 +1719,7 @@ public class UserServiceImpl implements UserService {
         if (recipient == null || recipient.trim().isEmpty()) {
             return;
         }
-        String otp = String.format("%08d", ThreadLocalRandom.current().nextInt(0, 100_000_000));
+        String otp = generateSecureOtp(8);
         String token = UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
         UserActivationToken activationToken = new UserActivationToken();
         activationToken.setUser(user);
@@ -1732,20 +1834,17 @@ public class UserServiceImpl implements UserService {
         if (sendUrl.isEmpty() || recipient == null || recipient.trim().isEmpty()) {
             return;
         }
+        // Sử dụng Jackson để serialize JSON (chống JSON injection / XSS).
         try {
-            RestTemplate restTemplate = new RestTemplate();
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("channel", channel);
+            payload.put("recipient", recipient.trim());
+            payload.put("subject", subject != null ? subject : "");
+            payload.put("body", body != null ? body : "");
+            payload.put("html", html);
+            String json = objectMapper.writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf("application/json;charset=UTF-8"));
-            String escapedBody = String.valueOf(body).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-            String escapedSubject = String.valueOf(subject).replace("\\", "\\\\").replace("\"", "\\\"");
-            String escapedRecipient = recipient.trim().replace("\\", "\\\\").replace("\"", "\\\"");
-            String json = "{"
-                    + "\"channel\":\"" + String.valueOf(channel).replace("\"", "") + "\","
-                    + "\"recipient\":\"" + escapedRecipient + "\","
-                    + "\"subject\":\"" + escapedSubject + "\","
-                    + "\"body\":\"" + escapedBody + "\","
-                    + "\"html\":" + (html ? "true" : "false")
-                    + "}";
             restTemplate.postForEntity(sendUrl, new HttpEntity<String>(json, headers), String.class);
         } catch (Exception e) {
             log.warn("Failed to send {} notification to {}: {}", channel, recipient, String.valueOf(e.getMessage()));

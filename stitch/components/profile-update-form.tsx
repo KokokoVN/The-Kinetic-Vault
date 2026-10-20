@@ -87,54 +87,69 @@ export function ProfileUpdateForm({
   }
 
   return (
-    <form onSubmit={submitAction} className="space-y-5 rounded-3xl border border-outline-variant/10 bg-white p-6 shadow-sm sm:p-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Update profile</p>
-          <h2 className="mt-1 text-xl font-black text-blue-950">Cập nhật thông tin</h2>
-        </div>
-        <span className="material-symbols-outlined text-3xl text-blue-600">edit</span>
+    <form onSubmit={submitAction} className="space-y-6">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field name="firstName" label="Tên" value={form.firstName} onChange={(v) => onChange("firstName", v)} onBlur={() => onBlur("firstName")} error={errors.firstName} placeholder="Nhập tên..." />
+        <Field name="lastName" label="Họ" value={form.lastName} onChange={(v) => onChange("lastName", v)} onBlur={() => onBlur("lastName")} error={errors.lastName} placeholder="Nhập họ..." />
       </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field name="firstName" label="Tên" value={form.firstName} onChange={(v) => onChange("firstName", v)} onBlur={() => onBlur("firstName")} error={errors.firstName} />
-        <Field name="lastName" label="Họ" value={form.lastName} onChange={(v) => onChange("lastName", v)} onBlur={() => onBlur("lastName")} error={errors.lastName} />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field name="phoneNumber" label="Số điện thoại" value={form.phoneNumber} onChange={(v) => onChange("phoneNumber", v)} onBlur={() => onBlur("phoneNumber")} error={errors.phoneNumber} />
+      
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field name="phoneNumber" label="Số điện thoại" value={form.phoneNumber} onChange={(v) => onChange("phoneNumber", v)} onBlur={() => onBlur("phoneNumber")} error={errors.phoneNumber} placeholder="0901234567" />
         <Field name="birthDate" label="Ngày sinh" value={form.birthDate} onChange={(v) => onChange("birthDate", v)} onBlur={() => onBlur("birthDate")} type="date" error={errors.birthDate} />
       </div>
+
       <div>
-        <label className="mb-2 block text-sm font-bold text-blue-900" htmlFor="gender">Giới tính</label>
-        <select id="gender" name="gender" value={form.gender} onChange={(e) => onChange("gender", e.target.value)} className="w-full rounded-2xl border border-outline-variant/20 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20">
-          <option value="">—</option>
-          <option value="male">Nam</option>
-          <option value="female">Nữ</option>
-          <option value="other">Khác</option>
+        <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-300" htmlFor="gender">Giới tính</label>
+        <select
+          id="gender"
+          name="gender"
+          value={form.gender}
+          onChange={(e) => onChange("gender", e.target.value)}
+          className="w-full rounded-xl border border-zinc-700/80 bg-zinc-900/90 px-4 py-3 text-sm text-zinc-100 outline-none transition-all focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+        >
+          <option value="" className="bg-zinc-900 text-zinc-400">— Chọn giới tính —</option>
+          <option value="male" className="bg-zinc-900 text-white">Nam</option>
+          <option value="female" className="bg-zinc-900 text-white">Nữ</option>
+          <option value="other" className="bg-zinc-900 text-white">Khác</option>
         </select>
       </div>
 
-      <button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-900/10 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60" disabled={!isValid}>
-        Lưu thay đổi
-      </button>
+      <div className="pt-3">
+        <button
+          type="submit"
+          disabled={!isValid}
+          className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
+        >
+          <span>Lưu thông tin thay đổi</span>
+          <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+            save
+          </span>
+        </button>
+      </div>
     </form>
   );
 }
 
-function Field({ name, label, value, onChange, onBlur, type = "text", error }: { name: string; label: string; value: string; onChange: (value: string) => void; onBlur: () => void; type?: string; error?: string }) {
+function Field({ name, label, value, onChange, onBlur, type = "text", error, placeholder }: { name: string; label: string; value: string; onChange: (value: string) => void; onBlur: () => void; type?: string; error?: string; placeholder?: string }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-blue-900" htmlFor={name}>{label}</label>
+      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-300" htmlFor={name}>{label}</label>
       <input
         id={name}
         name={name}
         type={type}
         value={value}
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none focus:ring-2 ${error ? "border-rose-400 bg-rose-50 focus:border-rose-500 focus:ring-rose-200" : "border-outline-variant/20 bg-slate-50 focus:border-primary focus:bg-white focus:ring-primary/20"}`}
+        className={`w-full rounded-xl border px-4 py-3 text-sm text-zinc-100 outline-none transition-all shadow-inner ${
+          error
+            ? "border-red-500/80 bg-red-950/20 text-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
+            : "border-zinc-700/80 bg-zinc-900/90 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+        }`}
       />
-      {error ? <p className="mt-1 text-xs font-medium text-rose-600">{error}</p> : null}
+      {error ? <p className="mt-1.5 text-xs font-semibold text-red-400 flex items-center gap-1"><span className="material-symbols-outlined text-sm">error</span>{error}</p> : null}
     </div>
   );
 }
+

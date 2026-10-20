@@ -55,7 +55,9 @@ public class User extends AuditableEntity {
     @Column(name = "is_2fa_enabled")
     private Boolean is2faEnabled = false;
 
-    @Column(name = "totp_secret", length = 100)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @javax.persistence.Convert(converter = com.rainbowforest.userservice.security.EncryptedStringConverter.class)
+    @Column(name = "totp_secret", length = 255)
     private String totpSecret;
 
     @Column(name = "total_spent", precision = 19, scale = 2, nullable = false)

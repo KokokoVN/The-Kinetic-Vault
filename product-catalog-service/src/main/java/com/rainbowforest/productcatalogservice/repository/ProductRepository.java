@@ -76,22 +76,32 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.categoryEntity LEFT JOIN FETCH p.images WHERE p.id = :id")
     Optional<Product> findByIdAdminFetched(@Param("id") Long id);
 
+    /** Lấy nhiều sản phẩm theo danh sách ID (kể cả ẩn / đã xóa mềm) — dùng cho batch Feign calls giữa các microservice. */
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.categoryEntity LEFT JOIN FETCH p.images WHERE p.id IN :ids")
+    List<Product> findByIdsAdminFetched(@Param("ids") java.util.Collection<Long> ids);
+
     /**
      * Sản phẩm gắn {@code category_id} trùng danh mục.
      */
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id")
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id AND p.deletedAt IS NULL")
     long countLinkedToCategory(@Param("id") Long id);
 
     /**
      * Danh sách sản phẩm gắn {@code category_id} (cùng logic {@link #countLinkedToCategory}).
      */
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.categoryEntity LEFT JOIN FETCH p.images WHERE "
-            + "p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id")
+            + "p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id AND p.deletedAt IS NULL")
     List<Product> findAllLinkedToCategory(@Param("id") Long id);
 
     @Modifying
     @Query("UPDATE Product p SET p.hidden = :hidden WHERE p.categoryEntity IS NOT NULL AND p.categoryEntity.id = :id")
     int updateHiddenByCategory(@Param("id") Long id, @Param("hidden") Boolean hidden);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.brand IS NOT NULL AND p.brand.id = :id AND p.deletedAt IS NULL")
+    long countLinkedToBrand(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.categoryEntity LEFT JOIN FETCH p.images WHERE p.brand IS NOT NULL AND p.brand.id = :id AND p.deletedAt IS NULL")
+    List<Product> findAllLinkedToBrand(@Param("id") Long id);
 
     @Modifying
     @Query("UPDATE Product p SET p.brand = null WHERE p.brand IS NOT NULL AND p.brand.id = :id")

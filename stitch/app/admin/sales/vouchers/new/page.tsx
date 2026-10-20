@@ -13,15 +13,15 @@ export default async function NewVoucherPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/sales/vouchers"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-sm border border-white/10 backdrop-blur-xl transition-transform hover:scale-105 hover:bg-white/5 backdrop-blur-xl text-slate-200 dark:hover:bg-slate-800"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 shadow-sm backdrop-blur-md transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
         >
-          <span className="material-symbols-outlined text-slate-400">arrow_back</span>
+          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </Link>
         <div>
-          <h1 className="font-headline text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-indigo-700 dark:from-purple-400 dark:to-indigo-400">
+          <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             Thêm Voucher mới
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-zinc-400">
             Khởi tạo mã giảm giá mới và cấu hình điều kiện sử dụng.
           </p>
         </div>

@@ -15,4 +15,14 @@ public interface WebActivityService {
     List<WebActivity> recent(int limit);
 
     int deleteByIds(List<Long> ids);
+
+    org.springframework.data.domain.Page<WebActivity> search(String action, String resourceType, String actorUserId, String q, int page, int size);
+
+    java.util.Map<String, Object> stats();
+
+    int purgeOlderThanDays(int days);
+
+    List<WebActivity> findByUser(String userId, int limit);
+
+    String exportCsv(int limit);
 }

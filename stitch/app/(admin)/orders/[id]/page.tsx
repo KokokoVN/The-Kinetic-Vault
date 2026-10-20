@@ -13,6 +13,7 @@ import {
 } from "@/lib/order-status";
 import { KineticSelect } from "@/components/kinetic-select";
 import { OrderInvoiceButton } from "@/components/order-invoice-button";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,15 @@ function asDateOnlyVi(raw?: string | number[] | null): string {
     return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
   }
   return "—";
+}
+
+function resolveOrderProductImage(raw?: string | null): string | null {
+  const v = String(raw ?? "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v) || v.startsWith("data:")) return v;
+  const origin = (process.env.API_SERVER_ORIGIN ?? "http://localhost:8900").replace(/\/+$/, "");
+  if (v.startsWith("/")) return `${origin}${v}`;
+  return `${origin}/api/catalog/admin/products/images/file/${encodeURIComponent(v)}`;
 }
 
 // VIP Pro visual stepper steps
@@ -109,30 +119,37 @@ export default async function AdminOrderDetailPage({
   }
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-        <Link href="/admin/orders" className="transition-colors hover:text-purple-600">Đơn hàng</Link>
+        <Link href="/admin/orders" className="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Đơn hàng</Link>
         <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-        <span className="text-purple-600">{order.orderNumber ?? `#${order.id}`}</span>
+        <span className="text-indigo-600 dark:text-indigo-400">{order.orderNumber ?? `#${order.id}`}</span>
       </nav>
 
-      {/* VIP PRO HEADER */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 p-8 shadow-2xl shadow-purple-900/40">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
+      {/* FLAGSHIP LUXURY HEADER */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-violet-500/10 dark:bg-violet-600/20 blur-[100px]" />
+        </div>
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
-          <div className="text-white">
-            <h1 className="font-headline text-3xl font-black tracking-tight sm:text-4xl" style={{ textShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 dark:border-indigo-500/30 bg-indigo-50/80 dark:bg-indigo-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300 shadow-sm">
+              <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+              Mã đơn: {order.orderNumber ?? `#${order.id}`}
+            </div>
+            <h1 className="mt-4 font-headline text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
               Chi tiết Đơn hàng
             </h1>
-            <p className="mt-2 flex items-center gap-2 text-sm text-purple-200">
-              <span className="material-symbols-outlined text-[18px]">receipt</span>
-              Mã đơn: <strong className="font-mono text-fuchsia-300">{order.orderNumber ?? `#${order.id}`}</strong>
+            <p className="mt-2.5 flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+              <span className="material-symbols-outlined text-[18px]">calendar_today</span>
+              Ngày đặt: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{asDateOnlyVi(order.createdAt)}</strong>
             </p>
           </div>
-          <div className="flex flex-col items-end gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 backdrop-blur-md">
+          <div className="flex flex-col items-end gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-6 py-4 shadow-sm backdrop-blur-md">
             <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-200">Tổng giá trị</p>
-              <p className="font-headline text-2xl font-black text-white">{asMoneyVnd(order.total)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Tổng giá trị</p>
+              <p className="font-headline text-2xl font-black text-slate-900 dark:text-white">{asMoneyVnd(order.total)}</p>
             </div>
             <OrderInvoiceButton orderId={order.id!} />
           </div>
@@ -247,9 +264,22 @@ export default async function AdminOrderDetailPage({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 p-5 shadow-lg shadow-indigo-900/5 backdrop-blur-md">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Mã Vận Đơn (MVD)</p>
-              <p className="mt-2 font-mono text-lg font-bold text-indigo-700">{order.mvd?.trim() || "—"}</p>
+            <div className="rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 p-5 shadow-lg shadow-indigo-900/5 backdrop-blur-md flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Mã Vận Đơn (MVD)</p>
+                <p className="mt-2 font-mono text-lg font-bold text-indigo-700">{order.mvd?.trim() || "—"}</p>
+              </div>
+              {order.mvd?.trim() && (
+                <Link
+                  href={`/tracking?mvd=${encodeURIComponent(order.mvd.trim())}&phone=${encodeURIComponent(order.phoneLast4?.trim() ?? "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 px-3 py-1.5 text-xs font-bold text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40 hover:scale-105 transition-transform shrink-0"
+                >
+                  <span>Theo dõi</span>
+                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                </Link>
+              )}
             </div>
             <div className="rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 p-5 shadow-lg shadow-indigo-900/5 backdrop-blur-md">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">4 Số Cuối SĐT</p>
@@ -274,13 +304,52 @@ export default async function AdminOrderDetailPage({
                 {items.map((it, idx) => (
                   <tr key={`${it.id ?? idx}`} className="transition-colors hover:bg-purple-50/30">
                     <td className="px-6 py-5">
-                      <p className="font-semibold text-slate-900 dark:text-white">{it.productNameSnapshot || it.product?.productName || "—"}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{it.productSkuSnapshot || it.product?.sku || "—"}</p>
-                      {it.variantLabel?.trim() && (
-                        <p className="mt-2 inline-flex rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-800">
-                          {it.variantLabel}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-4">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
+                          {(() => {
+                            const imgUrl = resolveOrderProductImage(it.productImageSnapshot || it.product?.primaryImageUrl);
+                            if (imgUrl) {
+                              // eslint-disable-next-line @next/next/no-img-element
+                              return <img src={imgUrl} alt="Product" className="h-full w-full object-cover" />;
+                            }
+                            return (
+                              <div className="flex h-full w-full items-center justify-center text-slate-400">
+                                <span className="material-symbols-outlined text-xl">inventory_2</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 dark:text-white truncate">{it.productNameSnapshot || it.product?.productName || "—"}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{it.productSkuSnapshot || it.product?.sku || "—"}</p>
+                          {(() => {
+                            const tiers = parseLabelToTiers(it.variantLabel);
+                            if (tiers.length > 0) {
+                              return (
+                                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                  {tiers.map((t, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1 rounded bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 text-xs text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40"
+                                    >
+                                      <span className="text-purple-500/80 font-medium">{t.name}:</span>
+                                      <span className="font-semibold text-purple-900 dark:text-purple-200">{t.value}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            if (it.variantLabel?.trim()) {
+                              return (
+                                <p className="mt-2 inline-flex rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-800">
+                                  {it.variantLabel}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-5 text-center font-bold text-slate-900 dark:text-white">{Number(it.quantity ?? 0).toLocaleString("vi-VN")}</td>
                     <td className="px-6 py-5 text-right font-headline text-base font-black text-indigo-600 dark:text-indigo-400">{asMoneyVnd(it.subTotal)}</td>

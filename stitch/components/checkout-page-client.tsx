@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { listActiveVouchers, type Voucher } from "@/lib/sale-api";
 import { StatusToast } from "@/components/status-toast";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 type SelectedItem = {
   productId: number;
@@ -628,39 +629,92 @@ export function CheckoutPageClient() {
 
   
   return (
-    <div className="bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-white font-body selection:bg-indigo-200 dark:selection:bg-indigo-900 min-h-screen">
-      {/* HEADER */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-40">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-4 flex items-center justify-between">
-          <h1 className="font-headline text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Thanh toán an toàn</h1>
-          <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">lock</span> Bảo mật 100%</p>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-slate-900 dark:text-white font-body selection:bg-indigo-500/20">
+      {/* Checkout Progress Stepper & Header */}
+      <div className="mb-8">
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <a href="/" className="hover:text-indigo-600 dark:hover:text-cyan-400 transition-colors">Trang chủ</a>
+          <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          <a href="/cart" className="hover:text-indigo-600 dark:hover:text-cyan-400 transition-colors">Giỏ hàng</a>
+          <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span className="text-slate-900 dark:text-white font-bold">Thanh toán</span>
+        </nav>
+
+        {/* Stepper Card */}
+        <div className="rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white/80 dark:bg-[#0c1017]/80 p-5 sm:p-6 backdrop-blur-xl shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-headline text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 bg-clip-text text-transparent">
+                Xác nhận &amp; Thanh toán
+              </h1>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Kiểm tra thông tin người nhận và lựa chọn phương thức thanh toán an toàn
+              </p>
+            </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="material-symbols-outlined text-[16px]">verified_user</span>
+              Bảo mật mã hóa 100%
+            </div>
+          </div>
+
+          {/* 3 Steps */}
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4 border-t border-slate-100 dark:border-white/[0.06] pt-5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-xs border border-emerald-500/30">
+                <span className="material-symbols-outlined text-sm font-black">check</span>
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Bước 1</p>
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Giỏ hàng</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-black text-xs shadow-md shadow-indigo-500/30">
+                2
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-[10px] uppercase font-bold text-indigo-600 dark:text-cyan-400">Bước 2</p>
+                <p className="text-xs font-black text-slate-900 dark:text-white">Thanh toán</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 opacity-50">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 font-bold text-xs border border-slate-200 dark:border-white/10">
+                3
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Bước 3</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hoàn tất</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <main className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8 md:py-12">
-        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-10 lg:items-start">
+      <div className="w-full">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
           
           {/* CỘT TRÁI (MAIN) */}
           <div className="lg:col-span-8 space-y-6">
             
             {/* 1. SẢN PHẨM */}
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-              <div className="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/20 p-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1017]/90 shadow-sm backdrop-blur-xl overflow-hidden">
+              <div className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                   <span className="material-symbols-outlined font-bold">shopping_bag</span>
                 </div>
                 <div>
-                  <h2 className="font-headline text-lg font-bold">Sản phẩm trong đơn hàng</h2>
-                  <p className="text-xs font-medium text-slate-500">{totalQty.toLocaleString("vi-VN")} sản phẩm</p>
+                  <h2 className="font-headline text-base sm:text-lg font-bold">Sản phẩm trong đơn hàng</h2>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{totalQty.toLocaleString("vi-VN")} sản phẩm được chọn</p>
                 </div>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-3">
                 {computedItems.length === 0 ? (
-                  <p className="text-sm font-medium text-slate-500 text-center py-4">Chưa có sản phẩm được chọn từ giỏ hàng.</p>
+                  <p className="text-sm font-medium text-slate-500 text-center py-6">Chưa có sản phẩm được chọn từ giỏ hàng.</p>
                 ) : (
                   computedItems.map((it, idx) => (
-                    <div key={`${it.productId}:${it.variantId ?? ""}:${idx}`} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
-                      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white">
+                    <div key={`${it.productId}:${it.variantId ?? ""}:${idx}`} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors border border-transparent hover:border-slate-200/60 dark:hover:border-white/[0.06]">
+                      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
                         {resolveCartImage(it.product?.primaryImageUrl) ? (
                           <img
                             className="h-full w-full object-cover"
@@ -673,9 +727,33 @@ export function CheckoutPageClient() {
                       </div>
                       <div className="min-w-0 flex-grow">
                         <p className="truncate text-base font-bold text-slate-900 dark:text-white">{it.product?.productName ?? `Sản phẩm #${it.productId}`}</p>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{it.variantLabel ?? it.product?.sku ?? "—"}</p>
+                        {(() => {
+                          const tiers = parseLabelToTiers(it.variantLabel);
+                          if (tiers.length > 0) {
+                            return (
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                {tiers.map((t, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10"
+                                  >
+                                    <span className="text-slate-400 dark:text-slate-500 font-medium">{t.name}:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100">{t.value}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          }
+                          if (it.variantLabel) {
+                            return <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">{it.variantLabel}</p>;
+                          }
+                          if (it.product?.sku) {
+                            return <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 font-mono">SKU: {it.product.sku}</p>;
+                          }
+                          return null;
+                        })()}
                         <div className="mt-2 flex items-center justify-between">
-                          <span className="inline-flex h-6 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+                          <span className="inline-flex h-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 px-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/5">
                             SL: {it.quantity}
                           </span>
                           <div className="text-right">
@@ -693,15 +771,15 @@ export function CheckoutPageClient() {
             </section>
 
             {/* 2. ĐỊA CHỈ */}
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-              <div className="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/20 p-5 flex items-center justify-between">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1017]/90 shadow-sm backdrop-blur-xl overflow-hidden">
+              <div className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
                     <span className="material-symbols-outlined font-bold">local_shipping</span>
                   </div>
                   <div>
-                    <h2 className="font-headline text-lg font-bold">Giao hàng tới</h2>
-                    <p className="text-xs font-medium text-slate-500">Thông tin người nhận</p>
+                    <h2 className="font-headline text-base sm:text-lg font-bold">Giao hàng tới</h2>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Thông tin người nhận đơn hàng</p>
                   </div>
                 </div>
               </div>
@@ -709,16 +787,16 @@ export function CheckoutPageClient() {
                 {userAddress ? (
                   <div 
                     onClick={() => setOpenAddressForm(true)}
-                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-gradient-to-r from-indigo-50/50 to-white dark:from-indigo-900/10 dark:to-slate-900 p-5 shadow-sm transition-all hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md"
+                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-indigo-200/80 dark:border-indigo-500/30 bg-gradient-to-r from-indigo-50/60 via-white to-cyan-50/30 dark:from-indigo-950/20 dark:via-[#0c1017] dark:to-cyan-950/10 p-5 shadow-sm transition-all hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md"
                   >
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Thay đổi</span>
-                      <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400">chevron_right</span>
+                      <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Thay đổi</span>
+                      <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-sm">chevron_right</span>
                     </div>
                     
                     <div className="flex items-start gap-4 pr-16">
-                      <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300">
-                        <span className="material-symbols-outlined text-[18px]">person_pin_circle</span>
+                      <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">
+                        <span className="material-symbols-outlined text-[20px]">person_pin_circle</span>
                       </div>
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -726,7 +804,7 @@ export function CheckoutPageClient() {
                           <span className="text-slate-300 dark:text-slate-600">|</span>
                           <span className="font-bold text-slate-700 dark:text-slate-300">{asText(userAddress.phoneNumber) || "—"}</span>
                           {userAddress.isDefault && (
-                            <span className="ml-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Mặc định</span>
+                            <span className="ml-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">Mặc định</span>
                           )}
                         </div>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
@@ -738,54 +816,54 @@ export function CheckoutPageClient() {
                 ) : (
                   <div 
                     onClick={() => setOpenAddressForm(true)}
-                    className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 py-8 text-center transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10"
+                    className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] py-8 text-center transition-colors hover:border-indigo-400 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20"
                   >
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400">
                       <span className="material-symbols-outlined text-2xl">add_location_alt</span>
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-white">Chưa có địa chỉ giao hàng</p>
-                    <p className="mt-1 text-xs text-slate-500">Nhấn vào đây để thêm địa chỉ mới</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nhấn vào đây để thêm địa chỉ nhận hàng</p>
                   </div>
                 )}
               </div>
             </section>
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN */}
-            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-              <div className="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-800/20 p-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+            <section className="rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1017]/90 shadow-sm backdrop-blur-xl overflow-hidden">
+              <div className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <span className="material-symbols-outlined font-bold">payments</span>
                 </div>
                 <div>
-                  <h2 className="font-headline text-lg font-bold">Phương thức thanh toán</h2>
-                  <p className="text-xs font-medium text-slate-500">Bảo mật &amp; an toàn</p>
+                  <h2 className="font-headline text-base sm:text-lg font-bold">Phương thức thanh toán</h2>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Mã hóa an toàn &amp; xác nhận tự động</p>
                 </div>
               </div>
               <div className="p-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="group relative cursor-pointer">
                     <input className="peer sr-only" name="payment" type="radio" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
-                    <div className="flex items-start gap-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/30 dark:peer-checked:bg-indigo-900/10">
+                    <div className="flex items-start gap-4 rounded-2xl border-2 border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-5 transition-all hover:bg-slate-50 dark:hover:bg-white/[0.04] peer-checked:border-indigo-600 dark:peer-checked:border-indigo-500 peer-checked:bg-indigo-50/30 dark:peer-checked:bg-indigo-950/20">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-indigo-600">
                         <div className={`h-2.5 w-2.5 rounded-full bg-indigo-600 transition-opacity ${paymentMethod === "cod" ? "opacity-100" : "opacity-0"}`} />
                       </div>
                       <div className="flex-1">
                         <p className="font-bold text-slate-900 dark:text-white">Thanh toán khi nhận hàng</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Phí thu hộ: Miễn phí</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Kiểm hàng &amp; thanh toán tiền mặt (COD)</p>
                       </div>
-                      <span className="material-symbols-outlined text-2xl text-slate-400 group-hover:text-indigo-500 peer-checked:text-indigo-600">money</span>
+                      <span className="material-symbols-outlined text-2xl text-slate-400 group-hover:text-indigo-500 peer-checked:text-indigo-600">payments</span>
                     </div>
                   </label>
                   
                   <label className="group relative cursor-pointer">
                     <input className="peer sr-only" name="payment" type="radio" checked={paymentMethod === "sepay_qr"} onChange={() => setPaymentMethod("sepay_qr")} />
-                    <div className="flex items-start gap-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/30 dark:peer-checked:bg-indigo-900/10">
+                    <div className="flex items-start gap-4 rounded-2xl border-2 border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-5 transition-all hover:bg-slate-50 dark:hover:bg-white/[0.04] peer-checked:border-indigo-600 dark:peer-checked:border-indigo-500 peer-checked:bg-indigo-50/30 dark:peer-checked:bg-indigo-950/20">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 dark:border-slate-600 peer-checked:border-indigo-600">
                         <div className={`h-2.5 w-2.5 rounded-full bg-indigo-600 transition-opacity ${paymentMethod === "sepay_qr" ? "opacity-100" : "opacity-0"}`} />
                       </div>
                       <div className="flex-1">
-                        <p className="font-bold text-slate-900 dark:text-white">Chuyển khoản QR (SePay)</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Tự động xác nhận 24/7</p>
+                        <p className="font-bold text-slate-900 dark:text-white">Chuyển khoản VietQR (SePay)</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Quét mã ngân hàng, tự động duyệt 24/7</p>
                       </div>
                       <span className="material-symbols-outlined text-2xl text-slate-400 group-hover:text-indigo-500 peer-checked:text-indigo-600">qr_code_scanner</span>
                     </div>
@@ -798,8 +876,8 @@ export function CheckoutPageClient() {
           {/* CỘT PHẢI (SIDEBAR) */}
           <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-[90px]">
             {/* VOUCHER & SUMMARY */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-indigo-900/5 overflow-hidden">
-              <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1017]/90 shadow-xl shadow-slate-200/50 dark:shadow-none backdrop-blur-xl overflow-hidden">
+              <div className="p-5 border-b border-slate-100 dark:border-white/[0.06]">
                 <h3 className="font-headline text-lg font-bold">Mã giảm giá</h3>
                 <button
                   type="button"
@@ -826,10 +904,10 @@ export function CheckoutPageClient() {
                       } catch {}
                     }
                   }}
-                  className={`mt-4 group relative flex w-full items-center justify-between overflow-hidden rounded-xl border-2 transition-all p-4 ${appliedVoucherCode ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10" : "border-indigo-100 dark:border-indigo-900/40 bg-slate-50 dark:bg-slate-800/40 hover:border-indigo-300 dark:hover:border-indigo-600/60 hover:shadow-sm"}`}
+                  className={`mt-4 group relative flex w-full items-center justify-between overflow-hidden rounded-2xl border-2 transition-all p-4 ${appliedVoucherCode ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20" : "border-indigo-100 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] hover:border-indigo-300 dark:hover:border-indigo-600/60 hover:shadow-sm"}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${appliedVoucherCode ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400" : "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400"}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${appliedVoucherCode ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400" : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"}`}>
                       <span className="material-symbols-outlined text-xl transition-transform group-hover:scale-110">local_activity</span>
                     </div>
                     <div className="text-left">
@@ -854,7 +932,7 @@ export function CheckoutPageClient() {
                 </div>
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>Phí vận chuyển</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400">Miễn phí</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Miễn phí toàn quốc</span>
                 </div>
                 {appliedVoucherCode && voucherDiscountAmount > 0 && (
                   <div className="flex justify-between text-slate-600 dark:text-slate-400">
@@ -863,7 +941,7 @@ export function CheckoutPageClient() {
                   </div>
                 )}
                 
-                <div className="my-2 border-t border-dashed border-slate-200 dark:border-slate-700" />
+                <div className="my-2 border-t border-dashed border-slate-200 dark:border-white/10" />
                 
                 <div className="flex items-end justify-between">
                   <span className="text-base font-bold text-slate-900 dark:text-white">Tổng thanh toán</span>
@@ -884,7 +962,7 @@ export function CheckoutPageClient() {
                     void startSepayQr();
                   }}
                   disabled={paying || finalTotal < 0 || !userAddress}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 py-4 text-base font-black text-white shadow-xl shadow-indigo-500/30 transition-all hover:opacity-95 hover:shadow-2xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                 >
                   {paying ? (
                     <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
@@ -893,34 +971,35 @@ export function CheckoutPageClient() {
                   )}
                   {paymentMethod === "cod"
                     ? paying ? "Đang xử lý..." : "Đặt hàng ngay (COD)"
-                    : sepayQr ? "Đang chờ thanh toán..." : paying ? "Đang tạo mã QR..." : "Thanh toán (SePay)"}
+                    : sepayQr ? "Đang chờ thanh toán..." : paying ? "Đang tạo mã QR..." : "Thanh toán VietQR (SePay)"}
                 </button>
                 {!userAddress && (
-                  <p className="text-center mt-3 text-xs font-medium text-rose-500">Vui lòng chọn địa chỉ để tiếp tục.</p>
+                  <p className="text-center mt-3 text-xs font-semibold text-rose-500">Vui lòng chọn hoặc thêm địa chỉ nhận hàng để tiếp tục.</p>
                 )}
               </div>
             </div>
             
-            <div className="flex items-center gap-3 justify-center text-xs font-semibold text-slate-500 dark:text-slate-400 mt-6">
-              <span className="material-symbols-outlined text-[16px] text-emerald-500">verified_user</span>
-              Thông tin được bảo mật mã hóa SSL
+            <div className="flex items-center gap-2 justify-center text-xs font-semibold text-slate-500 dark:text-slate-400 mt-4">
+              <span className="material-symbols-outlined text-[18px] text-emerald-500">verified_user</span>
+              Thông tin thanh toán được bảo mật mã hóa SSL 256-bit
             </div>
           </div>
         </div>
-      </main>
+      </div>
+
 
       {/* MODAL / BOTTOM SHEET ADDRESS MANAGEMENT */}
       {openAddressForm && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:items-center sm:justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setOpenAddressForm(false)}>
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:items-center sm:justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setOpenAddressForm(false)}>
           <div 
-            className="w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300 ease-out"
+            className="w-full sm:max-w-2xl bg-white dark:bg-[#0c1017] border border-slate-200/80 dark:border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300 ease-out"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-              <h3 className="font-headline text-xl font-bold text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]">
+              <h3 className="font-headline text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                 {editingAddressId != null ? "Cập nhật địa chỉ" : addresses.length === 0 || addressForm.provinceCode || (editingAddressId === null && addressForm.phoneNumber === '') ? "Thêm địa chỉ mới" : "Chọn địa chỉ giao hàng"}
               </h3>
-              <button type="button" onClick={() => setOpenAddressForm(false)} className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <button type="button" onClick={() => setOpenAddressForm(false)} className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
@@ -933,12 +1012,12 @@ export function CheckoutPageClient() {
                     const id = addr?.id != null ? Number(addr.id) : null;
                     const active = id != null && id === selectedAddressId;
                     return (
-                      <div key={id ?? `${addr.fullAddress}`} className={`relative rounded-xl border-2 p-4 transition-all cursor-pointer ${active ? "border-indigo-600 bg-indigo-50/30 dark:bg-indigo-900/10" : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700"}`} onClick={() => { if (id != null) { setSelectedAddressId(id); setOpenAddressForm(false); } }}>
+                      <div key={id ?? `${addr.fullAddress}`} className={`relative rounded-2xl border-2 p-4 transition-all cursor-pointer ${active ? "border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20" : "border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-600"}`} onClick={() => { if (id != null) { setSelectedAddressId(id); setOpenAddressForm(false); } }}>
                         {active && <div className="absolute top-4 right-4 h-5 w-5 rounded-full bg-indigo-600 text-white flex items-center justify-center"><span className="material-symbols-outlined text-[14px]">check</span></div>}
                         <div className="pr-10">
                           <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            Khách hàng <span className="text-slate-300">|</span> {asText(addr.phoneNumber) || "—"}
-                            {addr.isDefault && <span className="ml-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400">Mặc định</span>}
+                            Khách hàng <span className="text-slate-300 dark:text-slate-600">|</span> {asText(addr.phoneNumber) || "—"}
+                            {addr.isDefault && <span className="ml-1 rounded px-2 py-0.5 text-[9px] font-black uppercase text-emerald-700 bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400">Mặc định</span>}
                           </p>
                           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{asText(addr.fullAddress) || "—"}</p>
                         </div>
@@ -952,7 +1031,7 @@ export function CheckoutPageClient() {
                     );
                   })}
                   
-                  <button type="button" onClick={() => startAddAddress()} className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors">
+                  <button type="button" onClick={() => startAddAddress()} className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-slate-300 dark:border-white/15 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors">
                     <span className="material-symbols-outlined text-[18px]">add</span>
                     Thêm địa chỉ mới
                   </button>
@@ -965,31 +1044,31 @@ export function CheckoutPageClient() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-widest">Tỉnh / Thành phố <span className="text-rose-500">*</span></label>
-                      <select value={addressForm.provinceCode} onChange={(e) => { const code = e.target.value; const selected = provinceOptions.find((x) => x.code === code); setAddressForm((prev) => ({ ...prev, provinceCode: code, provinceName: selected?.name ?? "", wardCode: "", wardName: "" })); }} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
-                        <option value="">{loadingProvince ? "Đang tải..." : "Chọn tỉnh/thành phố"}</option>
-                        {provinceOptions.map((row) => <option key={row.code} value={row.code}>{row.name}</option>)}
+                      <select value={addressForm.provinceCode} onChange={(e) => { const code = e.target.value; const selected = provinceOptions.find((x) => x.code === code); setAddressForm((prev) => ({ ...prev, provinceCode: code, provinceName: selected?.name ?? "", wardCode: "", wardName: "" })); }} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-900 dark:text-white">
+                        <option value="" className="text-slate-900 dark:text-slate-900">{loadingProvince ? "Đang tải..." : "Chọn tỉnh/thành phố"}</option>
+                        {provinceOptions.map((row) => <option key={row.code} value={row.code} className="text-slate-900 dark:text-slate-900">{row.name}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-widest">Phường / Xã <span className="text-rose-500">*</span></label>
-                      <select value={addressForm.wardCode} onChange={(e) => { const code = e.target.value; const selected = wardOptions.find((x) => x.code === code); setAddressForm((prev) => ({ ...prev, wardCode: code, wardName: selected?.name ?? "" })); }} disabled={!addressForm.provinceCode} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-                        <option value="">{loadingWard ? "Đang tải..." : "Chọn phường/xã"}</option>
-                        {wardOptions.map((row) => <option key={row.code} value={row.code}>{row.name}</option>)}
+                      <select value={addressForm.wardCode} onChange={(e) => { const code = e.target.value; const selected = wardOptions.find((x) => x.code === code); setAddressForm((prev) => ({ ...prev, wardCode: code, wardName: selected?.name ?? "" })); }} disabled={!addressForm.provinceCode} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 dark:text-white">
+                        <option value="" className="text-slate-900 dark:text-slate-900">{loadingWard ? "Đang tải..." : "Chọn phường/xã"}</option>
+                        {wardOptions.map((row) => <option key={row.code} value={row.code} className="text-slate-900 dark:text-slate-900">{row.name}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-widest">Số nhà, Tên đường</label>
-                    <input value={addressForm.streetLine} onChange={(e) => setAddressForm({ ...addressForm, streetLine: e.target.value })} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="Ví dụ: 123 Đường ABC" />
+                    <input value={addressForm.streetLine} onChange={(e) => setAddressForm({ ...addressForm, streetLine: e.target.value })} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-900 dark:text-white" placeholder="Ví dụ: 123 Đường ABC" />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-widest">Số điện thoại nhận hàng <span className="text-rose-500">*</span></label>
-                    <input value={addressForm.phoneNumber} onChange={(e) => setAddressForm({ ...addressForm, phoneNumber: normalizePhoneInput(e.target.value) })} inputMode="numeric" pattern="0[0-9]{9}" maxLength={10} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold tracking-wider outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="0xxxxxxxxx" />
+                    <input value={addressForm.phoneNumber} onChange={(e) => setAddressForm({ ...addressForm, phoneNumber: normalizePhoneInput(e.target.value) })} inputMode="numeric" pattern="0[0-9]{9}" maxLength={10} className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-sm font-semibold tracking-wider outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-900 dark:text-white" placeholder="0xxxxxxxxx" />
                   </div>
                   
                   <div className="pt-4 flex gap-3">
                     {addresses.length > 0 && (
-                      <button type="button" onClick={() => { setEditingAddressId(null); setAddressForm({ provinceCode: "", provinceName: "", wardCode: "", wardName: "", streetLine: "", fullAddress: "", phoneNumber: "" }); }} className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                      <button type="button" onClick={() => { setEditingAddressId(null); setAddressForm({ provinceCode: "", provinceName: "", wardCode: "", wardName: "", streetLine: "", fullAddress: "", phoneNumber: "" }); }} className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
                         Quay lại
                       </button>
                     )}
@@ -1006,11 +1085,11 @@ export function CheckoutPageClient() {
 
       {/* VOUCHER POPUP */}
       {voucherPopupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" onClick={() => setVoucherPopupOpen(false)}>
-          <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/50 p-5">
-              <h3 className="font-headline text-xl font-bold">Chọn Voucher</h3>
-              <button type="button" onClick={() => setVoucherPopupOpen(false)} className="rounded-full p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setVoucherPopupOpen(false)}>
+          <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-3xl bg-white dark:bg-[#0c1017] border border-slate-200/80 dark:border-white/10 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/[0.06] p-5">
+              <h3 className="font-headline text-lg sm:text-xl font-bold">Chọn Voucher</h3>
+              <button type="button" onClick={() => setVoucherPopupOpen(false)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -1042,9 +1121,9 @@ export function CheckoutPageClient() {
                     const isExhaustedUser = userUses >= maxUsesUser;
 
                     return (
-                      <div key={v.id} className={`group relative overflow-hidden rounded-xl border-2 transition-all ${isExhaustedUser ? "border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900 grayscale opacity-50 cursor-not-allowed" : isApplied ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-900/10 shadow-md" : meetsMinOrder ? "border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm" : "border-slate-100 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-800/50 opacity-60"}`}>
+                      <div key={v.id} className={`group relative overflow-hidden rounded-2xl border-2 transition-all ${isExhaustedUser ? "border-slate-100 dark:border-white/5 bg-white dark:bg-[#0c1017] grayscale opacity-50 cursor-not-allowed" : isApplied ? "border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-md" : meetsMinOrder ? "border-slate-200 dark:border-white/10 bg-white dark:bg-[#0c1017] hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm" : "border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] opacity-60"}`}>
                         <div className="flex items-stretch">
-                          <div className={`flex w-24 flex-shrink-0 flex-col items-center justify-center border-r border-dashed p-3 ${isApplied ? "border-emerald-500/20 bg-emerald-500/10" : "border-slate-200 dark:border-slate-700/50 bg-slate-50/60 dark:bg-slate-800/60"}`}>
+                          <div className={`flex w-24 flex-shrink-0 flex-col items-center justify-center border-r border-dashed p-3 ${isApplied ? "border-emerald-500/20 bg-emerald-500/10" : "border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03]"}`}>
                             <span className={`material-symbols-outlined text-2xl ${isApplied ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}`}>sell</span>
                             <span className={`mt-1 text-lg font-black ${isApplied ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}`}>{discountLabel}</span>
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">giảm</span>
@@ -1073,9 +1152,9 @@ export function CheckoutPageClient() {
 
                           <div className="flex items-center pr-4">
                             {isApplied ? (
-                              <button type="button" onClick={() => setAppliedVoucherCode(null)} className="rounded-lg border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-100 dark:hover:bg-emerald-900/40">Bỏ chọn</button>
+                              <button type="button" onClick={() => setAppliedVoucherCode(null)} className="rounded-xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-100 dark:hover:bg-emerald-900/40">Bỏ chọn</button>
                             ) : isExhaustedUser ? (
-                              <button type="button" disabled className="rounded-lg bg-slate-200 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 cursor-not-allowed">Đã dùng</button>
+                              <button type="button" disabled className="rounded-xl bg-slate-200 dark:bg-white/10 px-3 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 cursor-not-allowed">Đã dùng</button>
                             ) : (
                               <button type="button" disabled={!meetsMinOrder} onClick={async () => {
                                 try {
@@ -1084,12 +1163,12 @@ export function CheckoutPageClient() {
                                   if (data.valid) { setAppliedVoucherCode(v.code); setVoucherPopupOpen(false); showToast("success", "Thành công", "Áp dụng voucher thành công."); }
                                   else { showToast("error", "Lỗi voucher", data.message || "Voucher không hợp lệ hoặc đã dùng hết lượt."); }
                                 } catch { showToast("error", "Lỗi", "Không thể kiểm tra voucher."); }
-                              }} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">Áp dụng</button>
+                              }} className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">Áp dụng</button>
                             )}
                           </div>
                         </div>
-                        {!meetsMinOrder && !isExhaustedUser && <div className="border-t border-slate-100 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">⚠️ Đơn hàng chưa đạt giá trị tối thiểu {Number(v.minOrderAmount).toLocaleString("vi-VN")}đ</div>}
-                        {isExhaustedUser && <div className="border-t border-error/10 bg-error-container/20 px-4 py-2 text-[11px] font-medium text-error">⚠️ Bạn đã hết lượt sử dụng voucher này ({userUses}/{maxUsesUser} lượt)</div>}
+                        {!meetsMinOrder && !isExhaustedUser && <div className="border-t border-slate-100 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02] px-4 py-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">⚠️ Đơn hàng chưa đạt giá trị tối thiểu {Number(v.minOrderAmount).toLocaleString("vi-VN")}đ</div>}
+                        {isExhaustedUser && <div className="border-t border-rose-500/20 bg-rose-500/10 px-4 py-2 text-[11px] font-medium text-rose-500">⚠️ Bạn đã hết lượt sử dụng voucher này ({userUses}/{maxUsesUser} lượt)</div>}
                       </div>
                     );
                   })}
@@ -1102,31 +1181,31 @@ export function CheckoutPageClient() {
 
       {/* SEPAY QR MODAL */}
       {sepayQr && paymentMethod === "sepay_qr" ? (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white dark:bg-[#0c1017] border border-slate-200/80 dark:border-white/10 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="font-headline text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">Thanh toán qua SePay QR</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Quét QR và giữ nguyên popup này, hệ thống sẽ tự xác nhận.</p>
+                <h3 className="font-headline text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">Thanh toán qua VietQR</h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Quét QR bằng ứng dụng ngân hàng và giữ nguyên cửa sổ này.</p>
               </div>
-              <button type="button" onClick={() => setSepayQr(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+              <button type="button" onClick={() => setSepayQr(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-6 flex flex-col justify-center items-center text-center">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] p-6 flex flex-col justify-center items-center text-center">
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Mã thanh toán</p>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-xl shadow-sm mb-4">
-                  <p className="font-mono text-3xl font-black text-indigo-600 dark:text-indigo-400">{sepayQr.code}</p>
+                <div className="bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 px-6 py-3 rounded-2xl shadow-sm mb-4">
+                  <p className="font-mono text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">{sepayQr.code}</p>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Ghi đúng mã này trong nội dung chuyển khoản để hệ thống xác nhận tự động.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Ghi đúng mã này trong nội dung chuyển khoản để hệ thống xác nhận tự động.</p>
               </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-6 flex items-center justify-center">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] p-6 flex items-center justify-center">
                 <img
                   src={sepayQr.qrImageUrl}
                   alt="SePay QR"
                   referrerPolicy="no-referrer"
-                  className="mx-auto w-full max-w-[280px] rounded-xl bg-white p-3 shadow-lg cursor-pointer transition hover:scale-105"
+                  className="mx-auto w-full max-w-[260px] rounded-2xl bg-white p-3 shadow-lg cursor-pointer transition hover:scale-105"
                   loading="lazy"
                   title="Click vào QR để giả lập thanh toán thành công (Dành cho Dev)"
                   onClick={async () => {

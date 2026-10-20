@@ -28,6 +28,7 @@ import com.rainbowforest.orderservice.feignclient.UserClientResponse;
 import com.rainbowforest.orderservice.http.header.HeaderGenerator;
 import com.rainbowforest.orderservice.service.OrderService;
 import com.rainbowforest.orderservice.utilities.OrderUtilities;
+import com.rainbowforest.orderservice.utilities.PdfOrderGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -47,10 +48,16 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.validation.Valid;
 
 @RestController
 public class OrderController {
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+
+    @org.springframework.beans.factory.annotation.Value("${internal.service.secret:}")
+    private String expectedInternalSecret;
 
     @Autowired
     private UserClient userClient;
@@ -81,13 +88,33 @@ public class OrderController {
 
     @Autowired
     private ActivityLogPublisher activityLogPublisher;
+
+    @Autowired
+    @org.springframework.beans.factory.annotation.Qualifier("orderAsyncExecutor")
+    private java.util.concurrent.Executor orderAsyncExecutor;
     
     @PostMapping(value = "/order/{userId}")
     public ResponseEntity<?> saveOrder(
     		@PathVariable("userId") Long userId,
     		@RequestHeader(value = "Cookie") String cartId,
     		HttpServletRequest request){
-    	
+
+        if (userId == null || userId <= 0) {
+            return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.BAD_REQUEST);
+        }
+        // Xác thực user hiện tại có khớp với userId được truyền không (defense-in-depth).
+        String headerUserId = request.getHeader("X-User-Id");
+        if (headerUserId != null && !headerUserId.isEmpty()) {
+            try {
+                long hid = Long.parseLong(headerUserId.trim());
+                if (hid != userId) {
+                    log.warn("User {} tried to create order for user {}", hid, userId);
+                    return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+                }
+            } catch (NumberFormatException ignored) {
+                return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+            }
+        }
         List<Item> cart = null;
         try {
             cart = cartClient.getCart(cartId);
@@ -131,23 +158,57 @@ public class OrderController {
                 enrichOrderProductDetails(order);
                 tryNotifyTelegram(order, null);
                 return new ResponseEntity<Order>(
-                		order, 
+                		order,
                 		headerGenerator.getHeadersForSuccessPostMethod(request, order.getId()),
                 		HttpStatus.CREATED);
             } catch (IllegalArgumentException ex) {
-                return ResponseEntity.badRequest().body(ex.getMessage());
+                log.warn("Bad request creating order: {}", ex.getMessage());
+                return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
             } catch (Exception ex) {
-                ex.printStackTrace();
-                return new ResponseEntity<String>(
-                        "Lỗi hệ thống: " + ex.getMessage(),
+                log.error("Lỗi hệ thống khi tạo order từ cart: ", ex);
+                // Không trả message chi tiết cho client (tránh information disclosure)
+                return new ResponseEntity<>(
+                        Map.of("error", "INTERNAL_ERROR", "message", "Lỗi hệ thống khi tạo đơn hàng"),
                         headerGenerator.getHeadersForError(),
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-  
+
         return new ResponseEntity<Order>(
         		headerGenerator.getHeadersForError(),
         		HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Helper kiểm tra user hiện tại có phải admin không (dựa vào header do gateway chèn).
+     */
+    private boolean isAdmin(HttpServletRequest request) {
+        String role = request.getHeader("X-User-Role");
+        return role != null && role.toUpperCase(Locale.ROOT).contains("ADMIN");
+    }
+
+    /**
+     * Helper lấy user id từ header gateway (defense-in-depth).
+     */
+    private Long currentUserId(HttpServletRequest request) {
+        String headerUserId = request.getHeader("X-User-Id");
+        if (headerUserId == null || headerUserId.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(headerUserId.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Helper kiểm tra user hiện tại có khớp với userId yêu cầu không.
+     */
+    private boolean isOwnerOrAdmin(HttpServletRequest request, Long requestedUserId) {
+        if (isAdmin(request)) return true;
+        Long current = currentUserId(request);
+        return current != null && current.equals(requestedUserId);
     }
 
     @GetMapping(value = "/orders")
@@ -157,12 +218,21 @@ public class OrderController {
             @RequestParam(value = "paymentStatus", required = false) String paymentStatus,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "startDate", required = false) String startDate,
-            @RequestParam(value = "endDate", required = false) String endDate
+            @RequestParam(value = "endDate", required = false) String endDate,
+            HttpServletRequest request
     ) {
-        List<Order> rows = orderService.listOrders(userId, status, paymentStatus, q, startDate, endDate);
-        for (Order row : rows) {
-            enrichOrderProductDetails(row);
+        // Non-admin chỉ được xem đơn của chính mình; nếu cố truyền userId khác sẽ bị override.
+        if (!isAdmin(request)) {
+            Long current = currentUserId(request);
+            if (current == null) {
+                return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.UNAUTHORIZED);
+            }
+            userId = current;
         }
+        // Giới hạn độ dài chuỗi tìm kiếm để chống DoS.
+        String safeQ = q != null && q.length() > 100 ? q.substring(0, 100) : q;
+        List<Order> rows = orderService.listOrders(userId, status, paymentStatus, safeQ, startDate, endDate);
+        enrichOrdersProductDetails(rows);
         return new ResponseEntity<List<Order>>(
                 rows,
                 headerGenerator.getHeadersForSuccessGetMethod(),
@@ -177,12 +247,17 @@ public class OrderController {
             @RequestParam(value = "paymentStatus", required = false) String paymentStatus,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "startDate", required = false) String startDate,
-            @RequestParam(value = "endDate", required = false) String endDate
+            @RequestParam(value = "endDate", required = false) String endDate,
+            HttpServletRequest request
     ) {
-        List<Order> rows = orderService.listOrders(userId, status, paymentStatus, q, startDate, endDate);
-        for (Order row : rows) {
-            enrichOrderProductDetails(row);
+        // Owner hoặc admin mới xem được.
+        if (!isOwnerOrAdmin(request, userId)) {
+            log.warn("User {} tried to list orders for user {} without permission", currentUserId(request), userId);
+            return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
         }
+        String safeQ = q != null && q.length() > 100 ? q.substring(0, 100) : q;
+        List<Order> rows = orderService.listOrders(userId, status, paymentStatus, safeQ, startDate, endDate);
+        enrichOrdersProductDetails(rows);
         return new ResponseEntity<List<Order>>(
                 rows,
                 headerGenerator.getHeadersForSuccessGetMethod(),
@@ -199,12 +274,19 @@ public class OrderController {
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            HttpServletRequest request
     ) {
-        Page<Order> rows = orderService.searchOrders(userId, status, paymentStatus, q, startDate, endDate, page, size);
-        for (Order row : rows.getContent()) {
-            enrichOrderProductDetails(row);
+        // Non-admin chỉ được tìm kiếm đơn hàng của chính mình.
+        if (!isAdmin(request)) {
+            Long current = currentUserId(request);
+            if (current == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            userId = current;
         }
+        Page<Order> rows = orderService.searchOrders(userId, status, paymentStatus, q, startDate, endDate, page, size);
+        enrichOrdersProductDetails(rows.getContent());
         OrderSearchPageResponse out = new OrderSearchPageResponse();
         out.setItems(rows.getContent());
         out.setPage(rows.getNumber());
@@ -219,12 +301,18 @@ public class OrderController {
     }
 
     @GetMapping(value = "/orders/{id}")
-    public ResponseEntity<Order> getOrder(@PathVariable("id") Long id) {
+    public ResponseEntity<Order> getOrder(@PathVariable("id") Long id, HttpServletRequest request) {
         Optional<Order> row = orderService.getOrderById(id);
         if (row.isPresent()) {
-            enrichOrderProductDetails(row.get());
+            Order order = row.get();
+            // Chỉ chủ sở hữu hoặc admin mới được xem chi tiết đơn.
+            if (!isOwnerOrAdmin(request, order.getUserId())) {
+                log.warn("User {} tried to view order {} without permission", currentUserId(request), id);
+                return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+            }
+            enrichOrderProductDetails(order);
             return new ResponseEntity<Order>(
-                    row.get(),
+                    order,
                     headerGenerator.getHeadersForSuccessGetMethod(),
                     HttpStatus.OK
             );
@@ -249,12 +337,15 @@ public class OrderController {
         ReviewOrderDto dto = new ReviewOrderDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
+        dto.setUserName(order.getUserName());
         dto.setOrderStatus(order.getStatus());
         dto.setOrderItems(order.getItems() == null ? new ArrayList<>() : order.getItems().stream().map(item -> {
             ReviewOrderItemDto itemDto = new ReviewOrderItemDto();
             itemDto.setId(item.getId());
             itemDto.setProductId(item.getProductId());
             itemDto.setVariantId(item.getVariantId());
+            itemDto.setVariantName(item.getVariantName() != null ? item.getVariantName() : item.getVariantLabel());
+            itemDto.setVariantAttributesJson(item.getVariantAttributesJson());
             itemDto.setQuantity(item.getQuantity());
             return itemDto;
         }).collect(Collectors.toList()));
@@ -316,12 +407,12 @@ public class OrderController {
                     userClient.setExactUserStats(uid, req);
                     updated++;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Lỗi khi đồng bộ user stats cho user {}: {}", uid, e.getMessage());
                 }
             }
             return new ResponseEntity<String>("Synced " + updated + " users.", HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi đồng bộ tất cả user stats: ", e);
             return new ResponseEntity<String>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -331,6 +422,11 @@ public class OrderController {
             @Valid @RequestBody ManualOrderCreateRequest req,
             HttpServletRequest request
     ) {
+        // Chỉ admin mới có thể tạo đơn hàng thủ công.
+        if (!isAdmin(request)) {
+            log.warn("Non-admin tried to create manual order: headerRole={}", request.getHeader("X-User-Role"));
+            return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+        }
         if (req == null || req.getUserId() == null || req.getItems() == null || req.getItems().isEmpty()) {
             return new ResponseEntity<Order>(
                     headerGenerator.getHeadersForError(),
@@ -434,11 +530,12 @@ public class OrderController {
                     HttpStatus.CREATED
             );
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            log.warn("Bad request creating manual order: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<String>(
-                    "Lỗi hệ thống: " + e.getMessage(),
+            log.error("Lỗi hệ thống khi tạo order thủ công: ", e);
+            return new ResponseEntity<>(
+                    Map.of("error", "INTERNAL_ERROR", "message", "Lỗi hệ thống khi tạo đơn hàng"),
                     headerGenerator.getHeadersForError(),
                     HttpStatus.INTERNAL_SERVER_ERROR
             );
@@ -499,10 +596,10 @@ public class OrderController {
                     HttpStatus.CREATED
             );
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Lỗi hệ thống khi checkout COD buy-now: ", ex);
             OrderCheckoutCodResponse out = new OrderCheckoutCodResponse();
             out.setError("COD_CHECKOUT_FAILED");
-            out.setMessage(ex.getMessage() != null ? ex.getMessage() : "Unexpected error during COD checkout (buy-now).");
+            out.setMessage("Lỗi hệ thống khi xử lý đơn hàng. Vui lòng thử lại sau.");
             return new ResponseEntity<OrderCheckoutCodResponse>(out, headerGenerator.getHeadersForError(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -557,10 +654,10 @@ public class OrderController {
                     HttpStatus.CREATED
             );
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Lỗi hệ thống khi checkout COD cart: ", ex);
             OrderCheckoutCodResponse out = new OrderCheckoutCodResponse();
             out.setError("COD_CHECKOUT_FAILED");
-            out.setMessage(ex.getMessage() != null ? ex.getMessage() : "Unexpected error during COD checkout (cart).");
+            out.setMessage("Lỗi hệ thống khi xử lý đơn hàng. Vui lòng thử lại sau.");
             return new ResponseEntity<OrderCheckoutCodResponse>(out, headerGenerator.getHeadersForError(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -568,8 +665,14 @@ public class OrderController {
     @RequestMapping(value = "/orders/{id}/status", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ResponseEntity<Order> updateOrderStatus(
             @PathVariable("id") Long id,
-            @Valid @RequestBody OrderStatusUpdateRequest req
+            @Valid @RequestBody OrderStatusUpdateRequest req,
+            HttpServletRequest request
     ) {
+        // Cập nhật trạng thái chỉ dành cho admin.
+        if (!isAdmin(request)) {
+            log.warn("Non-admin tried to update order {} status", id);
+            return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+        }
         try {
             String requestedStatus = req.getStatus() != null ? req.getStatus().trim() : "";
             Order row = orderService.updateOrderStatus(
@@ -626,8 +729,18 @@ public class OrderController {
     @RequestMapping(value = "/orders/{id}/payment-status", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ResponseEntity<Order> updateOrderPaymentStatus(
             @PathVariable("id") Long id,
-            @Valid @RequestBody PaymentStatusUpdateRequest req
+            @Valid @RequestBody PaymentStatusUpdateRequest req,
+            HttpServletRequest request
     ) {
+        // Endpoint này chỉ dành cho payment-service (gọi nội bộ qua Feign).
+        // Xác thực qua header X-Internal-Secret do gateway chèn vào.
+        String internalSecret = request.getHeader("X-Internal-Secret");
+        if (expectedInternalSecret == null || expectedInternalSecret.isEmpty()
+                || internalSecret == null
+                || !constantTimeEquals(internalSecret, expectedInternalSecret)) {
+            log.warn("Rejected /orders/{}/payment-status without valid internal secret", id);
+            return new ResponseEntity<>(headerGenerator.getHeadersForError(), HttpStatus.FORBIDDEN);
+        }
         try {
             Order row = orderService.updatePaymentStatus(id, req.getPaymentStatus(), req.getPaymentMethod());
             return new ResponseEntity<Order>(
@@ -652,7 +765,7 @@ public class OrderController {
         try {
             orderService.deductInventoryForOrder(order, performedBy != null ? performedBy : "system");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khấu trừ kho cho order {}: {}", order.getId(), e.getMessage());
         }
         if (order.getItems() != null) {
             for (Item item : order.getItems()) {
@@ -664,7 +777,7 @@ public class OrderController {
                         req.put("quantity", item.getQuantity());
                         saleClient.consumeSaleQty(req);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.error("Lỗi trừ sale quantity cho product {}: {}", item.getProductId(), e.getMessage());
                     }
                 }
             }
@@ -696,7 +809,7 @@ public class OrderController {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi xử lý voucher: ", e);
             throw new IllegalArgumentException("Lỗi khi kiểm tra voucher: " + e.getMessage());
         }
     }
@@ -720,19 +833,61 @@ public class OrderController {
     }
 
     private void enrichOrderProductDetails(Order order) {
-        if (order == null || order.getItems() == null) {
+        if (order == null) {
             return;
         }
-        for (Item item : order.getItems()) {
-            if (item == null || item.getProductId() == null) {
-                continue;
+        enrichOrdersProductDetails(java.util.Collections.singletonList(order));
+    }
+
+    private void enrichOrdersProductDetails(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return;
+        }
+        Set<Long> productIds = new HashSet<>();
+        for (Order o : orders) {
+            if (o != null && o.getItems() != null) {
+                for (Item it : o.getItems()) {
+                    if (it != null && it.getProductId() != null) {
+                        productIds.add(it.getProductId());
+                    }
+                }
             }
-            try {
-                item.setProduct(fetchProductWithAdminFallback(item.getProductId()));
-            } catch (Exception ignored) {
-                // Return order even if product-service is temporarily unavailable.
+        }
+        if (productIds.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Product> productMap = new LinkedHashMap<>();
+        try {
+            List<Product> batch = productClient.getProductsBatch(new ArrayList<>(productIds));
+            if (batch != null) {
+                for (Product p : batch) {
+                    if (p != null && p.getId() != null) {
+                        productMap.put(p.getId(), p);
+                    }
+                }
             }
-            fillItemSnapshot(item);
+        } catch (Exception e) {
+            log.warn("Batch fetch products for orders failed, falling back: {}", e.getMessage());
+        }
+
+        for (Order o : orders) {
+            if (o == null || o.getItems() == null) continue;
+            for (Item item : o.getItems()) {
+                if (item == null || item.getProductId() == null) continue;
+                Product p = productMap.get(item.getProductId());
+                if (p == null) {
+                    try {
+                        p = fetchProductWithAdminFallback(item.getProductId());
+                    } catch (Exception ignored) {
+                        // Return order even if product-service is temporarily unavailable.
+                    }
+                }
+                if (p != null) {
+                    item.setProduct(p);
+                }
+                fillItemSnapshot(item);
+            }
         }
     }
 
@@ -980,6 +1135,14 @@ public class OrderController {
                 }
             } catch (Exception ignored) {
                 // Fall back to product primary image below.
+            }
+        }
+        if (variantForImage != null) {
+            if (variantForImage.getVariantName() != null && !variantForImage.getVariantName().trim().isEmpty()) {
+                item.setVariantName(variantForImage.getVariantName().trim());
+            }
+            if (variantForImage.getAttributesJson() != null && !variantForImage.getAttributesJson().trim().isEmpty()) {
+                item.setVariantAttributesJson(variantForImage.getAttributesJson().trim());
             }
         }
         String variantImage = variantForImage != null && variantForImage.getVariantImageUrl() != null
@@ -1231,22 +1394,23 @@ public class OrderController {
                     itemsStr.append("- ").append(item.getProductNameSnapshot() != null ? item.getProductNameSnapshot() : "Sản phẩm")
                             .append(" (x").append(item.getQuantity()).append(")");
                     if (item.getVariantLabel() != null && !item.getVariantLabel().trim().isEmpty()) {
-                        itemsStr.append(" [").append(item.getVariantLabel()).append("]");
+                        String clean = PdfOrderGenerator.formatCleanVariantLabel(item.getVariantLabel().trim());
+                        itemsStr.append(" [").append(clean).append("]");
                     }
                     itemsStr.append("\n");
                 }
                 details.put("itemsDetail", itemsStr.toString());
             }
             
-            new Thread(() -> {
+            orderAsyncExecutor.execute(() -> {
                 try {
                     telegramClient.notifyNewOrder(details);
                 } catch (Exception e) {
-                    System.err.println("Failed to notify telegram: " + e.getMessage());
+                    log.error("Failed to notify telegram: {}", e.getMessage());
                 }
-            }).start();
+            });
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi chuẩn bị thông báo Telegram đơn hàng: ", e);
         }
     }
     @GetMapping(value = "/orders/export")
@@ -1255,8 +1419,13 @@ public class OrderController {
             @RequestParam(value = "paymentStatus", required = false) String paymentStatus,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "startDate", required = false) String startDate,
-            @RequestParam(value = "endDate", required = false) String endDate
+            @RequestParam(value = "endDate", required = false) String endDate,
+            HttpServletRequest request
     ) {
+        if (!isAdmin(request)) {
+            log.warn("Non-admin tried to export all orders: headerRole={}", request.getHeader("X-User-Role"));
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         try {
             byte[] pdfData = orderService.exportOrdersToPdf(status, paymentStatus, q, startDate, endDate);
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
@@ -1264,17 +1433,23 @@ public class OrderController {
             headers.add("Content-Type", "application/pdf");
             return new ResponseEntity<byte[]>(pdfData, headers, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi export PDF danh sách đơn hàng: ", e);
             return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping(value = "/orders/{id}/invoice")
-    public ResponseEntity<byte[]> exportOrderInvoice(@PathVariable("id") Long id) {
+    public ResponseEntity<byte[]> exportOrderInvoice(@PathVariable("id") Long id, HttpServletRequest request) {
         try {
             Optional<Order> orderOpt = orderService.getOrderById(id);
             if (!orderOpt.isPresent()) {
                 return new ResponseEntity<byte[]>(HttpStatus.NOT_FOUND);
+            }
+            // Chỉ chủ sở hữu hoặc admin được tải hóa đơn.
+            if (!isOwnerOrAdmin(request, orderOpt.get().getUserId())) {
+                log.warn("User {} tried to download invoice for order {} without permission",
+                        currentUserId(request), id);
+                return new ResponseEntity<byte[]>(HttpStatus.FORBIDDEN);
             }
             byte[] pdfData = com.rainbowforest.orderservice.utilities.PdfOrderGenerator.generateInvoicePdf(orderOpt.get());
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
@@ -1282,8 +1457,21 @@ public class OrderController {
             headers.add("Content-Type", "application/pdf");
             return new ResponseEntity<byte[]>(pdfData, headers, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi xuất hóa đơn PDF cho order {}: ", id, e);
             return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Constant-time string comparison (chống timing attack).
+     */
+    private static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        if (a.length() != b.length()) return false;
+        int result = 0;
+        for (int i = 0; i < a.length(); i++) {
+            result |= a.charAt(i) ^ b.charAt(i);
+        }
+        return result == 0;
     }
 }

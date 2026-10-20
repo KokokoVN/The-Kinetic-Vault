@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { AdminProductVariant } from "@/lib/api";
+import { resolveCatalogImageUrl, type AdminProductVariant } from "@/lib/api";
 import type { SaleProgram } from "@/lib/sale-api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { parseVariantTiers, getSwatchColor, type VariantTier } from "@/lib/variant-tier-utils";
 
 type Props = {
   productId: string;
@@ -19,6 +20,7 @@ type Props = {
   variants: AdminProductVariant[];
   isLoggedIn: boolean;
   onVariantImageChange?: (image: string | null) => void;
+  onVariantSelect?: (info: { price: number; name: string | null; image: string | null; stock: number }) => void;
 };
 
 function asCurrency(value: number): string {
@@ -42,93 +44,215 @@ function parseVariantPrice(raw: number | string | null | undefined, fallback: nu
 function resolvePreviewImage(raw: string | null | undefined, fallback: string): string {
   const v = String(raw ?? "").trim();
   if (!v) return fallback;
-  if (/^https?:\/\//i.test(v) || v.startsWith("data:")) return v;
-  const publicApiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").trim();
-  const inferredOrigin = /^https?:\/\//i.test(publicApiBase)
-    ? publicApiBase.replace(/\/+$/, "").replace(/\/api\/?$/i, "") : "";
-  const origin = (inferredOrigin || "http://localhost:8900").replace(/\/+$/, "");
-  if (v.startsWith("/")) return `${origin}${v}`;
-  return `${origin}/api/catalog/admin/products/images/file/${v}`;
+  return resolveCatalogImageUrl(v);
 }
 
 export function ProductDetailPurchase({
-  productId, productName, basePrice, effectivePrice, saleType, saleValue, activeSalePrograms, baseStock, baseImage, variants, isLoggedIn, onVariantImageChange,
+  productId,
+  productName,
+  basePrice,
+  effectivePrice,
+  saleType,
+  saleValue,
+  activeSalePrograms,
+  baseStock,
+  baseImage,
+  variants,
+  isLoggedIn,
+  onVariantImageChange,
+  onVariantSelect,
 }: Props) {
   const router = useRouter();
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedTiers, setSelectedTiers] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
+
   const lastEmittedVariantImageRef = useRef<string | null>(null);
   const lastEmittedVariantIdRef = useRef<number | null>(null);
   const hasUserPickedVariantRef = useRef(false);
 
-  const sizeOptions = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const v of variants) {
-      const raw = (v.size ?? "").trim();
-      if (!raw) continue;
-      const key = normalizeOption(raw);
-      if (!m.has(key)) m.set(key, raw);
-    }
-    return Array.from(m.values());
+  // Extract all dynamic tiers across all variants using unified utility
+  const parsedVariants = useMemo(() => {
+    return variants.map((v) => ({
+      ...v,
+      parsed: parseVariantTiers(v),
+    }));
   }, [variants]);
 
-  const colorOptions = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const v of variants) {
-      const raw = (v.color ?? "").trim();
-      if (!raw) continue;
-      const key = normalizeOption(raw);
-      if (!m.has(key)) m.set(key, raw);
-    }
-    return Array.from(m.values());
-  }, [variants]);
+  const tierDefinitions = useMemo(() => {
+    if (!parsedVariants.length) return [];
+    const tierMap = new Map<string, string[]>();
+    const tierOrder: string[] = [];
 
-  const variantLookup = useMemo(() => {
-    const m = new Map<string, AdminProductVariant>();
-    for (const v of variants) {
-      const colorKey = normalizeOption(v.color ?? "");
-      const sizeKey = normalizeOption(v.size ?? "");
-      const key = `${colorKey}||${sizeKey}`;
-      if (!m.has(key)) m.set(key, v);
+    for (const v of parsedVariants) {
+      for (const attr of v.parsed.tiers) {
+        if (!tierMap.has(attr.name)) {
+          tierMap.set(attr.name, []);
+          tierOrder.push(attr.name);
+        }
+        const existingList = tierMap.get(attr.name)!;
+        const exists = existingList.some((ex) => normalizeOption(ex) === normalizeOption(attr.value));
+        if (!exists) {
+          existingList.push(attr.value);
+        }
+      }
     }
-    return m;
-  }, [variants]);
 
+    if (tierOrder.length === 0 && parsedVariants.length > 0) {
+      return [
+        {
+          name: "Phiên bản",
+          isColor: false,
+          options: parsedVariants.map((v) => v.parsed.fullLabel || `Biến thể #${v.id}`),
+        },
+      ];
+    }
+
+    return tierOrder.map((name) => ({
+      name,
+      isColor: /màu|mau|color/i.test(name),
+      options: tierMap.get(name) || [],
+    }));
+  }, [parsedVariants]);
+
+  // Find the selected variant matching all current tier selections
   const selectedVariant = useMemo(() => {
-    if (!variants.length) return null;
-    const requireSize = sizeOptions.length > 0;
-    const requireColor = colorOptions.length > 0;
-    if ((requireSize && !selectedSize) || (requireColor && !selectedColor)) return null;
-    const colorKey = requireColor ? normalizeOption(selectedColor) : "";
-    const sizeKey = requireSize ? normalizeOption(selectedSize) : "";
-    const key = `${colorKey}||${sizeKey}`;
-    return variantLookup.get(key) ?? null;
-  }, [colorOptions.length, selectedColor, selectedSize, sizeOptions.length, variants, variantLookup]);
+    if (!parsedVariants.length) return null;
+    if (tierDefinitions.length === 0) return parsedVariants[0] ?? null;
 
-  const canPickSize = useMemo(() => (size: string) =>
-    variants.some((v) => {
-      const vs = normalizeOption(v.size ?? "");
-      const vc = normalizeOption(v.color ?? "");
-      if (vs !== normalizeOption(size)) return false;
-      if (selectedColor && vc !== normalizeOption(selectedColor)) return false;
-      return Number(v.availability ?? 0) > 0;
-    }), [selectedColor, variants]);
+    const allSelected = tierDefinitions.every((t) => Boolean(selectedTiers[t.name]));
+    if (!allSelected) {
+      const firstAvailable = parsedVariants.find((v) => Number(v.availability ?? 0) > 0) ?? parsedVariants[0];
+      return firstAvailable ?? null;
+    }
 
-  const canPickColor = useMemo(() => (color: string) =>
-    variants.some((v) => {
-      const vs = normalizeOption(v.size ?? "");
-      const vc = normalizeOption(v.color ?? "");
-      if (vc !== normalizeOption(color)) return false;
-      if (selectedSize && vs !== normalizeOption(selectedSize)) return false;
-      return Number(v.availability ?? 0) > 0;
-    }), [selectedSize, variants]);
+    const exact = parsedVariants.find((v) => {
+      return tierDefinitions.every((t) => {
+        const selVal = selectedTiers[t.name];
+        if (!selVal) return false;
+        const matchedAttr = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+        return matchedAttr && normalizeOption(matchedAttr.value) === normalizeOption(selVal);
+      });
+    });
+
+    if (exact) return exact;
+
+    // Best partial match fallback
+    let bestMatch: (typeof parsedVariants)[0] = parsedVariants[0];
+    let maxMatchCount = -1;
+    for (const v of parsedVariants) {
+      let count = 0;
+      for (const t of tierDefinitions) {
+        const selVal = selectedTiers[t.name];
+        if (!selVal) continue;
+        const matched = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+        if (matched && normalizeOption(matched.value) === normalizeOption(selVal)) {
+          count++;
+        }
+      }
+      if (count > maxMatchCount) {
+        maxMatchCount = count;
+        bestMatch = v;
+      }
+    }
+    return bestMatch ?? parsedVariants[0] ?? null;
+  }, [tierDefinitions, selectedTiers, parsedVariants]);
+
+  // Check if an option can be chosen for a given tier
+  const canPickTierOption = useMemo(() => {
+    return (tierName: string, optionValue: string) => {
+      return parsedVariants.some((v) => {
+        if (Number(v.availability ?? 0) <= 0) return false;
+        const thisTierAttr = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(tierName));
+        if (!thisTierAttr || normalizeOption(thisTierAttr.value) !== normalizeOption(optionValue)) {
+          return false;
+        }
+        for (const t of tierDefinitions) {
+          if (normalizeOption(t.name) === normalizeOption(tierName)) continue;
+          const currentOtherVal = selectedTiers[t.name];
+          if (!currentOtherVal) continue;
+          const otherAttr = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+          if (!otherAttr || normalizeOption(otherAttr.value) !== normalizeOption(currentOtherVal)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    };
+  }, [tierDefinitions, selectedTiers, parsedVariants]);
+
+  // Initial selection on mount: select first available in-stock variant
+  useEffect(() => {
+    if (!parsedVariants.length || tierDefinitions.length === 0) return;
+    const firstAvailable = parsedVariants.find((v) => Number(v.availability ?? 0) > 0) ?? parsedVariants[0];
+    if (!firstAvailable) return;
+
+    setSelectedTiers((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const t of tierDefinitions) {
+        if (!next[t.name]) {
+          const matchedAttr = firstAvailable.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+          next[t.name] = matchedAttr ? matchedAttr.value : t.options[0] ?? "";
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [parsedVariants, tierDefinitions]);
+
+  const handleSelectTierOption = (tierName: string, optionValue: string) => {
+    hasUserPickedVariantRef.current = true;
+    const candidateTiers = { ...selectedTiers, [tierName]: optionValue };
+
+    // 1. Check if exact variant exists with candidateTiers
+    const exact = parsedVariants.find((v) => {
+      return tierDefinitions.every((t) => {
+        const targetVal = candidateTiers[t.name];
+        if (!targetVal) return true;
+        const matched = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+        return matched && normalizeOption(matched.value) === normalizeOption(targetVal);
+      });
+    });
+
+    if (exact) {
+      setSelectedTiers(candidateTiers);
+      setQuantity(1);
+      const resolved = resolveVariantImageByTiers(candidateTiers);
+      emitVariantImage(resolved.id, resolved.url);
+      return;
+    }
+
+    // 2. If not exact, find the best compatible variant that has this option
+    const matchingVariants = parsedVariants.filter((v) => {
+      const matched = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(tierName));
+      return matched && normalizeOption(matched.value) === normalizeOption(optionValue);
+    });
+
+    const bestVariant =
+      matchingVariants.find((v) => Number(v.availability ?? 0) > 0) ??
+      matchingVariants[0];
+
+    if (bestVariant) {
+      const nextTiers: Record<string, string> = { ...selectedTiers, [tierName]: optionValue };
+      for (const attr of bestVariant.parsed.tiers) {
+        nextTiers[attr.name] = attr.value;
+      }
+      setSelectedTiers(nextTiers);
+      setQuantity(1);
+      const resolved = resolveVariantImageByTiers(nextTiers);
+      emitVariantImage(resolved.id, resolved.url);
+    } else {
+      setSelectedTiers(candidateTiers);
+      setQuantity(1);
+    }
+  };
 
   const originalVariantPrice = parseVariantPrice(selectedVariant?.price, basePrice).value;
-  
-  // Calculate specific sale for the selected variant (or base product if no variant selected)
+
+  // Calculate specific sale for the selected variant
   let activeEffectivePrice = effectivePrice;
   let activeSaleType = saleType;
   let activeSaleValue = saleValue;
@@ -137,20 +261,20 @@ export function ProductDetailPurchase({
     let lowestSalePrice = Infinity;
     let foundProgram = false;
     const numProductId = Number(productId);
-    
-    activeSalePrograms.forEach(program => {
-      // Find items in the program matching this product
-      const matchingItems = program.items.filter(it => it.productId === numProductId && (it.promoQtyLimit == null || it.promoQtyLimit > 0));
+
+    activeSalePrograms.forEach((program) => {
+      const matchingItems = program.items.filter(
+        (it) => it.productId === numProductId && (it.promoQtyLimit == null || it.promoQtyLimit > 0)
+      );
       if (matchingItems.length === 0) return;
 
-      // Check if it applies to the currently selected variant
       let appliesToCurrent = false;
       if (selectedVariant && selectedVariant.id != null) {
-        // If variant is selected, does this program apply to IT specifically, or to the whole product?
-        appliesToCurrent = matchingItems.some(it => it.variantId === Number(selectedVariant.id) || it.variantId == null);
+        appliesToCurrent = matchingItems.some(
+          (it) => it.variantId === Number(selectedVariant.id) || it.variantId == null
+        );
       } else {
-        // If no variant selected, does it apply to the whole product?
-        appliesToCurrent = matchingItems.some(it => it.variantId == null);
+        appliesToCurrent = matchingItems.some((it) => it.variantId == null);
       }
 
       if (appliesToCurrent) {
@@ -161,7 +285,7 @@ export function ProductDetailPurchase({
         } else if (program.discountType === "AMOUNT") {
           currentSalePrice = program.discountValue;
         }
-        
+
         if (currentSalePrice < lowestSalePrice) {
           lowestSalePrice = currentSalePrice;
           activeEffectivePrice = currentSalePrice;
@@ -170,60 +294,77 @@ export function ProductDetailPurchase({
         }
       }
     });
-    
+
     if (!foundProgram) {
-      // No active program found for this variant, reset to null
       activeEffectivePrice = null;
       activeSaleType = null;
       activeSaleValue = null;
     }
   }
 
-  // A sale exists if we found an active program, EVEN if it's technically higher than original
   const hasSale = activeEffectivePrice != null && activeSaleType != null;
-  
+
   let currentPrice = originalVariantPrice;
-  let displayOriginalPrice = null;
+  let displayOriginalPrice: number | null = null;
   let finalDiscountPct = 0;
 
   if (hasSale && activeSaleType === "AMOUNT" && activeSaleValue != null) {
-    currentPrice = activeSaleValue; // Fixed price (Đồng giá)
+    currentPrice = activeSaleValue;
     displayOriginalPrice = originalVariantPrice;
-    
-    if (activeSaleValue > originalVariantPrice) {
-      // Fixed price is magically higher than the original price. Show it as a special fixed price anyway.
-      // E.g., showing a 0% discount but still explicitly highlighting it's a fixed program.
-      finalDiscountPct = 0;
-    } else {
+    if (activeSaleValue < originalVariantPrice) {
       finalDiscountPct = Math.round(((displayOriginalPrice - currentPrice) / displayOriginalPrice) * 100);
     }
   } else if (hasSale && activeSaleType === "PERCENT" && activeSaleValue != null) {
-    currentPrice = Math.round(originalVariantPrice * (1 - activeSaleValue / 100)); // Percentage discount
+    currentPrice = Math.round(originalVariantPrice * (1 - activeSaleValue / 100));
     displayOriginalPrice = originalVariantPrice;
     finalDiscountPct = activeSaleValue;
   } else if (hasSale && activeEffectivePrice != null) {
     if (activeEffectivePrice < originalVariantPrice) {
-      currentPrice = activeEffectivePrice; 
+      currentPrice = activeEffectivePrice;
       displayOriginalPrice = originalVariantPrice;
       finalDiscountPct = Math.round(((originalVariantPrice - activeEffectivePrice) / originalVariantPrice) * 100);
     }
   }
-  const currentStock = Number(selectedVariant?.availability ?? baseStock);
+
+  const hasVariants = variants.length > 0;
+  const isCombinationValid = !hasVariants || Boolean(selectedVariant);
+  const currentStock = hasVariants
+    ? selectedVariant
+      ? Number(selectedVariant.availability ?? 0)
+      : 0
+    : Number(baseStock ?? 0);
   const maxQty = Math.max(1, Number.isFinite(currentStock) ? currentStock : 1);
   const variantPreview = selectedVariant?.variantImageUrl
-    ? resolvePreviewImage(selectedVariant.variantImageUrl, baseImage) : null;
-  const canBuy = currentStock > 0 && !busy;
+    ? resolvePreviewImage(selectedVariant.variantImageUrl, baseImage)
+    : null;
+  const canBuy = isCombinationValid && currentStock > 0 && !busy;
   const stockPct = Math.min(100, Math.max(0, (currentStock / Math.max(currentStock, 50)) * 100));
 
-  function resolveVariantImageBySelection(nextColor: string, nextSize: string): { id: number | null; url: string | null } {
-    if (!variants.length) return { id: null, url: null };
-    const requireSize = sizeOptions.length > 0;
-    const requireColor = colorOptions.length > 0;
-    if ((requireSize && !nextSize) || (requireColor && !nextColor)) return { id: null, url: null };
-    const key = `${requireColor ? normalizeOption(nextColor) : ""}||${requireSize ? normalizeOption(nextSize) : ""}`;
-    const v = variantLookup.get(key) ?? null;
-    const raw = v?.variantImageUrl ? resolvePreviewImage(v.variantImageUrl, baseImage) : null;
-    return { id: v?.id ?? null, url: raw };
+  function resolveVariantImageByTiers(nextTiers: Record<string, string>): { id: number | null; url: string | null } {
+    if (!parsedVariants.length) return { id: null, url: null };
+    const exact = parsedVariants.find((v) => {
+      return tierDefinitions.every((t) => {
+        const val = nextTiers[t.name];
+        if (!val) return true;
+        const m = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(t.name));
+        return m && normalizeOption(m.value) === normalizeOption(val);
+      });
+    });
+    if (exact?.variantImageUrl) {
+      return { id: exact.id ?? null, url: resolvePreviewImage(exact.variantImageUrl, baseImage) };
+    }
+    const firstTier = tierDefinitions[0];
+    if (firstTier && nextTiers[firstTier.name]) {
+      const tierVal = nextTiers[firstTier.name];
+      const withImg = parsedVariants.find((v) => {
+        const m = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(firstTier.name));
+        return m && normalizeOption(m.value) === normalizeOption(tierVal) && Boolean(v.variantImageUrl);
+      });
+      if (withImg?.variantImageUrl) {
+        return { id: withImg.id ?? null, url: resolvePreviewImage(withImg.variantImageUrl, baseImage) };
+      }
+    }
+    return { id: exact?.id ?? null, url: null };
   }
 
   function emitVariantImage(nextVariantId: number | null, nextUrl: string | null) {
@@ -234,16 +375,6 @@ export function ProductDetailPurchase({
   }
 
   useEffect(() => {
-    if (!variants.length) return;
-    const firstAvailable = variants.find((v) => Number(v.availability ?? 0) > 0) ?? variants[0];
-    if (!firstAvailable) return;
-    const initColor = (firstAvailable.color ?? "").trim();
-    const initSize = (firstAvailable.size ?? "").trim();
-    if (!selectedColor && initColor) setSelectedColor(initColor);
-    if (!selectedSize && initSize) setSelectedSize(initSize);
-  }, [selectedColor, selectedSize, variants]);
-
-  useEffect(() => {
     if (!hasUserPickedVariantRef.current) return;
     const currentVariantId = selectedVariant?.id ?? null;
     if (lastEmittedVariantIdRef.current === currentVariantId && lastEmittedVariantImageRef.current === variantPreview) return;
@@ -251,6 +382,29 @@ export function ProductDetailPurchase({
     lastEmittedVariantImageRef.current = variantPreview;
     onVariantImageChange?.(variantPreview);
   }, [onVariantImageChange, selectedVariant?.id, variantPreview]);
+
+  const computedVariantLabel = useMemo(() => {
+    if (selectedVariant?.variantName?.trim()) {
+      return selectedVariant.variantName.trim();
+    }
+    if (selectedVariant?.parsed?.fullLabel) {
+      return selectedVariant.parsed.fullLabel;
+    }
+    if (tierDefinitions.length > 0) {
+      const parts = tierDefinitions.map((t) => selectedTiers[t.name]).filter(Boolean);
+      if (parts.length > 0) return parts.join(" • ");
+    }
+    return null;
+  }, [selectedVariant, tierDefinitions, selectedTiers]);
+
+  useEffect(() => {
+    onVariantSelect?.({
+      price: currentPrice,
+      name: computedVariantLabel,
+      image: variantPreview,
+      stock: currentStock,
+    });
+  }, [currentPrice, computedVariantLabel, variantPreview, currentStock, onVariantSelect]);
 
   function redirectToLogin() {
     const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
@@ -265,80 +419,176 @@ export function ProductDetailPurchase({
     }
     const txt = await res.text().catch(() => "");
     const low = txt.toLowerCase();
-    if (res.status === 409) { toast.error("Sản phẩm/biến thể đã hết hàng hoặc không đủ tồn kho."); return true; }
+    if (res.status === 409) {
+      toast.error("Sản phẩm/biến thể đã hết hàng hoặc không đủ tồn kho.");
+      return true;
+    }
     if (low.includes("unauthorized") || low.includes("token không hợp lệ") || low.includes("bearer")) {
       toast.error("Bạn cần đăng nhập để thêm sản phẩm vào giỏ.");
       window.setTimeout(() => redirectToLogin(), 500);
       return true;
     }
-    if (txt) { toast.error(`Lỗi: ${txt.slice(0, 140)}`); return true; }
+    if (txt) {
+      toast.error(`Lỗi: ${txt.slice(0, 140)}`);
+      return true;
+    }
     return false;
   }
 
   async function addToCart() {
     const pid = Number(productId);
     if (!Number.isFinite(pid) || pid <= 0 || quantity <= 0) return;
-    if (!isLoggedIn) { redirectToLogin(); return; }
+    if (!isLoggedIn) {
+      redirectToLogin();
+      return;
+    }
+    if (tierDefinitions.length > 0) {
+      const missing = tierDefinitions.find((t) => !selectedTiers[t.name]);
+      if (missing) {
+        toast.error(`Vui lòng chọn ${missing.name} trước khi thêm vào giỏ.`);
+        return;
+      }
+    }
+    if (hasVariants && !selectedVariant) {
+      toast.error("Tổ hợp phân loại đã chọn không khả dụng. Vui lòng chọn lại.");
+      return;
+    }
     setBusy(true);
     try {
       const qp = new URLSearchParams({ productId: String(pid), quantity: String(quantity) });
       if (selectedVariant?.id != null) qp.set("variantId", String(selectedVariant.id));
-      const res = await fetch(`/api/cart?${qp.toString()}`, { method: "POST", cache: "no-store" });
-      if (!res.ok) { if (await shouldRedirectLogin(res)) return; toast.error("Không thêm được vào giỏ hàng."); return; }
+      if (computedVariantLabel) qp.set("variantLabel", computedVariantLabel);
+      const idempotencyKey =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `idemp-${Date.now()}-${Math.random()}`;
+      const res = await fetch(`/api/cart?${qp.toString()}`, {
+        method: "POST",
+        cache: "no-store",
+        headers: { "Idempotency-Key": idempotencyKey },
+      });
+      if (!res.ok) {
+        if (await shouldRedirectLogin(res)) return;
+        toast.error("Không thêm được vào giỏ hàng.");
+        return;
+      }
       toast.success("Đã thêm sản phẩm vào giỏ hàng thành công!");
       setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
-    } catch { toast.error("Không kết nối được hệ thống giỏ hàng."); }
-    finally { setBusy(false); }
+      setTimeout(() => setAddedToCart(false), 2200);
+    } catch {
+      toast.error("Không kết nối được hệ thống giỏ hàng.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   function proceedBuyNow() {
     const pid = Number(productId);
     if (!Number.isFinite(pid) || pid <= 0 || quantity <= 0) return;
-    const requireSize = sizeOptions.length > 0;
-    const requireColor = colorOptions.length > 0;
-    if ((requireSize && !selectedSize) || (requireColor && !selectedColor)) { toast.error("Vui lòng chọn đầy đủ màu/kích cỡ trước khi mua ngay."); return; }
-    if (variants.length && !selectedVariant) { toast.error("Không xác định được biến thể. Vui lòng chọn lại."); return; }
-    if (!canBuy) { toast.error("Sản phẩm hiện đang hết hàng."); return; }
-    const variantLabel = [selectedColor, selectedSize].map((x) => String(x ?? "").trim()).filter(Boolean).join(" • ") || null;
-    const picked = [{
-      productId: pid,
-      variantId: selectedVariant?.id != null ? Number(selectedVariant.id) : null,
-      quantity,
-      subTotal: Math.max(0, Number(currentPrice) * Math.max(1, Math.floor(quantity))),
-      variantLabel,
-      product: {
-        id: pid, sku: null, productName,
-        primaryImageUrl: (selectedVariant?.variantImageUrl ? resolvePreviewImage(selectedVariant.variantImageUrl, baseImage) : baseImage) || null,
-        effectivePrice: currentPrice ?? null,
+    if (tierDefinitions.length > 0) {
+      const missing = tierDefinitions.find((t) => !selectedTiers[t.name]);
+      if (missing) {
+        toast.error(`Vui lòng chọn ${missing.name} trước khi mua ngay.`);
+        return;
+      }
+    }
+    if (variants.length && !selectedVariant) {
+      toast.error("Không xác định được biến thể. Vui lòng chọn lại.");
+      return;
+    }
+    if (!canBuy) {
+      toast.error("Sản phẩm hiện đang hết hàng.");
+      return;
+    }
+    const variantLabel = computedVariantLabel;
+    const picked = [
+      {
+        productId: pid,
+        variantId: selectedVariant?.id != null ? Number(selectedVariant.id) : null,
+        quantity,
+        subTotal: Math.max(0, Number(currentPrice) * Math.max(1, Math.floor(quantity))),
+        variantLabel,
+        product: {
+          id: pid,
+          sku: selectedVariant?.sku ?? null,
+          productName,
+          primaryImageUrl:
+            (selectedVariant?.variantImageUrl
+              ? resolvePreviewImage(selectedVariant.variantImageUrl, baseImage)
+              : baseImage) || null,
+          effectivePrice: currentPrice ?? null,
+        },
       },
-    }];
+    ];
     window.sessionStorage.setItem("checkout:selectedItems", JSON.stringify(picked));
     window.sessionStorage.setItem("checkout:flow", "buy-now");
-    if (!isLoggedIn) { router.push(`/login?next=${encodeURIComponent("/checkout")}`); return; }
+    if (!isLoggedIn) {
+      router.push(`/login?next=${encodeURIComponent("/checkout")}`);
+      return;
+    }
     router.push("/checkout");
   }
 
+  const copyCouponCode = (code: string) => {
+    navigator.clipboard?.writeText(code);
+    setCopiedCoupon(code);
+    toast.success(`Đã sao chép mã ưu đãi ${code}!`);
+    setTimeout(() => setCopiedCoupon(null), 2000);
+  };
+
   return (
-    <div className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900/60">
-      {/* ── Price block ── */}
-      <div className="px-6 py-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Giá bán</p>
-            <div className="flex flex-col gap-1 mt-1">
-              <p
-                className="font-black tracking-tight leading-none inline-block text-4xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400 drop-shadow-sm"
-              >
+    <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-8 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-all duration-300">
+      {/* ── Ambient Glow Orb ── */}
+      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl" />
+      <div className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl" />
+
+      {/* ── FLASH SALE STRIP (When Active) ── */}
+      {hasSale && (
+        <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 overflow-hidden rounded-t-[2.5rem] bg-gradient-to-r from-amber-500 via-rose-600 to-indigo-600 p-4 text-white shadow-lg">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+                <span className="material-symbols-outlined text-[18px] text-amber-300 animate-pulse">
+                  bolt
+                </span>
+              </span>
+              <div>
+                <p className="font-headline text-xs font-black uppercase tracking-wider text-amber-200">
+                  Chương trình ưu đãi có hạn
+                </p>
+                <p className="text-sm font-black tracking-tight">Flash Sale Độc Quyền</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl bg-black/30 px-3.5 py-1.5 backdrop-blur-md border border-white/15 text-xs font-black">
+              <span className="material-symbols-outlined text-[15px] text-amber-300">schedule</span>
+              <span>Tiết kiệm {asCurrency((displayOriginalPrice ?? currentPrice) - currentPrice)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PRICE SECTION ── */}
+      <div className="relative z-10 pb-6 border-b border-slate-200/80 dark:border-white/10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 dark:bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-200/80 dark:border-indigo-500/30">
+                <span className="material-symbols-outlined text-[13px]">verified_user</span>
+                Giá niêm yết chính hãng
+              </span>
+            </div>
+            <div className="flex flex-wrap items-baseline gap-3 pt-1">
+              <span className="font-headline font-black text-3xl sm:text-4xl lg:text-5xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 dark:from-white dark:via-slate-100 dark:to-cyan-400">
                 {asCurrency(currentPrice)}
-              </p>
+              </span>
               {displayOriginalPrice && (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-400 dark:text-slate-500 line-through opacity-60">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm sm:text-base font-bold text-slate-400 dark:text-slate-500 line-through">
                     {asCurrency(displayOriginalPrice)}
-                  </p>
+                  </span>
                   {finalDiscountPct > 0 && (
-                    <span className="rounded bg-rose-500/10 dark:bg-rose-500/20 px-2 py-1 text-xs font-bold text-rose-600 dark:text-rose-400">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-0.5 text-[11px] font-black text-white shadow-md shadow-rose-500/20">
+                      <span className="material-symbols-outlined text-[12px]">local_fire_department</span>
                       -{finalDiscountPct}%
                     </span>
                   )}
@@ -347,26 +597,48 @@ export function ProductDetailPurchase({
             </div>
           </div>
 
-          {/* Stock pill */}
+          {/* Stock status indicator pill */}
           <div className="flex flex-col items-end gap-1.5">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-black border ${
-                currentStock > 0
-                  ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250/20 text-emerald-600 dark:text-emerald-400"
-                  : "bg-rose-50 dark:bg-rose-950/20 border-rose-250/20 text-rose-600 dark:text-rose-400"
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-black border backdrop-blur-md transition-all ${
+                !isCombinationValid
+                  ? "bg-slate-100 dark:bg-zinc-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"
+                  : currentStock > 0
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                  : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
               }`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${currentStock > 0 ? "bg-emerald-500" : "bg-rose-500"}`} />
-              {currentStock > 0 ? `Còn ${currentStock.toLocaleString("vi-VN")} sp` : "Hết hàng"}
-            </span>
-            {/* Stock progress bar */}
-            {currentStock > 0 && (
-              <div className="w-28 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <span className="relative flex h-2 w-2">
+                {isCombinationValid && currentStock > 0 && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={`relative inline-flex h-2 w-2 rounded-full ${
+                    !isCombinationValid ? "bg-slate-400" : currentStock > 0 ? "bg-emerald-500" : "bg-rose-500"
+                  }`}
+                />
+              </span>
+              <span>
+                {!isCombinationValid
+                  ? "Tổ hợp không khả dụng"
+                  : currentStock > 0
+                  ? `Còn ${currentStock.toLocaleString("vi-VN")} sp`
+                  : "Tạm hết hàng"}
+              </span>
+            </div>
+
+            {isCombinationValid && currentStock > 0 && (
+              <div className="w-28 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${stockPct}%`,
-                    background: stockPct > 50 ? "linear-gradient(90deg,#10b981,#34d399)" : stockPct > 20 ? "linear-gradient(90deg,#f59e0b,#fbbf24)" : "linear-gradient(90deg,#ef4444,#f87171)",
+                    background:
+                      stockPct > 50
+                        ? "linear-gradient(90deg,#10b981,#34d399)"
+                        : stockPct > 20
+                        ? "linear-gradient(90deg,#f59e0b,#fbbf24)"
+                        : "linear-gradient(90deg,#ef4444,#f87171)",
                   }}
                 />
               </div>
@@ -375,154 +647,282 @@ export function ProductDetailPurchase({
         </div>
       </div>
 
-      {/* ── Variants ── */}
-      {variants.length > 0 && (
-        <div className="space-y-5 px-6 py-5">
-          {colorOptions.length > 0 && (
-            <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Màu sắc</p>
-                {selectedColor && (
-                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400">{selectedColor}</span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {colorOptions.map((color) => {
-                  const active = selectedColor === color;
-                  const disabled = !canPickColor(color);
-                  return (
-                    <button
-                      key={color} type="button"
-                      onClick={() => {
-                        hasUserPickedVariantRef.current = true;
-                        setSelectedColor(color); setQuantity(1);
-                        const resolved = resolveVariantImageBySelection(color, selectedSize);
-                        emitVariantImage(resolved.id, resolved.url);
-                      }}
-                      disabled={disabled || busy}
-                      className={`relative overflow-hidden rounded-xl px-4 py-2 text-sm font-bold transition-all duration-200 border ${
-                        active 
-                          ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20" 
-                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800"
-                      } disabled:cursor-not-allowed disabled:opacity-35`}
-                    >
-                      {active && <span className="mr-1 text-[10px]">✓</span>}
-                      <span>{color}</span>
-                    </button>
-                  );
-                })}
-              </div>
+      {/* ── ACTIVE VARIANT SELECTION BANNER ── */}
+      {selectedVariant ? (
+        <div className="relative z-10 my-5 rounded-2xl border border-indigo-200/70 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white text-[12px] font-black">
+                ✓
+              </span>
+              <p className="truncate text-xs font-black text-slate-800 dark:text-slate-100">
+                <span className="text-slate-400 dark:text-slate-500 font-normal mr-1.5">Phiên bản:</span>
+                {computedVariantLabel || selectedVariant.variantName}
+              </p>
             </div>
-          )}
+            {selectedVariant.sku && (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900 px-2.5 py-0.5 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                SKU: {selectedVariant.sku}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : hasVariants ? (
+        <div className="relative z-10 my-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <span className="material-symbols-outlined text-[16px] text-amber-500">info</span>
+            <span>Tổ hợp phân loại này hiện đang hết hàng. Vui lòng chọn phân loại khác!</span>
+          </div>
+        </div>
+      ) : null}
 
-          {sizeOptions.length > 0 && (
-            <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Kích cỡ</p>
-                {selectedSize && (
-                  <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400">{selectedSize}</span>
-                )}
+      {/* ── DYNAMIC MULTI-TIER VARIANTS SELECTOR ── */}
+      {variants.length > 0 && tierDefinitions.length > 0 && (
+        <div className="relative z-10 space-y-6 py-2">
+          {tierDefinitions.map((tier, tierIdx) => {
+            const selectedValue = selectedTiers[tier.name];
+
+            return (
+              <div key={tier.name} className="space-y-3">
+                {/* Tier Title Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center rounded-lg bg-indigo-50/80 dark:bg-indigo-500/10 border border-indigo-200/80 dark:border-indigo-500/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                      Tầng {tierIdx + 1}
+                    </span>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {tier.name}
+                    </h4>
+                  </div>
+                  {selectedValue && (
+                    <span className="text-xs font-black text-indigo-600 dark:text-cyan-400">
+                      {selectedValue}
+                    </span>
+                  )}
+                </div>
+
+                {/* Options List */}
+                <div className="flex flex-wrap gap-2.5">
+                  {tier.options.map((opt) => {
+                    const active = selectedValue === opt;
+                    const hasStockForCurrent = canPickTierOption(tier.name, opt);
+                    const hasStockAnywhere = parsedVariants.some((v) => {
+                      const m = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(tier.name));
+                      return m && normalizeOption(m.value) === normalizeOption(opt) && Number(v.availability ?? 0) > 0;
+                    });
+                    const disabled = !hasStockAnywhere;
+
+                    // Match variant for thumbnail or color
+                    const matchingVariant = parsedVariants.find((v) => {
+                      const m = v.parsed.tiers.find((a) => normalizeOption(a.name) === normalizeOption(tier.name));
+                      return m && normalizeOption(m.value) === normalizeOption(opt);
+                    });
+
+                    const optThumb = matchingVariant?.variantImageUrl;
+                    const swatchColor = tier.isColor ? getSwatchColor(opt) : null;
+
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleSelectTierOption(tier.name, opt)}
+                        disabled={busy}
+                        className={`group relative flex items-center gap-2.5 rounded-2xl px-4 py-2.5 text-xs font-bold transition-all duration-200 border ${
+                          active
+                            ? "border-indigo-600 dark:border-indigo-400 bg-indigo-50/80 dark:bg-indigo-500/15 text-indigo-700 dark:text-white ring-2 ring-indigo-500/20 shadow-md shadow-indigo-500/10 scale-[1.02]"
+                            : !hasStockForCurrent
+                            ? "border-slate-200/70 dark:border-white/5 bg-slate-50/60 dark:bg-zinc-900/40 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-zinc-700"
+                            : "border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/60 text-slate-700 dark:text-slate-200 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm"
+                        } disabled:cursor-not-allowed disabled:opacity-40 active:scale-95`}
+                      >
+                        {/* Color swatch circle */}
+                        {swatchColor && (
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/10 dark:border-white/20 shadow-inner shrink-0"
+                            style={{ backgroundColor: swatchColor }}
+                          />
+                        )}
+
+                        {/* Thumbnail image if available */}
+                        {optThumb && !swatchColor && (
+                          <img
+                            src={resolvePreviewImage(optThumb, baseImage)}
+                            alt={opt}
+                            className="h-6 w-6 rounded-lg object-cover border border-slate-200 dark:border-zinc-700 transition-transform group-hover:scale-105 shrink-0"
+                          />
+                        )}
+
+                        {active && (
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white">
+                            ✓
+                          </span>
+                        )}
+                        <span>{opt}</span>
+                        {!hasStockForCurrent && hasStockAnywhere && (
+                          <span className="text-[10px] font-normal text-rose-500 ml-0.5">(hết)</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {sizeOptions.map((size) => {
-                  const active = selectedSize === size;
-                  const disabled = !canPickSize(size);
-                  return (
-                    <button
-                      key={size} type="button"
-                      onClick={() => {
-                        hasUserPickedVariantRef.current = true;
-                        setSelectedSize(size); setQuantity(1);
-                        const resolved = resolveVariantImageBySelection(selectedColor, size);
-                        emitVariantImage(resolved.id, resolved.url);
-                      }}
-                      disabled={disabled || busy}
-                      className={`relative min-w-[52px] overflow-hidden rounded-xl px-3 py-2 text-sm font-bold transition-all duration-200 border ${
-                        active 
-                          ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500/20" 
-                          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-650 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800"
-                      } disabled:cursor-not-allowed disabled:opacity-35`}
-                    >
-                      {size}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
 
-      {/* ── Quantity + Subtotal ── */}
-      <div className="flex items-center justify-between px-6 py-4">
-        {/* Qty stepper */}
-        <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
-          <button
-            type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            disabled={busy || quantity <= 1}
-            className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 dark:text-indigo-400 transition hover:bg-indigo-50 dark:hover:bg-indigo-955/40 disabled:opacity-30"
-          >−</button>
-          <span className="w-12 select-none text-center text-base font-black text-slate-800 dark:text-white">{quantity}</span>
-          <button
-            type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-            disabled={busy || quantity >= maxQty}
-            className="flex h-11 w-11 items-center justify-center font-black text-lg text-indigo-600 dark:text-indigo-400 transition hover:bg-indigo-50 dark:hover:bg-indigo-955/40 disabled:opacity-30"
-          >+</button>
+      {/* ── EXCLUSIVE COUPONS QUICK PICKER ── */}
+      <div className="relative z-10 my-4 rounded-2xl border border-slate-200/70 dark:border-white/5 bg-slate-50/70 dark:bg-zinc-900/40 p-4">
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="material-symbols-outlined text-[16px] text-indigo-600 dark:text-cyan-400">
+            confirmation_number
+          </span>
+          <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+            Mã Ưu Đãi Áp Dụng
+          </span>
         </div>
-
-        {/* Subtotal */}
-        <div className="text-right">
-          <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Thành tiền</p>
-          <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{asCurrency(currentPrice * quantity)}</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { code: "FREESHIP", label: "Freeship Đơn > 500k", desc: "Giảm 30.000₫" },
+            { code: "VIP50K", label: "Giảm 50.000₫", desc: "Đơn từ 1.000.000₫" },
+            { code: "WELCOME", label: "Thành viên mới", desc: "Giảm 5%" },
+          ].map((c) => (
+            <button
+              key={c.code}
+              type="button"
+              onClick={() => copyCouponCode(c.code)}
+              className="group flex items-center gap-2 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-500/30 bg-white dark:bg-zinc-800/80 px-3 py-1.5 text-left transition-all hover:border-indigo-500 hover:shadow-sm"
+            >
+              <div className="min-w-0">
+                <span className="block font-mono text-[11px] font-black text-indigo-600 dark:text-cyan-400">
+                  {c.code}
+                </span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                  {c.label}
+                </span>
+              </div>
+              <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-indigo-500">
+                {copiedCoupon === c.code ? "check" : "content_copy"}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ── CTA Buttons ── */}
-      <div className="space-y-3 px-6 py-5">
-        {/* Add to cart */}
+      {/* ── QUANTITY & SUBTOTAL STEPPER ── */}
+      <div className="relative z-10 pt-4 border-t border-slate-200/80 dark:border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              Số lượng
+            </p>
+            {/* Stepper */}
+            <div className="flex items-center overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                disabled={busy || quantity <= 1}
+                className="flex h-11 w-11 items-center justify-center text-lg font-black text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 active:scale-95"
+              >
+                −
+              </button>
+              <span className="w-12 select-none text-center font-mono text-base font-black text-slate-900 dark:text-white">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                disabled={busy || quantity >= maxQty}
+                className="flex h-11 w-11 items-center justify-center text-lg font-black text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 active:scale-95"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Subtotal */}
+          <div className="text-right">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              Tạm tính
+            </p>
+            <p className="font-headline text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              {asCurrency(currentPrice * quantity)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ACTION BUTTONS ── */}
+      <div className="relative z-10 space-y-3 pt-6">
+        {/* Add to Cart */}
         <button
           type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); void addToCart(); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void addToCart();
+          }}
           disabled={!canBuy}
-          className="group relative flex h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl font-black text-white text-sm transition-all duration-300 disabled:opacity-50"
+          className="group relative flex h-14 w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl font-headline text-sm font-black text-white shadow-xl shadow-indigo-500/25 transition-all duration-300 hover:scale-[1.01] hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           style={{
             background: addedToCart
-              ? "linear-gradient(135deg,#10b981,#059669)"
-              : "linear-gradient(135deg,#6366f1,#8b5cf6,#a78bfa)",
-            boxShadow: addedToCart
-              ? "0 8px 28px rgba(16,185,129,.4)"
-              : "0 8px 28px rgba(99,102,241,.4)",
+              ? "linear-gradient(135deg, #10b981, #059669)"
+              : "linear-gradient(135deg, #4f46e5, #6366f1, #06b6d4)",
           }}
         >
-          {/* Shine sweep */}
-          <span
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: "linear-gradient(110deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%)",
-              backgroundSize: "200% 100%",
-              animation: canBuy ? "shine 2.5s linear infinite" : "none",
-            }}
-          />
-          <style>{`@keyframes shine{from{background-position:-200% 0}to{background-position:200% 0}}`}</style>
           {busy ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           ) : addedToCart ? (
-            <><span className="material-symbols-outlined text-[20px]">check_circle</span>Đã thêm vào giỏ!</>
+            <>
+              <span className="material-symbols-outlined text-[20px]">check_circle</span>
+              <span>Đã thêm vào giỏ hàng thành công!</span>
+            </>
           ) : (
-            <><span className="material-symbols-outlined text-[20px]">shopping_bag</span>Thêm vào giỏ hàng</>
+            <>
+              <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">
+                add_shopping_cart
+              </span>
+              <span>Thêm vào giỏ hàng</span>
+            </>
           )}
         </button>
 
-        {/* Buy now */}
+        {/* Buy Now */}
         <button
           type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); proceedBuyNow(); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            proceedBuyNow();
+          }}
           disabled={!canBuy}
-          className="group flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-indigo-600 dark:border-indigo-500 bg-transparent text-indigo-600 dark:text-indigo-400 text-sm font-black transition-all hover:bg-indigo-600 hover:text-white dark:hover:text-white hover:shadow-lg hover:shadow-indigo-500/20 disabled:opacity-40"
+          className="group flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-2 border-indigo-600 dark:border-indigo-400 bg-transparent text-indigo-600 dark:text-indigo-400 font-headline text-sm font-black transition-all duration-300 hover:bg-gradient-to-r hover:from-indigo-600 hover:via-indigo-500 hover:to-cyan-500 hover:text-white hover:border-transparent hover:shadow-xl hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <span className="material-symbols-outlined text-[20px]">bolt</span>
-          Mua ngay — {asCurrency(currentPrice * quantity)}
+          <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-12">
+            bolt
+          </span>
+          <span>Mua ngay — {asCurrency(currentPrice * quantity)}</span>
         </button>
+      </div>
+
+      {/* ── TRUST & ASSURANCE BENEFITS ── */}
+      <div className="relative z-10 grid grid-cols-2 gap-3 pt-6 border-t border-slate-200/80 dark:border-white/10 mt-6">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+          </span>
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-tight">
+            Chính hãng 100% bảo hành tiêu chuẩn
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
+          </span>
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-tight">
+            Giao hàng nhanh &amp; đồng kiểm nhận hàng
+          </span>
+        </div>
       </div>
     </div>
   );

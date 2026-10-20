@@ -1,5 +1,7 @@
 package com.rainbowforest.productcatalogservice.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
@@ -49,13 +52,20 @@ public class GlobalExceptionHandler {
                     409, safePath(req), null);
             return new ResponseEntity<>(body, HttpStatus.CONFLICT);
         }
-        ApiError body = ApiError.of("BAD_REQUEST", msg, 400, safePath(req), null);
+        // Không leak raw message - log server-side, trả generic cho client.
+        log.debug("IllegalArgumentException: {}", msg);
+        ApiError body = ApiError.of("BAD_REQUEST", "Yêu cầu không hợp lệ", 400, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, HttpServletRequest req) {
         String msg = ex.getMessage() != null ? ex.getMessage() : "Conflict";
+        // Whitelist các message an toàn.
+        if (!isWhitelistedMessage(msg)) {
+            log.debug("IllegalStateException: {}", msg);
+            msg = "Trạng thái không hợp lệ";
+        }
         ApiError body = ApiError.of("CONFLICT", msg, 409, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
@@ -68,8 +78,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest req) {
-        ex.printStackTrace(); // print to logs
-        ApiError body = ApiError.of("INTERNAL_ERROR", "Có lỗi hệ thống: " + ex.getMessage(), 500, safePath(req), null);
+        // Log chi tiết server-side; KHÔNG leak raw exception message cho client.
+        log.error("Lỗi không mong muốn tại API: ", ex);
+        ApiError body = ApiError.of("INTERNAL_ERROR", "Có lỗi hệ thống", 500, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -79,6 +90,17 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Whitelist các message an toàn được phép trả về client.
+     */
+    private static boolean isWhitelistedMessage(String msg) {
+        if (msg == null) return false;
+        return msg.startsWith("Còn danh mục con")
+                || msg.startsWith("Không thể xóa")
+                || msg.startsWith("Danh mục đã được xóa trước đó")
+                || msg.startsWith("Còn sản phẩm liên quan");
     }
 }
 

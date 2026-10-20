@@ -1,4 +1,4 @@
-import { apiUrl, adminCatalogHeaders, parseJsonSafe, parseProductApiError } from "./api";
+import { apiUrl, adminCatalogHeaders, parseJsonSafe, parseProductApiError, fetchWithTimeout } from "./api";
 
 // ======================== Sale Program API ========================
 
@@ -119,7 +119,7 @@ export type Voucher = {
   id: number;
   code: string;
   description?: string;
-  discountType: "PERCENT" | "AMOUNT";
+  discountType: "PERCENT" | "AMOUNT" | "PERCENTAGE" | "FIXED" | string;
   discountValue: number;
   minOrderAmount?: number;
   maxDiscountAmount?: number;
@@ -415,9 +415,9 @@ export async function validateVoucher(
 
 export async function listActiveBanners(): Promise<PromoBanner[]> {
   try {
-    const res = await fetch(apiUrl("/sales/banners"), {
+    const res = await fetchWithTimeout(apiUrl("/sales/banners"), {
       next: { revalidate: 60 },
-    });
+    }, 5000);
     if (!res.ok) return [];
     return await parseJsonSafe<PromoBanner[]>(res);
   } catch {
@@ -427,26 +427,26 @@ export async function listActiveBanners(): Promise<PromoBanner[]> {
 
 export async function listActivePrograms(): Promise<SaleProgram[]> {
   try {
-    const res = await fetch(apiUrl('/sales/active'), {
+    const res = await fetchWithTimeout(apiUrl('/sales/active'), {
       next: { revalidate: 60 },
-    });
+    }, 5000);
     if (!res.ok) {
       if (res.status === 404) return [];
-      console.error('[listActivePrograms] failed:', res.status, res.statusText);
+      console.warn('[listActivePrograms] failed:', res.status, res.statusText);
       return [];
     }
     return await parseJsonSafe<SaleProgram[]>(res);
   } catch (err) {
-    console.error('[listActivePrograms] err:', err);
+    console.warn('[listActivePrograms] err:', err);
     return [];
   }
 }
 
 export async function listActiveVouchers(): Promise<Voucher[]> {
   try {
-    const res = await fetch(apiUrl('/sales/vouchers/active'), {
+    const res = await fetchWithTimeout(apiUrl('/sales/vouchers/active'), {
       next: { revalidate: 60 },
-    });
+    }, 5000);
     if (!res.ok) return [];
     return await parseJsonSafe<Voucher[]>(res);
   } catch {

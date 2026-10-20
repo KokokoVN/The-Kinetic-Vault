@@ -6,16 +6,28 @@ import com.rainbowforest.productcatalogservice.entity.Product;
 import com.rainbowforest.productcatalogservice.exception.CategoryDeletionRequiresConfirmationException;
 import com.rainbowforest.productcatalogservice.exception.CategoryHasChildCategoriesException;
 import com.rainbowforest.productcatalogservice.service.CategoryService;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/admin/categories")
 public class AdminCategoryController {
+
+    private static final Path CATEGORY_UPLOAD_DIR = Paths.get("uploads", "categories");
 
     private final CategoryService categoryService;
 
@@ -38,7 +50,7 @@ public class AdminCategoryController {
                                 "error", "DUPLICATE_NAME",
                                 "message", "Tên danh mục đã tồn tại (không phân biệt hoa thường)."));
             }
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Bad request"));
+            return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         }
     }
 
@@ -100,7 +112,7 @@ public class AdminCategoryController {
                                 "error", "DUPLICATE_NAME",
                                 "message", "Tên danh mục đã tồn tại (không phân biệt hoa thường)."));
             }
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Bad request"));
+            return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         }
     }
 
@@ -133,7 +145,7 @@ public class AdminCategoryController {
                                 "error", "DUPLICATE_SLUG",
                                 "message", "Slug đã được danh mục khác dùng — sửa slug trước khi khôi phục."));
             }
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Bad request"));
+            return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         }
     }
 
@@ -164,7 +176,7 @@ public class AdminCategoryController {
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Danh mục đã được xóa trước đó."));
             }
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", "BAD_REQUEST", "message", "Yêu cầu không hợp lệ"));
         } catch (CategoryHasChildCategoriesException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
                     "error", "HAS_CHILD_CATEGORIES",
@@ -175,6 +187,49 @@ public class AdminCategoryController {
                     "error", "REQUIRES_CONFIRMATION",
                     "productCount", e.getProductCount(),
                     "message", "Danh mục còn sản phẩm liên quan. Gửi lại DELETE với confirm=true sau khi người dùng xác nhận."));
+        }
+    }
+
+    /** POST /admin/categories/upload-image — tải lên hình ảnh đại diện danh mục. */
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        }
+        try {
+            Files.createDirectories(CATEGORY_UPLOAD_DIR);
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "category";
+            String ext = "";
+            int dot = original.lastIndexOf('.');
+            if (dot >= 0 && dot < original.length() - 1) {
+                ext = original.substring(dot);
+            }
+            String filename = UUID.randomUUID().toString().replace("-", "") + ext;
+            Path out = CATEGORY_UPLOAD_DIR.resolve(filename);
+            Files.copy(file.getInputStream(), out, StandardCopyOption.REPLACE_EXISTING);
+
+            String url = "/api/catalog/admin/categories/images/" + filename;
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to upload image", "error", e.getMessage()));
+        }
+    }
+
+    /** GET /admin/categories/images/{filename} — phục vụ file ảnh danh mục. */
+    @GetMapping("/images/{filename:.+}")
+    public ResponseEntity<Resource> serveImage(@PathVariable String filename) {
+        try {
+            Path filePath = CATEGORY_UPLOAD_DIR.resolve(filename).normalize();
+            if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            Resource resource = new UrlResource(filePath.toUri());
+            String type = Files.probeContentType(filePath);
+            MediaType mt = type != null ? MediaType.parseMediaType(type) : MediaType.APPLICATION_OCTET_STREAM;
+            return ResponseEntity.ok().contentType(mt).body(resource);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

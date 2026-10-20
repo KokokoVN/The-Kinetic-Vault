@@ -2,11 +2,25 @@
 
 import { getAdminSession } from "@/lib/auth-server";
 import { getUserIdFromAccessToken } from "@/lib/auth";
-import { createAdminBrand, checkAdminBrandName, uploadAdminBrandLogo } from "@/lib/api";
+import {
+  createAdminBrand,
+  updateAdminBrand,
+  deleteAdminBrand,
+  restoreAdminBrand,
+  checkAdminBrandName,
+  checkAdminBrandSlug,
+  uploadAdminBrandLogo,
+} from "@/lib/api";
+import { revalidatePath } from "next/cache";
 
-export async function checkBrandNameAction(name: string): Promise<boolean> {
+export async function checkBrandNameAction(name: string, excludeId?: number): Promise<boolean> {
   const session = await getAdminSession();
-  return checkAdminBrandName(name, { accessToken: session.token });
+  return checkAdminBrandName(name, { accessToken: session.token, excludeId });
+}
+
+export async function checkBrandSlugAction(slug: string, excludeId?: number): Promise<boolean> {
+  const session = await getAdminSession();
+  return checkAdminBrandSlug(slug, { accessToken: session.token, excludeId });
 }
 
 export async function uploadBrandLogoAction(formData: FormData): Promise<string> {
@@ -21,7 +35,15 @@ export async function uploadBrandLogoAction(formData: FormData): Promise<string>
   });
 }
 
-export async function createBrandAction(data: { name: string; description?: string | null; logoUrl?: string | null }) {
+export async function createBrandAction(data: {
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  logoUrl?: string | null;
+  website?: string | null;
+  country?: string | null;
+  hidden?: boolean;
+}) {
   const session = await getAdminSession();
   const uid = getUserIdFromAccessToken(session.token);
   const result = await createAdminBrand(data, {
@@ -29,35 +51,52 @@ export async function createBrandAction(data: { name: string; description?: stri
     username: session.username,
     userId: uid,
   });
-  const { revalidatePath } = await import("next/cache");
   revalidatePath("/admin/brands");
   return result;
 }
 
-export async function updateBrandAction(id: number, data: { name: string; description?: string | null; logoUrl?: string | null }) {
+export async function updateBrandAction(
+  id: number,
+  data: {
+    name: string;
+    slug?: string | null;
+    description?: string | null;
+    logoUrl?: string | null;
+    website?: string | null;
+    country?: string | null;
+    hidden?: boolean;
+  },
+) {
   const session = await getAdminSession();
   const uid = getUserIdFromAccessToken(session.token);
-  // We need to import updateAdminBrand
-  const { updateAdminBrand } = await import("@/lib/api");
-  const result = await updateAdminBrand(id, data, {
+  await updateAdminBrand(id, data, {
     accessToken: session.token,
     username: session.username,
     userId: uid,
   });
-  const { revalidatePath } = await import("next/cache");
   revalidatePath("/admin/brands");
-  return result;
+  revalidatePath(`/admin/brands/${id}`);
 }
 
 export async function deleteBrandAction(id: number) {
   const session = await getAdminSession();
   const uid = getUserIdFromAccessToken(session.token);
-  const { deleteAdminBrand } = await import("@/lib/api");
   await deleteAdminBrand(id, {
     accessToken: session.token,
     username: session.username,
     userId: uid,
   });
-  const { revalidatePath } = await import("next/cache");
   revalidatePath("/admin/brands");
+}
+
+export async function restoreBrandAction(id: number) {
+  const session = await getAdminSession();
+  const uid = getUserIdFromAccessToken(session.token);
+  const result = await restoreAdminBrand(id, {
+    accessToken: session.token,
+    username: session.username,
+    userId: uid,
+  });
+  revalidatePath("/admin/brands");
+  return result;
 }

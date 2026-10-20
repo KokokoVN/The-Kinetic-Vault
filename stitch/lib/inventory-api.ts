@@ -175,3 +175,15 @@ export async function getProductName(
     return `Sản phẩm #${id}`;
   }
 }
+
+export async function getLowStockItems(options?: { accessToken?: string | null }): Promise<InventoryBalanceDto[]> {
+  try {
+    const headers = adminCatalogHeaders(options);
+    const res = await fetch(apiUrl("/inventory/admin/stock/low-stock"), { headers, cache: "no-store" });
+    if (!res.ok) return [];
+    return await parseJsonSafe<InventoryBalanceDto[]>(res);
+  } catch {
+    return [];
+  }
+}
+

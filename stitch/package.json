@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run clean:dev-cache && next dev",
+    "dev": "next dev --webpack -p 3000",
+    "dev:webpack": "npm run clean:dev-cache && next dev --webpack",
     "clean:next": "node -e \"const fs=require('fs');fs.rmSync('.next',{recursive:true,force:true})\"",
     "clean:next-dev": "node -e \"const fs=require('fs');fs.rmSync('.next-dev',{recursive:true,force:true})\"",
-    "clean:dev-cache": "node -e \"const fs=require('fs');fs.rmSync('.next-dev',{recursive:true,force:true});fs.rmSync('node_modules/.cache/next',{recursive:true,force:true})\"",
+    "clean:dev-cache": "node -e \"const fs=require('fs');fs.rmSync('.next-dev',{recursive:true,force:true});fs.rmSync('.next',{recursive:true,force:true});fs.rmSync('node_modules/.cache/next',{recursive:true,force:true})\"",
     "backend": "call ..\\scripts\\chay-tat-ca-service.bat",
     "backend:nodocker": "call ..\\scripts\\chay-tat-ca-service.bat nodocker",
     "backend:lite": "call ..\\scripts\\chay-toi-thieu.bat",

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resendLoginOtp } from "@/lib/api";
+import { FloatingNotice } from "@/components/floating-notice";
 
 type PendingLoginPayload = {
   username?: string;
@@ -13,34 +14,47 @@ type PendingLoginPayload = {
 
 function OtpBoxes({ value, onChange, length = 6 }: { value: string[]; onChange: (next: string[]) => void; length?: number }) {
   return (
-    <div className="flex w-full flex-nowrap items-center justify-between gap-1 sm:gap-2 overflow-x-auto pb-1" aria-label={`OTP ${length} số`}>
-      {Array.from({ length }).map((_, idx) => (
-        <input
-          key={idx}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[idx] ?? ""}
-          onPaste={(e) => {
-            const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
-            if (!text) return;
-            e.preventDefault();
-            const next = Array.from({ length }, (_, i) => text[i] ?? "");
-            onChange(next);
-          }}
-          onChange={(e) => {
-            const ch = e.target.value.replace(/\D/g, "").slice(-1);
-            const next = [...value];
-            next[idx] = ch;
-            onChange(next);
-            if (ch) {
-              const nextEl = e.currentTarget.parentElement?.children.item(idx + 1) as HTMLInputElement | null;
-              nextEl?.focus();
-            }
-          }}
-          className="h-12 w-10 sm:h-14 sm:w-12 flex-none rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-center text-xl font-black tracking-[0.1em] text-indigo-700 dark:text-indigo-400 outline-none transition-all focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/20"
-        />
-      ))}
+    <div className="flex w-full flex-nowrap items-center justify-between gap-1.5 sm:gap-2 overflow-x-auto pb-1" aria-label={`OTP ${length} số`}>
+      {Array.from({ length }).map((_, idx) => {
+        const hasVal = Boolean(value[idx]);
+        return (
+          <input
+            key={idx}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={value[idx] ?? ""}
+            onPaste={(e) => {
+              const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+              if (!text) return;
+              e.preventDefault();
+              const next = Array.from({ length }, (_, i) => text[i] ?? "");
+              onChange(next);
+            }}
+            onChange={(e) => {
+              const ch = e.target.value.replace(/\D/g, "").slice(-1);
+              const next = [...value];
+              next[idx] = ch;
+              onChange(next);
+              if (ch) {
+                const nextEl = e.currentTarget.parentElement?.children.item(idx + 1) as HTMLInputElement | null;
+                nextEl?.focus();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && !value[idx] && idx > 0) {
+                const prevEl = e.currentTarget.parentElement?.children.item(idx - 1) as HTMLInputElement | null;
+                prevEl?.focus();
+              }
+            }}
+            className={`h-12 w-9 sm:h-14 sm:w-12 flex-none rounded-xl border text-center font-mono text-xl sm:text-2xl font-black outline-none transition-all shadow-inner ${
+              hasVal
+                ? "border-cyan-400/80 bg-cyan-950/40 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+                : "border-zinc-700/80 bg-zinc-900/90 text-zinc-100 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20"
+            }`}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -117,18 +131,19 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; message?: string };
       if (!res.ok || !data.ok) {
-        throw new Error(data.message || "Xác thực 2FA thất bại");
+        throw new Error(data.message || "Mã xác thực không hợp lệ.");
       }
       try {
         sessionStorage.removeItem("pendingDeviceApprovalLogin");
         sessionStorage.removeItem("pendingDeviceFingerprint");
       } catch {}
-      setStatusText("Xác thực thành công. Đang đăng nhập...");
+      setFailed(false);
+      setStatusText("Xác thực thành công. Đang chuyển hướng...");
       router.replace(fromAdmin ? "/admin" : "/");
       router.refresh();
     } catch (e) {
       setFailed(true);
-      setStatusText(e instanceof Error ? e.message : "Xác thực 2FA thất bại");
+      setStatusText(e instanceof Error ? e.message : "Mã xác thực không hợp lệ.");
       setOtpApp(Array.from({ length: 6 }, () => ""));
     } finally {
       setLoading(false);
@@ -152,23 +167,43 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; message?: string };
       if (!res.ok || !data.ok) {
-        throw new Error(data.message || "Xác thực OTP thất bại");
+        throw new Error(data.message || "Mã OTP không hợp lệ hoặc đã hết hạn.");
       }
       try {
         sessionStorage.removeItem("pendingDeviceApprovalLogin");
         sessionStorage.removeItem("pendingDeviceFingerprint");
       } catch {}
-      setStatusText("Xác thực thành công. Đang đăng nhập...");
+      setFailed(false);
+      setStatusText("Xác thực thành công. Đang chuyển hướng...");
       router.replace(fromAdmin ? "/admin" : "/");
       router.refresh();
     } catch (e) {
       setFailed(true);
-      setStatusText(e instanceof Error ? e.message : "Xác thực OTP thất bại");
+      setStatusText(e instanceof Error ? e.message : "Mã OTP không hợp lệ hoặc đã hết hạn.");
       setOtpEmail(Array.from({ length: 8 }, () => ""));
     } finally {
       setLoading(false);
     }
   };
+
+  // Tự động kiểm tra mã khi nhập đủ số (Auto-Submit)
+  useEffect(() => {
+    if (mode === "app" && canSubmitApp && !loading) {
+      const timer = setTimeout(() => {
+        void handleVerifyApp();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, canSubmitApp, loading]);
+
+  useEffect(() => {
+    if (mode === "email" && canSubmitEmail && !loading) {
+      const timer = setTimeout(() => {
+        void handleVerifyEmail();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, canSubmitEmail, loading]);
 
   const handleResendEmail = async () => {
     const identity = loadIdentity();
@@ -180,7 +215,7 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
         throw new Error("Gửi lại OTP thất bại");
       }
       setOtpEmail(Array.from({ length: 8 }, () => ""));
-      setStatusText("Đã gửi lại mã OTP mới.");
+      setStatusText("Đã gửi lại mã OTP mới vào hộp thư.");
       setCooldown(60);
       setFailed(false);
     } catch (e) {
@@ -192,37 +227,52 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
   };
 
   return (
-    <div className="mt-2 space-y-6">
-      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 dark:bg-slate-800 p-1.5 shadow-inner">
+    <div className="space-y-6">
+      {/* Top-Right Floating Toast Notification */}
+      {statusText ? (
+        <FloatingNotice
+          key={statusText + failed}
+          message={statusText}
+          variant={failed ? "error" : "success"}
+        />
+      ) : null}
+
+      {/* Mode Selector Tabs */}
+      <div className="relative flex w-full rounded-2xl border border-white/10 bg-zinc-900/90 p-1.5 shadow-inner">
         <button
           type="button"
           onClick={() => { setMode("app"); setStatusText(""); setFailed(false); }}
-          className={`relative z-10 flex-1 rounded-xl py-3 text-sm font-extrabold transition-all duration-300 ${
-            mode === "app" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          className={`relative z-10 flex-1 rounded-xl py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center justify-center space-x-2 ${
+            mode === "app" ? "text-white font-black" : "text-zinc-400 hover:text-white"
           }`}
         >
-          Ứng dụng 2FA
+          <span className="material-symbols-outlined text-base">phonelink_lock</span>
+          <span>Ứng dụng 2FA</span>
         </button>
         <button
           type="button"
           onClick={() => { setMode("email"); setStatusText(""); setFailed(false); }}
-          className={`relative z-10 flex-1 rounded-xl py-3 text-sm font-extrabold transition-all duration-300 ${
-            mode === "email" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          className={`relative z-10 flex-1 rounded-xl py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center justify-center space-x-2 ${
+            mode === "email" ? "text-white font-black" : "text-zinc-400 hover:text-white"
           }`}
         >
-          Mã qua Email
+          <span className="material-symbols-outlined text-base">mark_email_read</span>
+          <span>Mã qua Email</span>
         </button>
         <div
-          className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transition-all duration-500 ease-out ${
+          className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 shadow-md transition-all duration-300 ease-out ${
             mode === "app" ? "left-1.5" : "left-[calc(50%+4px)]"
           }`}
         />
       </div>
 
       {mode === "app" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="text-center mb-6">
-            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4 block">Nhập mã 6 số từ Google Authenticator / Authy</label>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-3 block flex items-center space-x-1.5">
+              <span className="material-symbols-outlined text-cyan-400 text-sm">security</span>
+              <span>Nhập mã 6 số từ Google Authenticator / Authy</span>
+            </label>
             <OtpBoxes value={otpApp} onChange={setOtpApp} length={6} />
           </div>
 
@@ -230,55 +280,52 @@ export function TwoFactorPendingAutoLogin({ fromAdmin }: { fromAdmin: boolean })
             type="button"
             onClick={handleVerifyApp}
             disabled={!canSubmitApp || loading}
-            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.25rem] bg-gradient-to-r from-indigo-600 to-purple-700 py-4 font-black text-lg text-white shadow-xl shadow-indigo-600/30 transition-all hover:-translate-y-1 hover:shadow-indigo-600/50 hover:shadow-2xl disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm sm:text-base font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
           >
-            <span className="relative z-10 uppercase tracking-wider">{loading ? "Đang xác thực..." : "Xác nhận & Tiếp tục"}</span>
-            <span className="material-symbols-outlined relative z-10 text-[24px] font-bold transition-transform group-hover:translate-x-2">
+            <span>{loading ? "Đang xác thực..." : "Xác nhận & Tiếp tục"}</span>
+            <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
               verified
             </span>
-            <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
         </div>
       )}
 
       {mode === "email" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="text-center mb-6">
-            <label className="text-sm font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4 block">Nhập mã OTP 8 số (Đã gửi vào Email)</label>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-3 block flex items-center space-x-1.5">
+              <span className="material-symbols-outlined text-cyan-400 text-sm">mail</span>
+              <span>Nhập mã OTP 8 số (Đã gửi vào Email)</span>
+            </label>
             <OtpBoxes value={otpEmail} onChange={setOtpEmail} length={8} />
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <button
               type="button"
               onClick={handleVerifyEmail}
               disabled={!canSubmitEmail || loading}
-              className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.25rem] bg-gradient-to-r from-blue-600 to-indigo-700 py-4 font-black text-lg text-white shadow-xl shadow-blue-600/30 transition-all hover:-translate-y-1 hover:shadow-blue-600/50 hover:shadow-2xl disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm sm:text-base font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
             >
-              <span className="relative z-10 uppercase tracking-wider">{loading ? "Đang xác thực..." : "Xác nhận & Tiếp tục"}</span>
-              <span className="material-symbols-outlined relative z-10 text-[24px] font-bold transition-transform group-hover:translate-x-2">
+              <span>{loading ? "Đang xác thực..." : "Xác nhận & Tiếp tục"}</span>
+              <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
                 check_circle
               </span>
-              <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
             </button>
 
             <button
               type="button"
               onClick={handleResendEmail}
               disabled={loading || cooldown > 0}
-              className="rounded-[1.25rem] px-4 py-3 text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline disabled:opacity-50 disabled:no-underline text-center"
+              className="rounded-xl px-4 py-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-all hover:underline disabled:opacity-50 text-center"
             >
-              {cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : "Gửi lại mã OTP"}
+              {cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : "Gửi lại mã OTP qua Email"}
             </button>
           </div>
         </div>
       )}
-
-      {statusText && (
-        <p className={`text-center text-sm font-bold ${failed ? 'text-rose-600' : 'text-emerald-600'}`}>
-          {statusText}
-        </p>
-      )}
     </div>
   );
 }
+
+

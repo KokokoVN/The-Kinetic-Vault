@@ -19,6 +19,7 @@ import { StorefrontLayout } from "@/components/storefront-layout";
 import { OrderRepaySepay } from "@/components/order-repay-sepay";
 import { WriteReviewButton } from "@/components/write-review-button";
 import { SimilarProductsSection } from "@/components/similar-products-section";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -142,12 +143,12 @@ export default async function UserOrderDetailPage({
   if (!order) {
     return (
       <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="orders">
-        <main className="px-6 py-8">
+        <div className="px-6 py-8">
           <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này.</p>
           <Link href="/my-orders" className="mt-4 inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-bold text-indigo-600 dark:text-indigo-400">
             Quay lại lịch sử đơn hàng
           </Link>
-        </main>
+        </div>
       </StorefrontLayout>
     );
   }
@@ -210,7 +211,7 @@ export default async function UserOrderDetailPage({
           paymentMethod: latest.paymentMethod ?? null,
           items: latestItems
             .map((it) => ({
-              productId: Number(it.product?.id ?? 0),
+              productId: Number(it.productId ?? it.product?.id ?? 0),
               quantity: Math.max(1, Number(it.quantity ?? 1)),
               variantId: it.variantId ?? null,
               variantLabel: it.variantLabel ?? null,
@@ -294,7 +295,7 @@ export default async function UserOrderDetailPage({
           <div className="absolute -right-[10%] -top-[10%] h-[30vw] w-[30vw] rounded-full bg-fuchsia-400/20 mix-blend-multiply blur-[100px] filter dark:bg-fuchsia-900/30 dark:mix-blend-lighten" />
         </div>
 
-        <main className="relative z-10 mx-auto max-w-[1440px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto max-w-[1440px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
           
           {/* Top Bar Navigation */}
           <div className="anim-fade-up flex items-center justify-between">
@@ -310,19 +311,19 @@ export default async function UserOrderDetailPage({
           {/* Notifications */}
           <div className="anim-fade-up stagger-1 space-y-3">
             {notice === "cancelled" && (
-              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-5 py-4 text-emerald-800 shadow-lg shadow-emerald-500/10 backdrop-blur-xl">
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 px-5 py-4 text-emerald-800 dark:text-emerald-300 shadow-lg shadow-emerald-500/10 backdrop-blur-xl">
                 <span className="material-symbols-outlined">check_circle</span>
                 <p className="text-sm font-semibold">Đơn hàng đã được hủy thành công.</p>
               </div>
             )}
             {notice === "reordered" && (
-              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-5 py-4 text-emerald-800 shadow-lg shadow-emerald-500/10 backdrop-blur-xl">
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 px-5 py-4 text-emerald-800 dark:text-emerald-300 shadow-lg shadow-emerald-500/10 backdrop-blur-xl">
                 <span className="material-symbols-outlined">check_circle</span>
                 <p className="text-sm font-semibold">Đặt lại đơn hàng thành công.</p>
               </div>
             )}
             {error && (
-              <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/80 px-5 py-4 text-rose-800 shadow-lg shadow-rose-500/10 backdrop-blur-xl">
+              <div className="flex items-center gap-3 rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-950/40 px-5 py-4 text-rose-800 dark:text-rose-300 shadow-lg shadow-rose-500/10 backdrop-blur-xl">
                 <span className="material-symbols-outlined">error</span>
                 <p className="text-sm font-semibold">{decodeURIComponent(error)}</p>
               </div>
@@ -407,12 +408,29 @@ export default async function UserOrderDetailPage({
                             <p className="truncate text-lg font-bold text-slate-800 dark:text-white">
                               {it.productNameSnapshot || it.product?.productName || "—"}
                             </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {it.variantLabel && it.variantLabel.trim() !== "" && (
-                                <span className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                  {it.variantLabel}
-                                </span>
-                              )}
+                            <div className="mt-2 flex flex-wrap gap-2 items-center">
+                              {(() => {
+                                const tiers = parseLabelToTiers(it.variantLabel);
+                                if (tiers.length > 0) {
+                                  return tiers.map((t, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60"
+                                    >
+                                      <span className="text-slate-400 dark:text-slate-500 font-medium">{t.name}:</span>
+                                      <span className="font-semibold text-slate-900 dark:text-slate-100">{t.value}</span>
+                                    </span>
+                                  ));
+                                }
+                                if (it.variantLabel && it.variantLabel.trim() !== "") {
+                                  return (
+                                    <span className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                      {it.variantLabel}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
                               <span className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                                 SL: {Number(it.quantity ?? 0)}
                               </span>
@@ -425,7 +443,7 @@ export default async function UserOrderDetailPage({
                             </p>
                             
                             {/* Review Button */}
-                            {String(order.status ?? "").toUpperCase() === "DELIVERED" && !userReviews.some((r) => r.orderId === orderId && r.productId === Number(it.product?.id ?? it.productId ?? 0)) && (
+                            {String(order.status ?? "").toUpperCase() === "DELIVERED" && !userReviews.some((r) => r.orderId === orderId && r.productId === Number(it.product?.id ?? it.productId ?? 0) && (Number(it.variantId ?? 0) > 0 ? Number(r.variantId ?? 0) === Number(it.variantId ?? 0) : true)) && (
                               <WriteReviewButton
                                 orderId={orderId}
                                 productId={Number(it.product?.id ?? it.productId ?? 0)}
@@ -435,7 +453,7 @@ export default async function UserOrderDetailPage({
                                 userId={String(userId)}
                               />
                             )}
-                            {String(order.status ?? "").toUpperCase() === "DELIVERED" && userReviews.some((r) => r.orderId === orderId && r.productId === Number(it.product?.id ?? it.productId ?? 0)) && (
+                            {String(order.status ?? "").toUpperCase() === "DELIVERED" && userReviews.some((r) => r.orderId === orderId && r.productId === Number(it.product?.id ?? it.productId ?? 0) && (Number(it.variantId ?? 0) > 0 ? Number(r.variantId ?? 0) === Number(it.variantId ?? 0) : true)) && (
                               <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                 ✓ Đã đánh giá
                               </div>
@@ -574,14 +592,25 @@ export default async function UserOrderDetailPage({
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-5 rounded-[1.5rem] bg-white/50 dark:bg-slate-800/50 p-5 border border-white/40 dark:border-slate-700/50 shadow-inner transition-colors hover:bg-white/80 dark:hover:bg-slate-800/80">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 shadow-sm">
-                      <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>barcode</span>
+                  <div className="flex items-center justify-between gap-4 rounded-[1.5rem] bg-white/50 dark:bg-slate-800/50 p-5 border border-white/40 dark:border-slate-700/50 shadow-inner transition-colors hover:bg-white/80 dark:hover:bg-slate-800/80">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 shadow-sm">
+                        <span className="material-symbols-outlined" style={{ fontSize: "24px" }}>barcode</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Mã vận đơn</p>
+                        <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">{order.mvd?.trim() || "Chưa có"}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Mã vận đơn</p>
-                      <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">{order.mvd?.trim() || "Chưa có"}</p>
-                    </div>
+                    {order.mvd?.trim() && (
+                      <Link
+                        href={`/tracking?mvd=${encodeURIComponent(order.mvd.trim())}&phone=${encodeURIComponent(order.phoneLast4?.trim() ?? "")}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 px-3.5 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 hover:scale-105 transition-transform shrink-0"
+                      >
+                        <span>Tra cứu</span>
+                        <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </aside>
@@ -595,7 +624,7 @@ export default async function UserOrderDetailPage({
               <SimilarProductsSection productId={Number(firstProductId)} limit={4} />
             </div>
           )}
-        </main>
+        </div>
       </div>
     </StorefrontLayout>
   );

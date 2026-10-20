@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     const scheme = req.headers.get("x-forwarded-proto") ?? (String(origin).startsWith("https") ? "https" : "http");
     const host = req.headers.get("x-forwarded-host") ?? (new URL(String(origin))).host;
 
-    const returnPath = (body?.returnPath ?? "/checkout").trim() || "/checkout";
+    const returnPath = (body?.returnPath ?? "/checkout/success").trim() || "/checkout/success";
     const returnUrl = `${scheme}://${host}/api/payments/vnpay/return?next=${encodeURIComponent(returnPath)}`;
 
     const now = new Date();

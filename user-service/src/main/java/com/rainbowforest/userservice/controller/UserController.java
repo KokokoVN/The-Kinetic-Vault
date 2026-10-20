@@ -17,9 +17,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 @RestController
 public class UserController {
+
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserService userService;
@@ -45,33 +49,31 @@ public class UserController {
     }
 
     @GetMapping (value = "/users", params = "name")
-    public ResponseEntity<User> getUserByName(@RequestParam("name") String userName){
-    	User user = userService.getUserByName(userName);
+    public ResponseEntity<User> getUserByName(@RequestParam("name") String username){
+    	User user = userService.getUserByName(username);
     	if(user != null) {
     		return new ResponseEntity<User>(
     				user,
-    				headerGenerator.
-    				getHeadersForSuccessGetMethod(),
+    				headerGenerator.getHeadersForSuccessGetMethod(),
     				HttpStatus.OK);
     	}
-        return new ResponseEntity<User>(
-        		headerGenerator.getHeadersForError(),
-        		HttpStatus.NOT_FOUND);
+    	return new ResponseEntity<User>(
+    			headerGenerator.getHeadersForError(),
+    			HttpStatus.NOT_FOUND);
     }
 
     @GetMapping (value = "/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") Long id){
-        User user = userService.getUserById(id);
-        if(user != null) {
+    	User user = userService.getUserById(id);
+    	if(user != null) {
     		return new ResponseEntity<User>(
     				user,
-    				headerGenerator.
-    				getHeadersForSuccessGetMethod(),
+    				headerGenerator.getHeadersForSuccessGetMethod(),
     				HttpStatus.OK);
     	}
-        return new ResponseEntity<User>(
-        		headerGenerator.getHeadersForError(),
-        		HttpStatus.NOT_FOUND);
+    	return new ResponseEntity<User>(
+    			headerGenerator.getHeadersForError(),
+    			HttpStatus.NOT_FOUND);
     }
 
     @GetMapping(value = "/users/{id}/devices")
@@ -93,13 +95,13 @@ public class UserController {
     }
 
     @PostMapping (value = "/users")
-    public ResponseEntity<User> addUser(@RequestBody User user, HttpServletRequest request){
-    	if(user != null)
+    public ResponseEntity<User> saveUser(@RequestBody User user, HttpServletRequest request){
+    	if(user != null) {
     		try {
     			userService.saveUser(user);
                 activityLogPublisher.publish(
                         "user-service",
-                        "USER_ADMIN_CREATE",
+                        "USER_CREATE",
                         "User",
                         String.valueOf(user.getId()),
                         "POST",
@@ -112,17 +114,24 @@ public class UserController {
     					headerGenerator.getHeadersForSuccessPostMethod(request, user.getId()),
     					HttpStatus.CREATED);
     		}catch (Exception e) {
-    			e.printStackTrace();
+    			log.error("Lỗi khi tạo user: ", e);
     			return new ResponseEntity<User>(HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+    		}
+    	}
     	return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
     }
 
     @PutMapping(value = {"/users/{id}/role", "/accounts/users/{id}/role"})
     public ResponseEntity<User> updateUserRole(
             @PathVariable("id") Long id,
-            @RequestBody UserRoleUpdateRequest req
+            @RequestBody UserRoleUpdateRequest req,
+            HttpServletRequest request
     ) {
+        String roleHeader = request.getHeader("X-User-Role");
+        if (roleHeader == null || !roleHeader.toUpperCase().contains("ADMIN")) {
+            log.warn("Non-admin tried to update user role for id {}: headerRole={}", id, roleHeader);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         User updated = userService.updateUserRole(id, req);
         if (updated == null) {
             return new ResponseEntity<User>(

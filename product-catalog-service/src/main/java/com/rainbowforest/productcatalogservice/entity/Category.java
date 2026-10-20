@@ -29,6 +29,10 @@ public class Category extends AuditableEntity {
     @Column(name = "is_hidden", nullable = false)
     private Boolean hidden = Boolean.FALSE;
 
+    @Size(max = 1024)
+    @Column(name = "image_url", length = 1024)
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;
@@ -36,6 +40,25 @@ public class Category extends AuditableEntity {
     @OneToMany(mappedBy = "parent")
     @JsonIgnore
     private List<Category> children = new ArrayList<>();
+
+    @Transient
+    private Long productCount;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Long getProductCount() {
+        return productCount;
+    }
+
+    public void setProductCount(Long productCount) {
+        this.productCount = productCount;
+    }
 
     public Long getId() {
         return id;

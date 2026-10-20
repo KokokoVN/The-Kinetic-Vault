@@ -52,6 +52,7 @@ export async function POST(req: Request) {
     }
 
     let paymentId: number | null = null;
+    let gatewayErrorText = "";
     try {
       const createRes = await fetch(`${paymentBase}/create`, {
         method: "POST",
@@ -60,8 +61,6 @@ export async function POST(req: Request) {
         body: JSON.stringify(paymentCreateBody),
       });
       
-      let gatewayErrorText = "";
-
       if (createRes.ok) {
         const row = (await createRes.json().catch(() => null)) as { id?: number | null } | null;
         const pid = Number(row?.id ?? 0);

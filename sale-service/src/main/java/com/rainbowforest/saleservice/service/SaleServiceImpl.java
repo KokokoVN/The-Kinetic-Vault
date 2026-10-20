@@ -1,6 +1,8 @@
 package com.rainbowforest.saleservice.service;
 
 import com.rainbowforest.saleservice.client.InventoryClient;
+import com.rainbowforest.saleservice.dto.PromoBannerCacheDto;
+import com.rainbowforest.saleservice.dto.SaleProgramCacheDto;
 import com.rainbowforest.saleservice.dto.SaleProgramRequest;
 import com.rainbowforest.saleservice.dto.VoucherApplyResponse;
 import com.rainbowforest.saleservice.dto.VoucherRequest;
@@ -8,6 +10,8 @@ import com.rainbowforest.saleservice.dto.VoucherUsageResponse;
 import com.rainbowforest.saleservice.entity.*;
 import com.rainbowforest.saleservice.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,10 +47,11 @@ public class SaleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public List<SaleProgram> listActivePrograms() {
+    @Cacheable(value = "activeSalePrograms", key = "'all'")
+    public List<SaleProgramCacheDto> listActivePrograms() {
         List<SaleProgram> programs = saleProgramRepo.findCurrentlyActive(LocalDateTime.now());
         programs.forEach(p -> p.getItems().size());
-        return programs;
+        return SaleProgramCacheDto.fromList(programs);
     }
 
     @Transactional(readOnly = true)
@@ -57,6 +62,7 @@ public class SaleServiceImpl {
         return program;
     }
 
+    @CacheEvict(value = "activeSalePrograms", allEntries = true)
     public SaleProgram createProgram(SaleProgramRequest req, String performedBy) {
         validateProgramRequest(req);
         SaleProgram program = new SaleProgram();
@@ -74,6 +80,7 @@ public class SaleServiceImpl {
         return saved;
     }
 
+    @CacheEvict(value = "activeSalePrograms", allEntries = true)
     public SaleProgram updateProgram(Long id, SaleProgramRequest req, String performedBy) {
         SaleProgram program = getProgramById(id);
         validateProgramRequest(req);
@@ -94,6 +101,7 @@ public class SaleServiceImpl {
         return saved;
     }
 
+    @CacheEvict(value = "activeSalePrograms", allEntries = true)
     public void deleteProgram(Long id) {
         SaleProgram program = getProgramById(id);
         saleProgramRepo.delete(program);
@@ -417,8 +425,9 @@ public class SaleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public List<PromoBanner> listActiveBanners() {
-        return promoBannerRepo.findActiveBanners(LocalDateTime.now());
+    @Cacheable(value = "activeBanners", key = "'all'")
+    public List<PromoBannerCacheDto> listActiveBanners() {
+        return PromoBannerCacheDto.fromList(promoBannerRepo.findActiveBanners(LocalDateTime.now()));
     }
 
     @Transactional(readOnly = true)
@@ -427,11 +436,13 @@ public class SaleServiceImpl {
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy banner #" + id));
     }
 
+    @CacheEvict(value = "activeBanners", allEntries = true)
     public PromoBanner createBanner(PromoBanner banner, String performedBy) {
         banner.setCreatedBy(performedBy);
         return promoBannerRepo.save(banner);
     }
 
+    @CacheEvict(value = "activeBanners", allEntries = true)
     public PromoBanner updateBanner(Long id, PromoBanner patch, String performedBy) {
         PromoBanner b = promoBannerRepo.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy banner #" + id));
@@ -446,6 +457,7 @@ public class SaleServiceImpl {
         return promoBannerRepo.save(b);
     }
 
+    @CacheEvict(value = "activeBanners", allEntries = true)
     public void deleteBanner(Long id) {
         PromoBanner b = promoBannerRepo.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy banner #" + id));

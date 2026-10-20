@@ -85,7 +85,7 @@ export function ProductTabs({ newProducts, hotProducts, saleProducts, isLoggedIn
               footer={
                 <AddToCartButton
                   productId={String(item.id)}
-                  hasVariants={Boolean(item.hasVariantPriceRange)}
+                  hasVariants={Boolean(item.hasVariants ?? item.hasVariantPriceRange)}
                   isLoggedIn={isLoggedIn}
                 />
               }

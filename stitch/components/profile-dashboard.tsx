@@ -39,6 +39,7 @@ type Props = {
 };
 
 export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState<
     | null
     | "info"
@@ -52,6 +53,10 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
   const [savingAddress, setSavingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<
     "info" | "security" | "address" | "devices" | "reviews" | "logs"
@@ -322,31 +327,31 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
         
         {/* TAB 1: THÔNG TIN CÁ NHÂN */}
         {activeTab === "info" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30">
+                <h2 className="font-headline text-3xl font-black text-white flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/30">
                     <span className="material-symbols-outlined">person</span>
                   </div>
                   Hồ Sơ Của Bạn
                 </h2>
-                <p className="mt-2 text-slate-500 dark:text-slate-400 font-medium">Quản lý thông tin cá nhân cơ bản để chúng tôi phục vụ bạn tốt hơn.</p>
+                <p className="mt-2 text-zinc-400 font-medium">Quản lý thông tin cá nhân cơ bản để chúng tôi phục vụ bạn tốt hơn.</p>
               </div>
               <button
                 onClick={() => setOpen("info")}
-                className="group relative overflow-hidden rounded-2xl bg-slate-900 dark:bg-white px-8 py-4 font-bold text-white dark:text-slate-900 shadow-xl shadow-slate-900/20 dark:shadow-white/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 px-8 py-4 font-black text-white shadow-xl shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:to-indigo-600 active:scale-[0.98]"
               >
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="relative z-10 flex items-center gap-2 uppercase tracking-wider text-xs">
                   <span className="material-symbols-outlined text-[18px]">edit_square</span>
                   Cập nhật thông tin
                 </span>
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 dark:via-black/10 to-transparent group-hover:animate-shimmer" />
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shimmer" />
               </button>
             </div>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <InfoCard icon="badge" title="Họ và Tên" value={`${profile?.userDetails?.firstName ?? ""} ${profile?.userDetails?.lastName ?? ""}`} color="blue" />
+              <InfoCard icon="badge" title="Họ và Tên" value={`${profile?.userDetails?.firstName ?? ""} ${profile?.userDetails?.lastName ?? ""}`} color="cyan" />
               <InfoCard icon="smartphone" title="Số điện thoại" value={maskPhone(profile?.phoneNumber) || "Chưa cập nhật"} color="emerald" />
               <InfoCard icon="wc" title="Giới tính" value={profile?.userDetails?.gender || "Chưa cập nhật"} color="fuchsia" />
               <InfoCard icon="cake" title="Ngày sinh" value={profile?.userDetails?.birthDate || "Chưa cập nhật"} color="orange" />
@@ -357,96 +362,96 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
         {/* TAB 2: BẢO MẬT TÀI KHOẢN */}
         {activeTab === "security" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex items-center gap-4 mb-10">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/30">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/30">
                 <span className="material-symbols-outlined text-[28px]">shield_person</span>
               </div>
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white">Bảo Mật Tài Khoản</h2>
-                <p className="mt-1 text-slate-500 dark:text-slate-400 font-medium">Bảo vệ tài khoản của bạn bằng các lớp bảo mật đa tầng.</p>
+                <h2 className="font-headline text-3xl font-black text-white">Bảo Mật Tài Khoản</h2>
+                <p className="mt-1 text-zinc-400 font-medium">Bảo vệ tài khoản của bạn bằng các lớp bảo mật đa tầng.</p>
               </div>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-2">
               {/* Đổi Email Card */}
-              <div className="group relative overflow-hidden rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 transition-all hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/10">
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-colors" />
+              <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-8 transition-all hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10">
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl group-hover:bg-cyan-500/20 transition-colors" />
                 <div className="flex items-start justify-between mb-8 relative z-10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                     <span className="material-symbols-outlined">mark_email_unread</span>
                   </div>
-                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Email</span>
+                  <span className="rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-300">Email</span>
                 </div>
                 <div className="space-y-1 mb-8 relative z-10">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Đang liên kết</p>
-                  <p className="font-headline text-xl font-black text-slate-900 dark:text-white truncate">{maskEmail(profile?.email)}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Đang liên kết</p>
+                  <p className="font-headline text-xl font-black text-white truncate">{maskEmail(profile?.email)}</p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 mb-8 flex items-start gap-3 relative z-10">
-                  <span className="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">info</span>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Cần mã xác thực OTP gửi về email hiện tại để có thể thực hiện thay đổi email mới.</p>
+                <div className="rounded-2xl bg-zinc-950/60 border border-white/5 p-4 mb-8 flex items-start gap-3 relative z-10">
+                  <span className="material-symbols-outlined text-cyan-400 text-[18px] mt-0.5">info</span>
+                  <p className="text-xs text-zinc-400 leading-relaxed">Cần mã xác thực OTP gửi về email hiện tại để có thể thực hiện thay đổi email mới.</p>
                 </div>
                 <button
                   onClick={() => setOpen("change-email")}
-                  className="w-full rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-5 py-4 font-bold transition-all hover:bg-indigo-100 dark:hover:bg-indigo-500/20 active:scale-[0.98] relative z-10"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white px-5 py-3.5 text-xs font-black uppercase tracking-wider transition-all hover:from-cyan-400 hover:to-indigo-500 active:scale-[0.98] relative z-10 shadow-lg shadow-cyan-500/20"
                 >
                   Thay Đổi Email
                 </button>
               </div>
 
               {/* Đổi Password Card */}
-              <div className="group relative overflow-hidden rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 transition-all hover:border-fuchsia-500/30 hover:shadow-2xl hover:shadow-fuchsia-500/10">
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-fuchsia-500/5 blur-3xl group-hover:bg-fuchsia-500/10 transition-colors" />
+              <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-8 transition-all hover:border-fuchsia-500/40 hover:shadow-2xl hover:shadow-fuchsia-500/10">
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-3xl group-hover:bg-fuchsia-500/20 transition-colors" />
                 <div className="flex items-start justify-between mb-8 relative z-10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
                     <span className="material-symbols-outlined">password</span>
                   </div>
-                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Password</span>
+                  <span className="rounded-full bg-fuchsia-950/80 border border-fuchsia-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-fuchsia-300">Password</span>
                 </div>
                 <div className="space-y-1 mb-8 relative z-10">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Mã hóa bảo mật</p>
-                  <p className="font-headline text-2xl font-black text-slate-900 dark:text-white tracking-[0.2em] mt-1">••••••••</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Mã hóa bảo mật</p>
+                  <p className="font-headline text-2xl font-black text-white tracking-[0.2em] mt-1">••••••••</p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-4 mb-8 flex items-start gap-3 relative z-10">
-                  <span className="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">update</span>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Đổi mật khẩu lần cuối: <strong className="text-slate-700 dark:text-slate-300">{profile?.passwordChangedAt ? formatWebActivityTime(profile.passwordChangedAt) : "Chưa từng đổi"}</strong></p>
+                <div className="rounded-2xl bg-zinc-950/60 border border-white/5 p-4 mb-8 flex items-start gap-3 relative z-10">
+                  <span className="material-symbols-outlined text-fuchsia-400 text-[18px] mt-0.5">update</span>
+                  <p className="text-xs text-zinc-400 leading-relaxed">Đổi mật khẩu lần cuối: <strong className="text-zinc-200">{profile?.passwordChangedAt ? formatWebActivityTime(profile.passwordChangedAt) : "Chưa từng đổi"}</strong></p>
                 </div>
                 <button
                   onClick={() => setOpen("change-password")}
-                  className="w-full rounded-2xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white px-5 py-4 font-bold shadow-lg shadow-fuchsia-500/25 transition-all hover:shadow-fuchsia-500/40 hover:-translate-y-0.5 active:scale-[0.98] relative z-10"
+                  className="w-full rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white px-5 py-3.5 text-xs font-black uppercase tracking-wider shadow-lg shadow-fuchsia-500/25 transition-all hover:shadow-fuchsia-500/40 hover:-translate-y-0.5 active:scale-[0.98] relative z-10"
                 >
                   Cập Nhật Mật Khẩu
                 </button>
               </div>
 
               {/* 2FA Card */}
-              <div className="group relative overflow-hidden rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 transition-all hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/10 lg:col-span-2">
-                <div className="absolute -left-10 -bottom-10 h-60 w-60 rounded-full bg-emerald-500/5 blur-3xl group-hover:bg-emerald-500/10 transition-colors" />
+              <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-8 transition-all hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/10 lg:col-span-2">
+                <div className="absolute -left-10 -bottom-10 h-60 w-60 rounded-full bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition-colors" />
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         <span className="material-symbols-outlined">fingerprint</span>
                       </div>
-                      <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white">Xác Thực 2 Bước (2FA)</h3>
+                      <h3 className="font-headline text-2xl font-black text-white">Xác Thực 2 Bước (2FA)</h3>
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-xl mb-6">
+                    <p className="text-zinc-400 text-xs font-medium leading-relaxed max-w-xl mb-6">
                       Thêm một lớp bảo vệ bổ sung. Mỗi khi đăng nhập, bạn sẽ cần nhập mã xác minh từ ứng dụng (Google Authenticator, Authy, v.v.).
                     </p>
-                    <div className="inline-flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 px-5 py-3">
-                      <div className={`relative flex h-4 w-4 items-center justify-center rounded-full ${profile?.is2faEnabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
+                    <div className="inline-flex items-center gap-3 rounded-2xl bg-zinc-950/60 border border-white/5 px-5 py-3">
+                      <div className={`relative flex h-4 w-4 items-center justify-center rounded-full ${profile?.is2faEnabled ? 'bg-emerald-500' : 'bg-zinc-600'}`}>
                         {profile?.is2faEnabled && <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-50" />}
                       </div>
-                      <span className="font-bold text-slate-700 dark:text-slate-300">{profile?.is2faEnabled ? "Đang được bảo vệ bởi 2FA" : "2FA đang tắt"}</span>
+                      <span className="font-bold text-xs text-zinc-200">{profile?.is2faEnabled ? "Đang được bảo vệ bởi 2FA" : "2FA đang tắt"}</span>
                     </div>
                   </div>
                   
                   <button
                     onClick={() => setOpen("setup-2fa")}
-                    className={`shrink-0 rounded-2xl px-8 py-4 font-bold transition-all hover:-translate-y-0.5 active:scale-[0.98] shadow-lg ${
+                    className={`shrink-0 rounded-xl px-8 py-3.5 text-xs font-black uppercase tracking-wider transition-all hover:-translate-y-0.5 active:scale-[0.98] shadow-lg ${
                       profile?.is2faEnabled 
-                        ? 'border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-none'
-                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/25 hover:shadow-emerald-500/40'
+                        ? 'border border-white/10 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white shadow-none'
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-emerald-500/25 hover:shadow-emerald-500/40'
                     }`}
                   >
                     {profile?.is2faEnabled ? "Quản lý & Tắt 2FA" : "Bật Bảo Mật 2FA"}
@@ -459,16 +464,16 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
         {/* TAB 3: SỔ ĐỊA CHỈ */}
         {activeTab === "address" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <h2 className="font-headline text-3xl font-black text-white flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-500/30">
                     <span className="material-symbols-outlined">map</span>
                   </div>
                   Sổ Địa Chỉ Của Bạn
                 </h2>
-                <p className="mt-2 text-slate-500 dark:text-slate-400 font-medium">Quản lý địa chỉ giao hàng để thanh toán nhanh chóng hơn.</p>
+                <p className="mt-2 text-zinc-400 font-medium">Quản lý địa chỉ giao hàng để thanh toán nhanh chóng hơn.</p>
               </div>
               <button
                 onClick={() => {
@@ -478,7 +483,7 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
                   });
                   setOpen("address");
                 }}
-                className="group relative overflow-hidden rounded-2xl bg-emerald-500 px-6 py-4 font-bold text-white shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] hover:bg-emerald-600 active:scale-[0.98] flex items-center gap-2 shrink-0"
+                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-xl shadow-emerald-500/20 transition-all hover:from-emerald-400 hover:to-teal-500 active:scale-[0.98] flex items-center gap-2 shrink-0"
               >
                 <span className="material-symbols-outlined text-[20px]">add_location</span>
                 Thêm Địa Chỉ Mới
@@ -488,8 +493,8 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
             <div className="grid gap-6 lg:grid-cols-2">
               {loadingLists ? (
                 <div className="p-12 text-center col-span-full">
-                  <span className="material-symbols-outlined animate-spin text-5xl text-emerald-500/50">sync</span>
-                  <p className="mt-4 font-semibold text-slate-500">Đang tải sổ địa chỉ...</p>
+                  <span className="material-symbols-outlined animate-spin text-5xl text-emerald-400">sync</span>
+                  <p className="mt-4 font-semibold text-zinc-400">Đang tải sổ địa chỉ...</p>
                 </div>
               ) : addresses.length ? (
                 addresses.map((a) => (
@@ -525,12 +530,12 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
                   />
                 ))
               ) : (
-                <div className="col-span-full flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 py-20 text-center">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 mb-6">
+                <div className="col-span-full flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-zinc-800 bg-zinc-900/50 py-20 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-6">
                     <span className="material-symbols-outlined text-5xl">wrong_location</span>
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Bạn chưa có địa chỉ nào</h3>
-                  <p className="mt-2 text-slate-500 dark:text-slate-400">Thêm một địa chỉ mới để bắt đầu mua sắm ngay.</p>
+                  <h3 className="text-xl font-black text-white">Bạn chưa có địa chỉ nào</h3>
+                  <p className="mt-2 text-zinc-400 text-xs">Thêm một địa chỉ mới để bắt đầu mua sắm ngay.</p>
                 </div>
               )}
             </div>
@@ -539,22 +544,22 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
         {/* TAB 4: THIẾT BỊ */}
         {activeTab === "devices" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex items-center gap-4 mb-10">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-500/30">
                 <span className="material-symbols-outlined text-[28px]">devices_other</span>
               </div>
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white">Thiết Bị Đăng Nhập</h2>
-                <p className="mt-1 text-slate-500 dark:text-slate-400 font-medium">Quản lý các thiết bị đang có quyền truy cập vào tài khoản của bạn.</p>
+                <h2 className="font-headline text-3xl font-black text-white">Thiết Bị Đăng Nhập</h2>
+                <p className="mt-1 text-zinc-400 font-medium">Quản lý các thiết bị đang có quyền truy cập vào tài khoản của bạn.</p>
               </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               {loadingLists ? (
                 <div className="p-12 text-center col-span-full">
-                  <span className="material-symbols-outlined animate-spin text-5xl text-cyan-500/50">sync</span>
-                  <p className="mt-4 font-semibold text-slate-500">Đang tải danh sách thiết bị...</p>
+                  <span className="material-symbols-outlined animate-spin text-5xl text-cyan-400">sync</span>
+                  <p className="mt-4 font-semibold text-zinc-400">Đang tải danh sách thiết bị...</p>
                 </div>
               ) : devices.length ? (
                 devices.map((d) => (
@@ -573,9 +578,9 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
                   />
                 ))
               ) : (
-                <div className="col-span-full flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 py-20 text-center">
-                  <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-700 mb-4">devices_off</span>
-                  <p className="text-lg font-bold text-slate-500 dark:text-slate-400">Không có thiết bị nào được ghi nhận</p>
+                <div className="col-span-full flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-zinc-800 bg-zinc-900/50 py-20 text-center">
+                  <span className="material-symbols-outlined text-6xl text-zinc-600 mb-4">devices_off</span>
+                  <p className="text-lg font-bold text-zinc-400">Không có thiết bị nào được ghi nhận</p>
                 </div>
               )}
             </div>
@@ -584,14 +589,14 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
         {/* TAB 5: ĐÁNH GIÁ */}
         {activeTab === "reviews" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex items-center gap-4 mb-10">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30">
                 <span className="material-symbols-outlined text-[28px]">stars</span>
               </div>
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white">Đánh Giá Sản Phẩm</h2>
-                <p className="mt-1 text-slate-500 dark:text-slate-400 font-medium">Tất cả các lượt đánh giá và phản hồi của bạn về sản phẩm.</p>
+                <h2 className="font-headline text-3xl font-black text-white">Đánh Giá Sản Phẩm</h2>
+                <p className="mt-1 text-zinc-400 font-medium">Tất cả các lượt đánh giá và phản hồi của bạn về sản phẩm.</p>
               </div>
             </div>
             <UserReviewsPanel accessToken={accessToken} userId={String(userId)} />
@@ -600,14 +605,14 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
         {/* TAB 6: LỊCH SỬ HOẠT ĐỘNG */}
         {activeTab === "logs" && (
-          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[3rem] border border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-3xl p-8 sm:p-12 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          <div className="animate-in fade-in zoom-in-[0.98] duration-500 rounded-[2.5rem] border border-white/10 bg-zinc-950/80 backdrop-blur-2xl p-8 sm:p-12 shadow-2xl shadow-cyan-950/40 text-zinc-100">
             <div className="flex items-center gap-4 mb-10">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-600 to-slate-900 text-white shadow-lg shadow-slate-900/30">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/30">
                 <span className="material-symbols-outlined text-[28px]">history_edu</span>
               </div>
               <div>
-                <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white">Nhật Ký Hoạt Động</h2>
-                <p className="mt-1 text-slate-500 dark:text-slate-400 font-medium">Theo dõi các thay đổi và cập nhật trên tài khoản của bạn.</p>
+                <h2 className="font-headline text-3xl font-black text-white">Nhật Ký Hoạt Động</h2>
+                <p className="mt-1 text-zinc-400 font-medium">Theo dõi các thay đổi và cập nhật trên tài khoản của bạn.</p>
               </div>
             </div>
             <ProfileActivityPanel logs={logs} />
@@ -617,7 +622,7 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
 
       {/* MODALS */}
       {open === "info" && (
-        <Modal close={() => setOpen(null)} title="Cập nhật hồ sơ" icon="manage_accounts" color="indigo">
+        <Modal close={() => setOpen(null)} title="Cập nhật hồ sơ" icon="manage_accounts" color="cyan">
           <ProfileUpdateForm action={updateProfile} initial={initial} />
         </Modal>
       )}
@@ -632,7 +637,7 @@ export function ProfileDashboard({ user, logs, accessToken, userId }: Props) {
         </Modal>
       )}
       {open === "change-email" && (
-        <Modal close={() => setOpen(null)} title="Thay đổi Email liên kết" icon="mark_email_unread" color="indigo">
+        <Modal close={() => setOpen(null)} title="Thay đổi Email liên kết" icon="mark_email_unread" color="cyan">
           <ChangeEmailForm
             userId={userId}
             accessToken={accessToken}
@@ -708,22 +713,22 @@ function TabBar({
   ] as const;
 
   return (
-    <div className="flex w-full overflow-x-auto no-scrollbar justify-start md:justify-center">
-      <div className="flex gap-2 rounded-full border border-slate-200/50 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 p-2 backdrop-blur-xl shadow-lg shadow-slate-200/20 dark:shadow-slate-900/50 mx-4 md:mx-0">
+    <div className="flex w-full overflow-x-auto no-scrollbar justify-start md:justify-center" suppressHydrationWarning>
+      <div className="flex gap-2 rounded-full border border-white/10 bg-zinc-950/90 p-2 backdrop-blur-2xl shadow-2xl shadow-cyan-950/50 mx-4 md:mx-0" suppressHydrationWarning>
         {tabs.map((t) => {
           const isActive = active === t.id;
           return (
             <button
               key={t.id}
               onClick={() => onChange(t.id)}
-              className={`relative flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+              className={`relative flex items-center gap-2 rounded-full px-5 py-3 text-xs font-bold transition-all duration-300 whitespace-nowrap ${
                 isActive 
-                  ? "text-white shadow-md shadow-indigo-500/25" 
-                  : "text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                  ? "text-white shadow-md shadow-cyan-500/25 font-black" 
+                  : "text-zinc-400 hover:bg-white/10 hover:text-white"
               }`}
             >
               {isActive && (
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 animate-in fade-in zoom-in-95" style={{ zIndex: -1 }} />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 animate-in fade-in zoom-in-95" style={{ zIndex: -1 }} />
               )}
               <span className={`material-symbols-outlined text-[18px] transition-transform ${isActive ? 'scale-110' : ''}`}>{t.icon}</span>
               {t.label}
@@ -763,51 +768,53 @@ function membershipBadgeClass(level: string) {
 
 function InfoCard({ icon, title, value, color, className = "" }: any) {
   const colorStyles: Record<string, string> = {
-    blue: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    fuchsia: "bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
-    orange: "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    indigo: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+    blue: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+    cyan: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+    emerald: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    fuchsia: "bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20",
+    orange: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+    indigo: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
   };
   
   return (
-    <div className={`group relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 ${className}`}>
+    <div className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-6 backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-xl hover:shadow-cyan-500/10 ${className}`}>
       <div className="flex items-center gap-4 mb-4">
         <div className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 group-hover:rotate-3 ${colorStyles[color]}`}>
           <span className="material-symbols-outlined">{icon}</span>
         </div>
-        <p className="text-xs font-black uppercase tracking-widest text-slate-400">{title}</p>
+        <p className="text-xs font-black uppercase tracking-widest text-zinc-400">{title}</p>
       </div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
+      <p className="text-xl font-bold text-white truncate">{value}</p>
     </div>
   );
 }
 
-function Modal({ children, close, title, icon, color = "indigo" }: any) {
+function Modal({ children, close, title, icon, color = "cyan" }: any) {
   const colorStyles: Record<string, string> = {
-    indigo: "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400",
-    emerald: "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-    fuchsia: "bg-fuchsia-50 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400",
+    cyan: "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30",
+    indigo: "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30",
+    emerald: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    fuchsia: "bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30",
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300" onClick={close} />
-      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 rounded-[2.5rem] bg-white dark:bg-slate-900 p-6 sm:p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] overflow-y-auto max-h-[90vh] no-scrollbar border border-slate-200 dark:border-slate-800">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-300" onClick={close} />
+      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 rounded-[2.5rem] border border-white/10 bg-zinc-950/95 p-6 sm:p-10 shadow-2xl shadow-cyan-950/60 overflow-y-auto max-h-[90vh] no-scrollbar backdrop-blur-2xl text-white">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
           <div className="flex items-center gap-4">
             {icon && (
               <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colorStyles[color]}`}>
                 <span className="material-symbols-outlined">{icon}</span>
               </div>
             )}
-            <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white">{title}</h3>
+            <h3 className="font-headline text-2xl font-black text-white">{title}</h3>
           </div>
           <button
             onClick={close}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-white"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
@@ -841,16 +848,16 @@ function maskEmail(raw: string | null | undefined) {
 
 function AddressItem({ item, onEdit, onDelete, onDefault }: { item: UserAddress; onEdit: () => void; onDelete: () => void; onDefault: () => void; }) {
   return (
-    <div className={`group relative overflow-hidden rounded-[2.5rem] border-2 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${item.isDefault ? "border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-500/5 hover:border-emerald-500/60 shadow-emerald-500/10" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-500/30 shadow-slate-200/50 dark:shadow-none"}`}>
+    <div className={`group relative overflow-hidden rounded-[2rem] border-2 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${item.isDefault ? "border-emerald-500/50 bg-emerald-950/20 hover:border-emerald-500/80 shadow-emerald-950/50" : "border-white/10 bg-zinc-900/90 hover:border-cyan-500/40 shadow-xl"}`}>
       
       {item.isDefault && (
-        <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl" />
+        <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/20 blur-2xl" />
       )}
 
       <div className="relative z-10 flex flex-col h-full justify-between gap-6">
         <div>
           <div className="flex items-start justify-between gap-4 mb-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.isDefault ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.isDefault ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-400'}`}>
               <span className="material-symbols-outlined">{item.isDefault ? 'home' : 'business'}</span>
             </div>
             {item.isDefault && (
@@ -862,32 +869,32 @@ function AddressItem({ item, onEdit, onDelete, onDefault }: { item: UserAddress;
           </div>
           
           <div className="space-y-1 mb-4">
-            <h3 className="font-headline text-xl font-black text-slate-900 dark:text-white">{item.recipientName || "Người nhận"}</h3>
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <h3 className="font-headline text-xl font-black text-white">{item.recipientName || "Người nhận"}</h3>
+            <p className="text-xs font-bold text-zinc-400 flex items-center gap-1.5 font-mono">
               <span className="material-symbols-outlined text-[14px]">call</span>
               {maskPhone(item.phoneNumber)}
             </p>
           </div>
           
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+          <p className="text-xs font-medium text-zinc-300 leading-relaxed bg-zinc-950/60 border border-white/5 p-4 rounded-2xl">
             {item.fullAddress || [item.streetLine, item.wardName, item.provinceName].filter(Boolean).join(", ") || "Chưa có địa chỉ chi tiết"}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <button onClick={onEdit} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:hover:bg-slate-700">
+        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
+          <button onClick={onEdit} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-800 px-4 py-3 text-xs font-bold text-zinc-200 transition hover:bg-zinc-700 hover:text-white">
             <span className="material-symbols-outlined text-[18px]">edit_square</span> Sửa
           </button>
           {!item.isDefault ? (
-            <button onClick={onDefault} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-4 py-3 text-sm font-bold transition hover:bg-indigo-100 dark:hover:bg-indigo-500/20">
+            <button onClick={onDefault} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 px-4 py-3 text-xs font-bold transition hover:bg-cyan-900/60 hover:text-white">
               <span className="material-symbols-outlined text-[18px]">bookmark_add</span> Làm mặc định
             </button>
           ) : (
-            <div className="flex-1" /> /* Spacer */
+            <div className="flex-1" />
           )}
           {!item.isDefault && (
-            <button onClick={onDelete} className="shrink-0 flex items-center justify-center h-[44px] w-[44px] rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 transition hover:bg-rose-100 dark:hover:bg-rose-500/20" title="Xóa địa chỉ">
-              <span className="material-symbols-outlined text-[20px]">delete</span>
+            <button onClick={onDelete} className="shrink-0 flex items-center justify-center h-[40px] w-[40px] rounded-xl bg-rose-950/60 border border-rose-500/30 text-rose-400 transition hover:bg-rose-900/80 hover:text-white" title="Xóa địa chỉ">
+              <span className="material-symbols-outlined text-[18px]">delete</span>
             </button>
           )}
         </div>
@@ -898,38 +905,38 @@ function AddressItem({ item, onEdit, onDelete, onDefault }: { item: UserAddress;
 
 function DeviceItem({ item, onRemove }: { item: UserLoginDevice; onRemove: () => void; }) {
   return (
-    <div className="group overflow-hidden rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10 flex flex-col justify-between">
+    <div className="group overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-900/90 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10 flex flex-col justify-between">
       <div>
         <div className="flex items-start justify-between mb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
             <span className="material-symbols-outlined text-[28px]">
               {item.deviceLabel?.toLowerCase().includes('phone') || item.deviceLabel?.toLowerCase().includes('mobile') ? 'smartphone' : 'laptop_mac'}
             </span>
           </div>
-          <button onClick={onRemove} className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 transition-colors hover:bg-rose-100 dark:hover:bg-rose-500/20" title="Đăng xuất thiết bị">
-            <span className="material-symbols-outlined text-[20px]">power_settings_new</span>
+          <button onClick={onRemove} className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-950/60 border border-rose-500/30 text-rose-400 transition-colors hover:bg-rose-900/80 hover:text-white" title="Đăng xuất thiết bị">
+            <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
           </button>
         </div>
         
-        <h3 className="font-headline text-xl font-black text-slate-900 dark:text-white mb-4 line-clamp-2" title={item.deviceLabel || "Thiết bị không rõ"}>
+        <h3 className="font-headline text-xl font-black text-white mb-4 line-clamp-2" title={item.deviceLabel || "Thiết bị không rõ"}>
           {item.deviceLabel || "Thiết bị không rõ"}
         </h3>
         
         <div className="space-y-3">
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3">
-            <span className="material-symbols-outlined text-[16px] text-slate-400">language</span>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 font-mono text-xs">{item.lastLoginIp || "Không xác định"}</p>
+          <div className="flex items-center gap-3 rounded-xl bg-zinc-950/60 border border-white/5 p-3">
+            <span className="material-symbols-outlined text-[16px] text-zinc-400">language</span>
+            <p className="text-xs font-semibold text-zinc-300 font-mono">{item.lastLoginIp || "Không xác định"}</p>
           </div>
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3">
-            <span className="material-symbols-outlined text-[16px] text-slate-400">explore</span>
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{item.lastLoginLocation || "Không xác định"}</p>
+          <div className="flex items-center gap-3 rounded-xl bg-zinc-950/60 border border-white/5 p-3">
+            <span className="material-symbols-outlined text-[16px] text-zinc-400">explore</span>
+            <p className="text-xs font-semibold text-zinc-300">{item.lastLoginLocation || "Không xác định"}</p>
           </div>
         </div>
       </div>
       
-      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-slate-400">
+      <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-zinc-400">
         <span>Gần nhất</span>
-        <span className="text-slate-500 dark:text-slate-300">{item.lastSeenAt ? formatWebActivityTime(item.lastSeenAt) : "-"}</span>
+        <span className="text-cyan-300 font-mono">{item.lastSeenAt ? formatWebActivityTime(item.lastSeenAt) : "-"}</span>
       </div>
     </div>
   );

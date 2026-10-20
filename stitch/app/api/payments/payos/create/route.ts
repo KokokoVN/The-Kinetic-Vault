@@ -141,8 +141,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "UPSTREAM_ERROR", message: "PayOS không trả checkoutUrl." }, { status: 502 });
     }
 
-    const jar = await cookies();
-    void jar;
     const res = NextResponse.json({ checkoutUrl, orderCode, paymentId, orderId, orderNumber: orderNumber || null }, { status: 200 });
     res.cookies.set("payosOrderCode", String(orderCode), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 15 * 60 });
     res.cookies.set("payosPaymentId", String(paymentId), { httpOnly: true, sameSite: "lax", path: "/", maxAge: 15 * 60 });

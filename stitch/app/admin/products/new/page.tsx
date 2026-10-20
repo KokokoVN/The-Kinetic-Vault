@@ -32,14 +32,12 @@ export default async function AdminNewProductPage({ searchParams }: { searchPara
     redirect("/admin/products?error=readonly");
   }
 
-  const categories = activeCategories(
-    await listAdminCategories({ deletionFilter: "active", accessToken: session.token }),
-  );
-  
-  const [brands, allProducts] = await Promise.all([
+  const [rawCategories, brands, allProducts] = await Promise.all([
+    listAdminCategories({ deletionFilter: "active", accessToken: session.token }),
     listAdminBrands({ accessToken: session.token }),
-    getAdminProductsForUi({ accessToken: session.token, username: session.username })
+    getAdminProductsForUi({ accessToken: session.token, username: session.username }),
   ]);
+  const categories = activeCategories(rawCategories);
 
   async function createAction(formData: FormData) {
     "use server";
@@ -129,23 +127,67 @@ export default async function AdminNewProductPage({ searchParams }: { searchPara
   }
 
   return (
-    <div className="w-full space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          prefetch
-          href="/admin/products"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 transition-transform hover:scale-105 hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700"
-        >
-          <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">arrow_back</span>
+    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 pb-20 text-slate-800 dark:text-zinc-100">
+      {/* Breadcrumb & Navigation */}
+      <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500">
+        <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          Tổng quan
         </Link>
-        <div>
-          <h1 className="font-headline text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-900 to-indigo-700 dark:from-blue-400 dark:to-indigo-400">
-            Thêm sản phẩm mới
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Khởi tạo thông tin cơ bản cho sản phẩm. Biến thể (size/màu) sẽ được thêm sau khi lưu.
-          </p>
+        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+        <Link href="/admin/products" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          Sản phẩm
+        </Link>
+        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span className="text-slate-700 dark:text-slate-300 font-black">Thêm mới</span>
+      </nav>
+
+      {/* Hero Header Card */}
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white via-slate-50/50 to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 p-6 sm:p-8 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <Link
+              href="/admin/products"
+              title="Quay lại danh sách"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 shadow-sm transition-all hover:scale-105 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 dark:text-zinc-300"
+            >
+              <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+            </Link>
+            <div>
+              <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                  Thêm sản phẩm mới
+                </h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 shadow-xs">
+                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  Studio Tạo Mới
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 font-medium max-w-2xl leading-relaxed">
+                Khởi tạo đầy đủ thông tin sản phẩm, đăng ảnh & video, đồng thời thiết lập ma trận phân loại hàng đa tầng tự động.
+              </p>
+            </div>
+          </div>
+
+          {/* Quy trình các bước */}
+          <div className="flex items-center gap-2 rounded-2xl bg-white/80 dark:bg-zinc-900/80 p-2 border border-slate-200/60 dark:border-white/10 shadow-xs backdrop-blur-md">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-xs font-black">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px]">1</span>
+              <span>Thông tin</span>
+            </div>
+            <span className="material-symbols-outlined text-slate-300 dark:text-slate-700 text-[16px]">chevron_right</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 text-xs font-bold">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px]">2</span>
+              <span>Media</span>
+            </div>
+            <span className="material-symbols-outlined text-slate-300 dark:text-slate-700 text-[16px]">chevron_right</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-slate-500 dark:text-slate-400 text-xs font-bold">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px]">3</span>
+              <span>Đa tầng</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -159,3 +201,4 @@ export default async function AdminNewProductPage({ searchParams }: { searchPara
     </div>
   );
 }
+

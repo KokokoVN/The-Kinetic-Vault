@@ -3,6 +3,8 @@ package com.rainbowforest.telegramservice.controller;
 import com.rainbowforest.telegramservice.bot.AdminTelegramBot;
 import com.rainbowforest.telegramservice.entity.TelegramUser;
 import com.rainbowforest.telegramservice.repository.TelegramUserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/internal/telegram/orders")
 public class TelegramOrderNotificationController {
+    private static final Logger log = LoggerFactory.getLogger(TelegramOrderNotificationController.class);
 
     @Autowired
     private AdminTelegramBot bot;
@@ -67,10 +70,10 @@ public class TelegramOrderNotificationController {
         markupInline.setKeyboard(rowsInline);
 
         List<TelegramUser> admins = userRepository.findAll();
-        System.out.println("Found " + admins.size() + " telegram users to notify");
+        log.info("Found {} telegram users to notify", admins.size());
         for (TelegramUser admin : admins) {
             String role = admin.getRole();
-            System.out.println("Checking user: " + admin.getChatId() + " with role: " + role);
+            log.info("Checking user: {} with role: {}", admin.getChatId(), role);
             if (role != null && (role.toUpperCase().contains("ADMIN") || role.toUpperCase().contains("MANAGER"))) {
                 SendMessage msg = new SendMessage();
                 msg.setChatId(admin.getChatId().toString());
@@ -79,7 +82,7 @@ public class TelegramOrderNotificationController {
                 try {
                     bot.execute(msg);
                 } catch (Exception e) {
-                    System.err.println("Failed to send order notification to Telegram user: " + admin.getChatId());
+                    log.error("Failed to send order notification to Telegram user {}: {}", admin.getChatId(), e.getMessage());
                 }
             }
         }

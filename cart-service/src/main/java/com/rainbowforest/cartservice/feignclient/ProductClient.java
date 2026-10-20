@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "product-catalog-service", url = "http://localhost:8810/")
+@FeignClient(name = "product-catalog-service", url = "${product.catalog.service.url:http://localhost:8810/}")
 public interface ProductClient {
 
     @GetMapping(value = "/products/{id}")
@@ -14,4 +14,7 @@ public interface ProductClient {
 
     @GetMapping(value = "/product-variants/{variantId}")
     ProductVariantInfo getVariantById(@PathVariable(value = "variantId") Long variantId);
+
+    @GetMapping(value = "/products/batch")
+    java.util.List<Product> getProductsBatch(@org.springframework.web.bind.annotation.RequestParam(value = "ids") java.util.List<Long> ids);
 }

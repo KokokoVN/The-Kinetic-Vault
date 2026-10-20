@@ -9,6 +9,8 @@ import com.rainbowforest.productcatalogservice.repository.ProductRepository;
 import com.rainbowforest.productcatalogservice.repository.ProductVariantRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -142,6 +144,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<Product> getProductsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new java.util.ArrayList<>();
+        }
+        List<Product> list = productRepository.findByIdsAdminFetched(ids);
+        attachPricing(list);
+        return list;
+    }
+
+    @Override
     public List<Product> getAllProductByCategory(String category) {
         List<Product> list = productRepository.findAllByCategory(category);
         attachPricing(list);
@@ -149,6 +161,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#id", unless = "#result == null")
     public Product getProductById(Long id) {
         return productRepository.findByIdFetched(id).map(p -> {
             attachPricing(p);
@@ -157,6 +170,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "adminProducts", key = "#id", unless = "#result == null")
     public Product getProductForAdminById(Long id) {
         if (id == null) {
             return null;
@@ -175,6 +189,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = {"products", "adminProducts"}, allEntries = true)
     public Product addProduct(Product product, String actorUsername, String actorUserId) {
         if (product == null) {
             throw new IllegalArgumentException("bad request");
@@ -219,6 +234,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = {"products", "adminProducts"}, allEntries = true)
     public Product updateProduct(Long id, Product patch, String actorUsername, String actorUserId) {
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("not found"));
@@ -296,6 +312,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = {"products", "adminProducts"}, allEntries = true)
     public void deleteProduct(Long productId, String actorUsername, String actorUserId) {
         Product p = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("not found"));
@@ -333,6 +350,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = {"products", "adminProducts"}, allEntries = true)
     public Product restoreProduct(Long productId, String actorUsername, String actorUserId) {
         Product p = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("not found"));
@@ -356,6 +374,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = {"products", "adminProducts"}, allEntries = true)
     public Product setProductHidden(Long productId, boolean hidden, String actorUsername, String actorUserId) {
         Product p = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("not found"));

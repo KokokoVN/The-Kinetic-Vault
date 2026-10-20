@@ -2,9 +2,11 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { LogoutButton } from "@/components/logout-button";
 import { HeaderDateTime } from "@/components/header-date-time";
+import { HeaderWeather } from "@/components/header-weather";
 import { getResolvedApiRoot, getResolvedCartServiceOrigin } from "@/app/api/cart/_shared";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getAdminUserBrief, listMyOrders } from "@/lib/api";
+import { StorefrontHeaderSearch } from "@/components/storefront-header-search";
+import { getAdminUserBrief, listMyOrders, getStoreContact, DEFAULT_STORE_CONTACT, fetchWithTimeout } from "@/lib/api";
 import { getUserIdFromAccessToken } from "@/lib/auth";
 import { listNotificationsByEmail } from "@/lib/notification-api";
 
@@ -23,8 +25,8 @@ type HeaderCounts = {
 
 function menuClass(active: boolean): string {
   return active
-    ? "relative flex items-center gap-2 rounded-full bg-indigo-50/80 px-4 py-2.5 text-sm font-bold text-indigo-700 shadow-sm transition-all dark:bg-indigo-500/20 dark:text-indigo-300"
-    : "relative flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400";
+    ? "relative flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 text-white px-4 py-2 text-xs font-black shadow-[0_4px_16px_rgba(99,102,241,0.35)] ring-1 ring-white/25 transition-all duration-200 backdrop-blur-md whitespace-nowrap shrink-0"
+    : "relative flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-slate-600 dark:text-zinc-300 transition-all duration-200 hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-indigo-600 dark:hover:text-cyan-300 hover:scale-[1.02] whitespace-nowrap shrink-0";
 }
 
 function badge(n: number): string {
@@ -73,12 +75,12 @@ function cartCountFromPayload(raw: unknown): number {
 }
 
 async function fetchCartCount(headers: Record<string, string>): Promise<number> {
-  const direct = getResolvedCartServiceOrigin();
   const apiRoot = getResolvedApiRoot();
-  const candidates = [`${direct}/cart/items`, `${apiRoot}/shop/cart/items`, `${direct}/cart`, `${apiRoot}/shop/cart`];
+  const direct = getResolvedCartServiceOrigin();
+  const candidates = [`${apiRoot}/shop/cart`, `${direct}/cart`];
   for (const url of candidates) {
     try {
-      const res = await fetch(url, { cache: "no-store", headers });
+      const res = await fetchWithTimeout(url, { cache: "no-store", headers }, 2000);
       if (!res.ok) continue;
       const data = (await res.json().catch(() => null)) as unknown;
       const count = cartCountFromPayload(data);
@@ -136,173 +138,422 @@ export async function StorefrontLayout({
   activeMenu = "home",
 }: StorefrontLayoutProps) {
   const counts = await resolveHeaderCounts(isLoggedIn);
+  const contact = await getStoreContact().catch(() => DEFAULT_STORE_CONTACT);
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-900 selection:bg-indigo-200 dark:bg-slate-950 dark:text-slate-100 dark:selection:bg-indigo-900/50">
-      {/* Top Banner */}
-      <div className="hidden bg-indigo-900 px-4 py-1.5 text-center text-[11px] font-medium text-white sm:block">
-        Tưng bừng mua sắm — Freeship toàn quốc cho mọi đơn hàng từ 500k. Đăng ký ngay!
+    <div className="bg-[#f8fafc] dark:bg-[#060810] min-h-screen text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30 relative overflow-x-hidden transition-colors duration-300">
+      {/* Top Banner with subtle shimmering gradient */}
+      <div className="hidden relative overflow-hidden bg-gradient-to-r from-slate-950 via-[#0a0d18] to-slate-950 text-white border-b border-indigo-500/20 px-4 py-2 text-center text-xs font-semibold sm:block backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.18),rgba(255,255,255,0))]" />
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-[0_0_12px_rgba(251,146,60,0.6)] animate-pulse">
+              <span className="material-symbols-outlined text-[13px]">bolt</span>
+              VIP PRIVILEGE
+            </span>
+            <span className="text-zinc-300 font-medium tracking-wide">
+              Freeship toàn quốc từ 500.000₫ · Bảo hành chính hãng 1 đổi 1 trong 30 ngày.
+            </span>
+          </div>
+          <div className="hidden lg:flex items-center gap-4 text-[11px] font-bold text-zinc-400">
+            <span className="inline-flex items-center gap-1 text-cyan-400">
+              <span className="material-symbols-outlined text-[14px]">rocket_launch</span>
+              Hỏa tốc 2H
+            </span>
+            <span className="inline-flex items-center gap-1 text-emerald-400">
+              <span className="material-symbols-outlined text-[14px]">verified</span>
+              100% Chính Hãng
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Main Glassmorphism Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 bg-white/70 backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-slate-950/70">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-white/[0.06] bg-white/75 dark:bg-[#060810]/75 backdrop-blur-2xl transition-all duration-300 shadow-[0_4px_25px_-5px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_35px_-5px_rgba(0,0,0,0.8)] relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-gradient-to-r after:from-transparent after:via-indigo-500/50 dark:after:via-cyan-400/40 after:to-transparent after:shadow-[0_0_8px_rgba(99,102,241,0.5)]">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           
           {/* Logo Section */}
-          <div className="flex flex-1 items-center gap-2">
-            <Link href="/" className="group relative flex shrink-0 items-center gap-2 sm:gap-3">
-              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-indigo-500/50">
-                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">view_in_ar</span>
+          <div className="flex shrink-0 items-center">
+            <Link href="/" className="group relative flex shrink-0 items-center gap-3">
+              {/* Ambient Hover Glow behind Logo */}
+              <div className="pointer-events-none absolute -inset-2 rounded-3xl bg-indigo-500/15 dark:bg-cyan-500/15 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100" />
+
+              {/* 3D Cyber Emblem / Holographic Gem */}
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-[0_4px_20px_rgba(99,102,241,0.35)] ring-1 ring-white/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_4px_28px_rgba(6,182,212,0.55)] overflow-hidden">
+                {/* Specular glass reflection on top half */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent rounded-t-2xl" />
+                
+                {/* Core 3D AR Icon */}
+                <span className="material-symbols-outlined text-[24px] relative z-10 transition-transform duration-300 group-hover:rotate-6 drop-shadow-sm">
+                  view_in_ar
+                </span>
+
+                {/* Integrated Cyber Corner Notch Indicator (Không lòi ra ngoài) */}
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2 z-20">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300 shadow-[0_0_6px_#22d3ee]" />
+                </span>
               </div>
-              <div className="flex flex-col">
-                <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white whitespace-nowrap">The Kinetic Vault</h1>
-                <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Premium</p>
+
+              {/* Brand Typography & Cyber Tagline */}
+              <div className="flex flex-col items-start leading-none gap-1">
+                <span className="font-headline text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-800 dark:from-white dark:via-cyan-100 dark:to-indigo-200 bg-clip-text text-transparent whitespace-nowrap transition-colors duration-200 drop-shadow-xs">
+                  The Kinetic Vault
+                </span>
+                
+                {/* Cyber Flagship Micro-Capsule */}
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50/80 dark:bg-cyan-950/40 border border-indigo-200/60 dark:border-cyan-500/30 px-2 py-0.5 shadow-xs transition-all duration-200 group-hover:border-indigo-400/80 dark:group-hover:border-cyan-400/60">
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+                  </span>
+                  <span className="text-[8.5px] font-black uppercase tracking-[0.25em] text-indigo-700 dark:text-cyan-300 whitespace-nowrap">
+                    Cyber Flagship
+                  </span>
+                </div>
               </div>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden flex-1 justify-center md:flex">
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white/50 p-1 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/50">
+          {/* Desktop Navigation Capsule */}
+          <nav className="hidden shrink-0 items-center justify-center md:flex">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-white/[0.04] p-1.5 shadow-xs dark:shadow-2xl backdrop-blur-2xl ring-1 ring-slate-900/5 dark:ring-white/[0.05]">
               <Link className={menuClass(activeMenu === "home")} href="/">
-                Trang chủ
+                <span className="material-symbols-outlined text-[18px]">home</span>
+                <span className="whitespace-nowrap">Trang chủ</span>
               </Link>
               <Link className={menuClass(activeMenu === "products")} href="/products">
-                Sản phẩm
+                <span className="material-symbols-outlined text-[18px]">storefront</span>
+                <span className="whitespace-nowrap">Sản phẩm</span>
               </Link>
               <Link className={menuClass(activeMenu === "orders")} href="/my-orders">
-                Đơn hàng
+                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                <span className="whitespace-nowrap">Đơn hàng</span>
               </Link>
             </div>
           </nav>
 
           {/* Right Section: Utilities & Auth */}
-          <div className="flex flex-1 items-center justify-end gap-3 sm:gap-4">
-            <div className="hidden lg:block">
-              <HeaderDateTime />
-            </div>
+          <div className="flex shrink-0 items-center justify-end gap-2.5 sm:gap-3">
+            <StorefrontHeaderSearch />
+
+            <HeaderDateTime />
+
+            <HeaderWeather />
 
             <ThemeToggle />
 
             {isLoggedIn ? (
               <>
-                <Link href="/notifications" className="group relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                  <span className="material-symbols-outlined text-[18px] sm:text-[20px] transition-transform group-hover:scale-110">notifications</span>
+                <Link 
+                  href="/notifications" 
+                  aria-label="Thông báo"
+                  title="Thông báo hệ thống"
+                  className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-zinc-300 shadow-xs backdrop-blur-xl transition-all duration-200 hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-cyan-300 hover:shadow-[0_0_15px_rgba(99,102,241,0.25)] hover:scale-105 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover:scale-110">notifications</span>
                   {counts.notifications > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 animate-pulse items-center justify-center rounded-full border-2 border-white bg-rose-500 text-[9px] sm:text-[10px] font-bold text-white dark:border-slate-950">
+                    <span className="absolute -right-1 -top-1 flex h-4.5 min-w-[18px] px-1 items-center justify-center rounded-full border-2 border-white dark:border-[#060810] bg-gradient-to-r from-rose-500 to-pink-500 text-[9px] font-black text-white shadow-[0_0_8px_rgba(244,63,94,0.5)]">
                       {badge(counts.notifications)}
                     </span>
                   )}
                 </Link>
 
-                <Link href="/cart" className="hidden sm:flex group relative h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                  <span className="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">shopping_cart</span>
+                <Link 
+                  href="/cart" 
+                  aria-label="Giỏ hàng"
+                  title="Giỏ hàng của bạn"
+                  className="hidden sm:flex group relative h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-zinc-300 shadow-xs backdrop-blur-xl transition-all duration-200 hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-cyan-300 hover:shadow-[0_0_15px_rgba(99,102,241,0.25)] hover:scale-105 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover:scale-110">shopping_cart</span>
                   {counts.cart > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-indigo-600 text-[10px] font-bold text-white dark:border-slate-950">
+                    <span className="absolute -right-1 -top-1 flex h-4.5 min-w-[18px] px-1 items-center justify-center rounded-full border-2 border-white dark:border-[#060810] bg-gradient-to-r from-indigo-600 to-cyan-500 text-[9px] font-black text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]">
                       {badge(counts.cart)}
                     </span>
                   )}
                 </Link>
 
-                <div className="hidden h-6 w-px bg-slate-200 dark:bg-slate-700 sm:block" />
+                <div className="hidden h-6 w-px bg-slate-200/80 dark:bg-white/10 sm:block shrink-0" />
 
-                <div className="hidden flex-col items-end sm:flex">
-                  <span className="whitespace-nowrap text-[10px] font-bold uppercase text-slate-400">Xin chào</span>
-                  <Link href="/profile" className="whitespace-nowrap text-sm font-bold text-slate-900 transition-colors hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">
-                    {username ?? "User"}
+                {/* Cyber Identity Card */}
+                <div className="hidden sm:flex items-center gap-2 shrink-0">
+                  <Link 
+                    href="/profile" 
+                    className="group flex items-center gap-2.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-white/[0.04] px-3 py-1.5 shadow-xs backdrop-blur-xl transition-all duration-200 hover:border-indigo-500/50 hover:bg-indigo-500/5 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+                    title="Xem hồ sơ cá nhân"
+                  >
+                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 text-white shadow-xs">
+                      <span className="material-symbols-outlined text-[18px]">
+                        {username?.toLowerCase() === "admin" ? "shield_person" : "person"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-start leading-tight">
+                      <div className="flex items-center gap-1.5">
+                        {username?.toLowerCase() === "admin" ? (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 py-0.2 text-[8px] font-black uppercase text-white shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                            <span className="material-symbols-outlined text-[10px]">verified</span>
+                            ADMIN VIP
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-indigo-500/15 dark:bg-cyan-500/20 px-1.5 py-0.2 text-[8px] font-black uppercase text-indigo-700 dark:text-cyan-300">
+                            VIP MEMBER
+                          </span>
+                        )}
+                      </div>
+                      <span className="whitespace-nowrap text-xs font-black text-slate-900 dark:text-white transition-colors group-hover:text-indigo-600 dark:group-hover:text-cyan-300">
+                        {username ?? "User"}
+                      </span>
+                    </div>
+                    <span className="material-symbols-outlined text-[14px] text-slate-400 dark:text-zinc-500 transition-transform duration-200 group-hover:translate-x-0.5">
+                      arrow_forward_ios
+                    </span>
                   </Link>
-                </div>
-                
-                <div className="hidden sm:block">
+
+                  {username?.toLowerCase() === "admin" && (
+                    <Link
+                      href="/admin"
+                      title="Truy cập Portal Quản trị viên"
+                      className="hidden lg:inline-flex items-center gap-1 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs font-bold text-indigo-700 dark:text-cyan-300 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                      <span>Quản trị</span>
+                    </Link>
+                  )}
+
                   <LogoutButton 
                     variant="header" 
                     redirectTo="/" 
-                    className="flex h-10 items-center justify-center rounded-full bg-rose-50 px-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20" 
                   />
                 </div>
               </>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <Link
-                  className="hidden rounded-full border border-slate-200 px-5 py-2 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 sm:block"
+                  className="hidden sm:inline-flex shrink-0 whitespace-nowrap items-center rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-white/[0.04] px-4.5 py-2 text-xs font-bold text-slate-700 dark:text-zinc-200 shadow-xs backdrop-blur-xl transition-all duration-200 hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-white"
                   href="/login"
                 >
                   Đăng nhập
                 </Link>
                 <Link
-                  className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/40"
+                  className="shrink-0 whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 px-5 py-2 text-xs font-black text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/20 transition-all duration-200 hover:scale-105 hover:shadow-indigo-500/45 active:scale-95"
                   href="/register"
                 >
                   Đăng ký
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="min-h-screen pb-32 pt-8 md:pb-16">{children}</main>
+      <main className="min-h-screen pb-32 pt-6 md:pb-16">{children}</main>
 
-      {/* Premium Footer */}
-      <footer className="border-t border-slate-200 bg-white pt-16 dark:border-slate-800 dark:bg-slate-950">
+      {/* Flagship Luxury Footer */}
+      <footer className="relative overflow-hidden border-t border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#07090e] pt-16 pb-12 transition-colors duration-300">
+        {/* Ambient background glows */}
+        <div className="pointer-events-none absolute -left-48 bottom-0 h-96 w-96 rounded-full bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -right-48 bottom-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-[120px]" />
+
+        {/* 4 Trust pillars */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] p-5 backdrop-blur-xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <span className="material-symbols-outlined text-2xl">local_shipping</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Giao Hàng Siêu Tốc</h4>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Nội thành 2h, toàn quốc 2-3 ngày</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] p-5 backdrop-blur-xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                <span className="material-symbols-outlined text-2xl">verified_user</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">100% Chính Hãng</h4>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Cam kết bảo hành ủy quyền toàn quốc</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] p-5 backdrop-blur-xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                <span className="material-symbols-outlined text-2xl">published_with_changes</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Đổi Trả 7 Ngày</h4>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Miễn phí nếu phát sinh lỗi phần cứng</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/80 dark:bg-white/[0.02] p-5 backdrop-blur-xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                <span className="material-symbols-outlined text-2xl">support_agent</span>
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Hỗ Trợ 24/7</h4>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Đội ngũ kỹ thuật viên chuyên sâu</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             
-            {/* Brand Section */}
-            <div className="space-y-6">
+            {/* Brand & Store Contact Info */}
+            <div className="space-y-4">
               <Link href="/" className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-                  <span className="material-symbols-outlined text-[20px]">view_in_ar</span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-400 text-white shadow-lg shadow-indigo-500/30">
+                  <span className="material-symbols-outlined text-[22px]">view_in_ar</span>
                 </div>
-                <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">The Kinetic Vault</span>
+                <div>
+                  <span className="font-headline text-lg font-black tracking-tight text-slate-900 dark:text-white">{contact.storeName || "The Kinetic Vault"}</span>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-400">Cyber Flagship Store</p>
+                </div>
               </Link>
-              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                Hệ thống thương mại điện tử hiện đại, mang đến trải nghiệm mua sắm mượt mà, nhanh chóng và an toàn tuyệt đối.
+              
+              <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                {contact.description || "Hệ sinh thái thương mại điện tử công nghệ cao, cam kết sản phẩm chính hãng và dịch vụ tận tâm."}
               </p>
-              <div className="flex gap-4">
-                {/* Social placeholders */}
-                <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/50 dark:hover:text-indigo-400">
-                  <span className="material-symbols-outlined">public</span>
-                </a>
-                <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/50 dark:hover:text-indigo-400">
-                  <span className="material-symbols-outlined">share</span>
-                </a>
+
+              {/* Dynamic Store Contact Details */}
+              <div className="space-y-2 pt-1 text-xs text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-2.5">
+                  <span className="material-symbols-outlined text-indigo-500 shrink-0 text-[18px]">location_on</span>
+                  <div className="leading-snug">
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{contact.address}</span>
+                    {contact.googleMapsUrl && (
+                      <div>
+                        <a 
+                          href={contact.googleMapsUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-500 dark:text-cyan-400 dark:hover:text-cyan-300 inline-flex items-center gap-1 mt-0.5"
+                        >
+                          Xem bản đồ đường đi
+                          <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-indigo-500 shrink-0 text-[18px]">call</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {contact.hotline && (
+                      <span className="font-bold text-slate-900 dark:text-white">Hotline: {contact.hotline}</span>
+                    )}
+                    {contact.phoneNumber && contact.phoneNumber !== contact.hotline && (
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">({contact.phoneNumber})</span>
+                    )}
+                  </div>
+                </div>
+
+                {contact.email && (
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-indigo-500 shrink-0 text-[18px]">mail</span>
+                    <a href={`mailto:${contact.email}`} className="text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-cyan-400 font-medium">
+                      {contact.email}
+                    </a>
+                  </div>
+                )}
+
+                {contact.openingHours && (
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-indigo-500 shrink-0 text-[18px]">schedule</span>
+                    <span>{contact.openingHours}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Social links */}
+              <div className="flex gap-2.5 pt-1">
+                {contact.facebookUrl && (
+                  <a
+                    href={contact.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Facebook"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 transition-colors hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  >
+                    <span className="material-symbols-outlined text-base">public</span>
+                  </a>
+                )}
+                {contact.zaloPhone && (
+                  <a
+                    href={`https://zalo.me/${contact.zaloPhone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Zalo: ${contact.zaloPhone}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 transition-colors hover:text-blue-500 dark:hover:text-blue-400 hover:bg-slate-200 dark:hover:bg-white/10 text-[11px] font-black"
+                  >
+                    Zalo
+                  </a>
+                )}
+                {contact.tiktokUrl && (
+                  <a
+                    href={contact.tiktokUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="TikTok"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 transition-colors hover:text-pink-500 dark:hover:text-pink-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  >
+                    <span className="material-symbols-outlined text-base">music_note</span>
+                  </a>
+                )}
+                {contact.instagramUrl && (
+                  <a
+                    href={contact.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Instagram"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 transition-colors hover:text-purple-500 dark:hover:text-purple-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  >
+                    <span className="material-symbols-outlined text-base">photo_camera</span>
+                  </a>
+                )}
               </div>
             </div>
 
             {/* Links Section 1 */}
             <div>
-              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Dịch vụ khách hàng</h3>
-              <ul className="space-y-4">
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Trung tâm hỗ trợ</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Hướng dẫn mua hàng</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Chính sách giao hàng</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Chính sách đổi trả</Link></li>
+              <h3 className="mb-5 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Dịch vụ khách hàng</h3>
+              <ul className="space-y-3">
+                <li><Link href="/" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Trung tâm trợ giúp & CSKH</Link></li>
+                <li><Link href="/products" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Danh mục sản phẩm chính hãng</Link></li>
+                <li><Link href="/my-orders" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Tra cứu đơn hàng trực tuyến</Link></li>
+                <li><Link href="/" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Chính sách giao nhận & thanh toán</Link></li>
               </ul>
             </div>
 
             {/* Links Section 2 */}
             <div>
-              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Về chúng tôi</h3>
-              <ul className="space-y-4">
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Giới thiệu công ty</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Tuyển dụng</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Điều khoản sử dụng</Link></li>
-                <li><Link href="/" className="text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">Chính sách bảo mật</Link></li>
+              <h3 className="mb-5 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Hệ thống & Đối tác</h3>
+              <ul className="space-y-3">
+                <li><Link href="/" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Về The Kinetic Vault</Link></li>
+                <li><Link href="/admin/dashboard" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Cổng quản trị (Admin Portal)</Link></li>
+                <li><Link href="/" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Điều khoản & Bảo mật thông tin</Link></li>
+                <li><Link href="/" className="text-xs text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-cyan-400">Chính sách hoàn tiền 100%</Link></li>
               </ul>
             </div>
 
             {/* Newsletter */}
             <div>
-              <h3 className="mb-6 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Đăng ký nhận tin</h3>
-              <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Nhận các ưu đãi đặc biệt và thông tin sản phẩm mới nhất.</p>
+              <h3 className="mb-5 text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Bản tin công nghệ</h3>
+              <p className="mb-4 text-xs text-slate-600 dark:text-slate-400">Đăng ký để nhận voucher ưu đãi 100k và cập nhật sản phẩm công nghệ mới nhất.</p>
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="Email của bạn..."
-                  className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  placeholder="Nhập email của bạn..."
+                  className="w-full min-w-0 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-all focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10"
                 />
-                <button type="button" className="flex shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-white transition-all hover:bg-indigo-700">
+                <button 
+                  type="button" 
+                  className="flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-600 to-cyan-500 px-4 py-2.5 text-white transition-all hover:scale-105 shadow-md shadow-indigo-500/20"
+                >
                   <span className="material-symbols-outlined text-sm">send</span>
                 </button>
               </div>
@@ -312,63 +563,70 @@ export async function StorefrontLayout({
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-16 border-t border-slate-100 bg-slate-50 py-6 dark:border-slate-800/50 dark:bg-slate-900/50">
+        <div className="mt-16 border-t border-slate-200/80 dark:border-white/[0.06] pt-8">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:px-6 lg:px-8 lg:text-left">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-              &copy; {new Date().getFullYear()} The Kinetic Vault. All rights reserved.
+            <p className="text-xs text-slate-500">
+              &copy; {new Date().getFullYear()} The Kinetic Vault E-Commerce Platform. All rights reserved.
             </p>
-            <div className="flex items-center gap-4 text-sm font-medium text-slate-500 dark:text-slate-400">
-              <span>Thiết kế bằng</span>
-              <span className="material-symbols-outlined text-rose-500">favorite</span>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span>Bản quyền phát triển bởi</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">Kinetic Dev Team</span>
             </div>
           </div>
         </div>
       </footer>
 
       {/* Floating Mobile Bottom Navigation */}
-      <nav className="fixed bottom-6 left-1/2 z-50 flex w-[calc(100%-3rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full border border-white/20 bg-slate-900/80 px-2 py-2 backdrop-blur-xl shadow-2xl shadow-indigo-500/20 dark:bg-slate-800/90 md:hidden">
+      <nav className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2.5rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-[#0b0f19]/90 px-3 py-2 backdrop-blur-2xl shadow-xl shadow-slate-300/40 dark:shadow-2xl dark:shadow-black/80 md:hidden ring-1 ring-slate-200/50 dark:ring-white/10">
         <Link 
           href="/" 
-          className={`relative flex flex-col items-center justify-center p-2 transition-all ${activeMenu === "home" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 transition-all ${activeMenu === "home" ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
         >
-          {activeMenu === "home" && <div className="absolute inset-0 rounded-full bg-white/10" />}
-          <span className="material-symbols-outlined relative z-10 text-[24px]">home</span>
-          <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest mt-1">Home</span>
+          {activeMenu === "home" && <div className="absolute inset-0 rounded-full bg-indigo-500/10 dark:bg-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-cyan-500/30" />}
+          <span className="material-symbols-outlined relative z-10 text-[22px]">home</span>
+          <span className="relative z-10 text-[8px] uppercase tracking-wider mt-0.5">Trang chủ</span>
         </Link>
         <Link 
           href="/products" 
-          className={`relative flex flex-col items-center justify-center p-2 transition-all ${activeMenu === "products" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 transition-all ${activeMenu === "products" ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
         >
-          {activeMenu === "products" && <div className="absolute inset-0 rounded-full bg-white/10" />}
-          <span className="material-symbols-outlined relative z-10 text-[24px]">storefront</span>
-          <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest mt-1">Shop</span>
+          {activeMenu === "products" && <div className="absolute inset-0 rounded-full bg-indigo-500/10 dark:bg-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-cyan-500/30" />}
+          <span className="material-symbols-outlined relative z-10 text-[22px]">storefront</span>
+          <span className="relative z-10 text-[8px] uppercase tracking-wider mt-0.5">Cửa hàng</span>
         </Link>
         <Link 
           href="/cart" 
-          className={`relative flex flex-col items-center justify-center p-2 transition-all ${activeMenu === "cart" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 transition-all ${activeMenu === "cart" ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
         >
-          {activeMenu === "cart" && <div className="absolute inset-0 rounded-full bg-white/10" />}
-          <span className="material-symbols-outlined relative z-10 text-[24px]">shopping_bag</span>
-          {counts.cart > 0 && <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[8px] font-bold text-white shadow-sm">{badge(counts.cart)}</span>}
-          <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest mt-1">Cart</span>
+          {activeMenu === "cart" && <div className="absolute inset-0 rounded-full bg-indigo-500/10 dark:bg-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-cyan-500/30" />}
+          <div className="relative">
+            <span className="material-symbols-outlined relative z-10 text-[22px]">shopping_cart</span>
+            {counts.cart > 0 && (
+              <span className="absolute -right-2 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[8px] font-black text-white shadow-sm ring-1 ring-white/20">
+                {badge(counts.cart)}
+              </span>
+            )}
+          </div>
+          <span className="relative z-10 text-[8px] uppercase tracking-wider mt-0.5">Giỏ hàng</span>
         </Link>
         <Link 
           href="/my-orders" 
-          className={`relative flex flex-col items-center justify-center p-2 transition-all ${activeMenu === "orders" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 transition-all ${activeMenu === "orders" ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
         >
-          {activeMenu === "orders" && <div className="absolute inset-0 rounded-full bg-white/10" />}
-          <span className="material-symbols-outlined relative z-10 text-[24px]">receipt_long</span>
-          <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest mt-1">Orders</span>
+          {activeMenu === "orders" && <div className="absolute inset-0 rounded-full bg-indigo-500/10 dark:bg-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-cyan-500/30" />}
+          <span className="material-symbols-outlined relative z-10 text-[22px]">receipt_long</span>
+          <span className="relative z-10 text-[8px] uppercase tracking-wider mt-0.5">Đơn mua</span>
         </Link>
         <Link 
           href={isLoggedIn ? "/profile" : "/login"} 
-          className={`relative flex flex-col items-center justify-center p-2 transition-all ${activeMenu === "profile" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 transition-all ${activeMenu === "profile" ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"}`}
         >
-          {activeMenu === "profile" && <div className="absolute inset-0 rounded-full bg-white/10" />}
-          <span className="material-symbols-outlined relative z-10 text-[24px]">person</span>
-          <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest mt-1">Profile</span>
+          {activeMenu === "profile" && <div className="absolute inset-0 rounded-full bg-indigo-500/10 dark:bg-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-cyan-500/30" />}
+          <span className="material-symbols-outlined relative z-10 text-[22px]">person</span>
+          <span className="relative z-10 text-[8px] uppercase tracking-wider mt-0.5">Cá nhân</span>
         </Link>
       </nav>
     </div>
   );
 }
+

@@ -8,16 +8,25 @@ echo     KHOI TAO DUONG HAM CLOUDFLARE CHO BACKEND
 echo ===================================================
 echo.
 
-if not exist "cloudflared.exe" (
+set CLOUDFLARED_BIN=tools\cloudflared.exe
+if not exist "%CLOUDFLARED_BIN%" (
+    if exist "cloudflared.exe" (
+        set CLOUDFLARED_BIN=cloudflared.exe
+    )
+)
+
+if not exist "%CLOUDFLARED_BIN%" (
+    if not exist "tools" mkdir "tools"
     echo [1/3] Dang tai Cloudflared... (Vui long cho vai giay)
-    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile 'cloudflared.exe'"
-    if not exist "cloudflared.exe" (
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile 'tools\cloudflared.exe'"
+    set CLOUDFLARED_BIN=tools\cloudflared.exe
+    if not exist "%CLOUDFLARED_BIN%" (
         echo [Loi] Khong the tai xuong Cloudflared! Kiem tra lai mang.
         pause
         exit /b
     )
 ) else (
-    echo [1/3] Da tim thay Cloudflared.
+    echo [1/3] Da tim thay Cloudflared tai: %CLOUDFLARED_BIN%
 )
 
 echo [2/3] Chuan bi tao duong ham...
@@ -33,6 +42,6 @@ echo.
 echo [3/3] Dang ket noi vao mang luoi Cloudflare...
 echo.
 
-cloudflared.exe tunnel --url http://localhost:8900
+"%CLOUDFLARED_BIN%" tunnel --url http://localhost:8900
 
 pause

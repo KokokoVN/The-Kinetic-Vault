@@ -42,6 +42,18 @@ public class ProductVariant extends AuditableEntity {
     @Column(name = "variant_image_url", length = 1024)
     private String variantImageUrl;
 
+    @Column(name = "variant_name", length = 255)
+    private String variantName;
+
+    @Column(name = "attributes_json", columnDefinition = "TEXT")
+    private String attributesJson;
+
+    @Column(name = "sku", length = 128)
+    private String sku;
+
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+
     @Column(name = "price")
     private BigDecimal price;
 
@@ -87,6 +99,38 @@ public class ProductVariant extends AuditableEntity {
 
     public void setVariantImageUrl(String variantImageUrl) {
         this.variantImageUrl = variantImageUrl;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getAttributesJson() {
+        return attributesJson;
+    }
+
+    public void setAttributesJson(String attributesJson) {
+        this.attributesJson = attributesJson;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public BigDecimal getPrice() {

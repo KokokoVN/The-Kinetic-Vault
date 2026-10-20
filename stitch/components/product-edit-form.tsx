@@ -43,6 +43,14 @@ export function ProductEditForm({
 
   const pid = String(product.id);
   const priceDisplay = Number(product.price ?? 0);
+  const [editPrice, setEditPrice] = useState<string>(
+    String(Number.isFinite(priceDisplay) && priceDisplay >= 1 ? Math.round(priceDisplay) : 1)
+  );
+  const [description, setDescription] = useState<string>(product.discription ?? "");
+
+  const appendTemplate = (text: string) => {
+    setDescription((prev) => (prev ? `${prev.trim()}\n\n${text}` : text));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,20 +134,55 @@ export function ProductEditForm({
 
               {/* Description */}
               <div>
-                <label className={labelClass} htmlFor="discription">
-                  <span className="material-symbols-outlined text-[15px] text-indigo-500">
-                    description
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className={labelClass} htmlFor="discription">
+                    <span className="material-symbols-outlined text-[15px] text-indigo-500">
+                      description
+                    </span>
+                    Mô tả sản phẩm <span className="text-rose-500 ml-0.5">*</span>
+                  </label>
+                  <span className="text-[11px] font-mono font-bold text-slate-400">
+                    {description.length} ký tự · {description.trim() ? description.trim().split(/\s+/).length : 0} từ
                   </span>
-                  Mô tả sản phẩm <span className="text-rose-500 ml-0.5">*</span>
-                </label>
+                </div>
+
+                {/* Quick description template snippets */}
+                <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">
+                    Chèn mẫu nhanh:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => appendTemplate("• Đặc điểm nổi bật:\n- Thiết kế hiện đại, sang trọng\n- Chất liệu cao cấp, độ bền cao\n- Dễ dàng sử dụng và bảo quản")}
+                    className="rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 hover:text-indigo-600 px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-zinc-300 transition-colors"
+                  >
+                    + Đặc điểm nổi bật
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => appendTemplate("• Thông số sản phẩm:\n- Xuất xứ: Chính hãng\n- Quy cách: Đóng gói tiêu chuẩn\n- Kích thước & Trọng lượng: Tiêu chuẩn")}
+                    className="rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 hover:text-indigo-600 px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-zinc-300 transition-colors"
+                  >
+                    + Thông số cơ bản
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => appendTemplate("• Chính sách bảo hành:\n- Bảo hành chính hãng 12 tháng\n- Hỗ trợ đổi mới trong 30 ngày nếu có lỗi do nhà sản xuất")}
+                    className="rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 hover:text-indigo-600 px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-zinc-300 transition-colors"
+                  >
+                    + Bảo hành
+                  </button>
+                </div>
+
                 <textarea
                   id="discription"
                   name="discription"
                   rows={9}
                   required
-                  defaultValue={product.discription ?? ""}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Mô tả chi tiết về chất liệu, đặc điểm, công dụng..."
-                  className={`${inputClass} resize-none leading-relaxed`}
+                  className={`${inputClass} resize-none leading-relaxed font-sans`}
                 />
               </div>
             </div>
@@ -225,27 +268,46 @@ export function ProductEditForm({
                       step={1}
                       required
                       inputMode="numeric"
-                      defaultValue={String(
-                        Number.isFinite(priceDisplay)
-                          ? Math.max(1, Math.round(priceDisplay))
-                          : 1
-                      )}
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
                       className={`${inputClass} pr-16`}
                     />
                     <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                       VND
                     </span>
                   </div>
+                  {Number(editPrice) > 0 && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <span>Định dạng: {Number(editPrice).toLocaleString("vi-VN")} ₫</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* SKU */}
                 <div>
-                  <label className={labelClass} htmlFor="sku">
-                    <span className="material-symbols-outlined text-[15px] text-slate-400">
-                      barcode
-                    </span>
-                    Mã SKU <span className="text-rose-500 ml-0.5">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelClass} htmlFor="sku">
+                      <span className="material-symbols-outlined text-[15px] text-slate-400">
+                        barcode
+                      </span>
+                      Mã SKU <span className="text-rose-500 ml-0.5">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById("sku") as HTMLInputElement | null;
+                        if (input) {
+                          const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+                          input.value = `PRD-${rand}`;
+                        }
+                      }}
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">shuffle</span>
+                      <span>Tạo SKU ngẫu nhiên</span>
+                    </button>
+                  </div>
                   <input
                     id="sku"
                     name="sku"
@@ -258,22 +320,46 @@ export function ProductEditForm({
                 </div>
               </div>
 
-              {/* Save button */}
-              <button
-                type="submit"
-                disabled={isPending}
-                className="group relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-indigo-500/40 hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {/* Shine sweep */}
-                <span className="absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/15 transition-transform duration-700 group-hover:translate-x-full" />
+              {/* Action buttons */}
+              <div className="space-y-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="group relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-indigo-500/40 hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  {/* Shine sweep */}
+                  <span className="absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/15 transition-transform duration-700 group-hover:translate-x-full" />
 
-                <span className="material-symbols-outlined text-[20px]">
-                  {isPending ? "sync" : "save"}
-                </span>
-                <span className={isPending ? "animate-pulse" : ""}>
-                  {isPending ? "Đang lưu..." : "Lưu thay đổi"}
-                </span>
-              </button>
+                  <span className="material-symbols-outlined text-[20px]">
+                    {isPending ? "sync" : "save"}
+                  </span>
+                  <span className={isPending ? "animate-pulse" : ""}>
+                    {isPending ? "Đang lưu..." : "Lưu thay đổi"}
+                  </span>
+                  <kbd className="hidden sm:inline-block rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-mono font-medium text-white ml-2">
+                    Ctrl+S
+                  </kbd>
+                </button>
+
+                <div className="flex items-center justify-between gap-3">
+                  <a
+                    href={`/admin/products/${pid}/detail`}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-center"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">visibility</span>
+                    <span>Xem chi tiết</span>
+                  </a>
+                  <a
+                    href={`/product/${pid}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-center"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                    <span>Xem trên web</span>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </form>

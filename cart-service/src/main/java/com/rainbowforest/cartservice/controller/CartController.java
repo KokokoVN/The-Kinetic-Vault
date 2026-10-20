@@ -74,8 +74,17 @@ public class CartController {
         );
     }
 
+    private boolean isAdmin(HttpServletRequest req) {
+        if (req == null) return false;
+        String role = req.getHeader("X-User-Role");
+        return role != null && role.toUpperCase().contains("ADMIN");
+    }
+
     @GetMapping(value = "/carts/admin")
-    public ResponseEntity<List<CartResponse>> listAllCartsForAdmin() {
+    public ResponseEntity<List<CartResponse>> listAllCartsForAdmin(HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         List<CartResponse> out = new ArrayList<>();
         for (String cartId : cartService.listCartIds()) {
             List<Item> items = cartService.getCart(cartId);
@@ -93,7 +102,10 @@ public class CartController {
     }
 
     @GetMapping(value = "/carts/admin/{cartId}")
-    public ResponseEntity<CartResponse> getCartForAdmin(@PathVariable("cartId") String cartId) {
+    public ResponseEntity<CartResponse> getCartForAdmin(@PathVariable("cartId") String cartId, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         String key = cartId == null ? "" : cartId.trim();
         if (key.isEmpty()) {
             return new ResponseEntity<CartResponse>(
@@ -116,7 +128,10 @@ public class CartController {
     }
 
     @DeleteMapping(value = "/carts/admin/clear-all")
-    public ResponseEntity<Void> clearAllCarts() {
+    public ResponseEntity<Void> clearAllCarts(HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
         cartService.clearAllCarts();
         
         Map<String, Object> detail = new LinkedHashMap<>();

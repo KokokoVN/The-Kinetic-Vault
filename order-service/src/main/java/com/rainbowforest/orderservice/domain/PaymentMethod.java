@@ -6,7 +6,9 @@ public enum PaymentMethod {
     COD,
     BANK_TRANSFER,
     CARD,
-    SEPAY;
+    SEPAY,
+    VNPAY,
+    PAYOS;
 
     public static PaymentMethod fromNullable(String rawValue) {
         if (rawValue == null || rawValue.trim().isEmpty()) {

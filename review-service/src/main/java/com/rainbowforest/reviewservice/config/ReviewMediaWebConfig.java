@@ -22,6 +22,9 @@ public class ReviewMediaWebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String location = REVIEW_MEDIA_DIR.toUri().toString();
+        if (!location.endsWith("/")) {
+            location += "/";
+        }
         registry.addResourceHandler("/media/**")
                 .addResourceLocations(location);
     }

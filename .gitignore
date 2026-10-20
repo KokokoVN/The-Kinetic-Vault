@@ -31,14 +31,16 @@ bin/
 *.log
 catalog-run.log
 
-# VS Code & IntelliJ IDEA
+# VS Code, Cursor & IntelliJ IDEA
 .vscode/
 .idea/
-*.iws
-*.iml
-*.ipr
+.cursor/
+
+# Build metadata
+*.tsbuildinfo
 
 # OS & Temporary/trash files
+~$*
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -51,3 +53,42 @@ cartjar.txt
 *.xlsx
 *.xls
 *.csv
+
+# Secrets & Environment Configuration (Security Hardening)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.jks
+application-secret.properties
+application-secrets.yml
+credentials.json
+secrets/
+
+# Uploaded files (user content - có thể chứa PII)
+uploads/
+logs/
+
+# Các file output tạm có thể chứa thông tin nhạy cảm
+*.bak
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+ọ.txt
+o.js
+test.txt
+cartjar.txt
+
+# Tài liệu nội bộ / API docs có thể chứa thông tin nhạy cảm
+*.docx
+# Cho phép commit README/docx mẫu nếu cần - chỉ ignore các file local
+
+# Backup files
+*.bak
+*.orig
+

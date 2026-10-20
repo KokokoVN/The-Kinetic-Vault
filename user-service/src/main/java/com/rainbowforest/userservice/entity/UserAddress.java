@@ -35,14 +35,16 @@ public class UserAddress extends AuditableEntity {
     @Column(name = "ward_name", length = 120)
     private String wardName;
 
-    @Column(name = "street_line", length = 255)
+    @javax.persistence.Convert(converter = com.rainbowforest.userservice.security.EncryptedStringConverter.class)
+    @Column(name = "street_line", length = 500)
     private String streetLine;
 
-    @Column(name = "full_address", length = 500)
+    @Column(name = "full_address", length = 1000)
     private String fullAddress;
 
     /** SĐT liên hệ theo từng địa chỉ (khác SĐT tài khoản nếu cần). */
-    @Column(name = "phone_number", length = 20)
+    @javax.persistence.Convert(converter = com.rainbowforest.userservice.security.EncryptedStringConverter.class)
+    @Column(name = "phone_number", length = 255)
     private String phoneNumber;
 
     @Column(name = "is_default", nullable = false)

@@ -1,11 +1,14 @@
 package com.rainbowforest.saleservice.controller;
 
+import com.rainbowforest.saleservice.dto.PromoBannerCacheDto;
+import com.rainbowforest.saleservice.dto.SaleProgramCacheDto;
 import com.rainbowforest.saleservice.dto.VoucherApplyResponse;
 import com.rainbowforest.saleservice.entity.PromoBanner;
 import com.rainbowforest.saleservice.entity.SaleProgram;
 import com.rainbowforest.saleservice.entity.Voucher;
 import com.rainbowforest.saleservice.service.SaleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,7 +54,7 @@ public class PublicSaleController {
 
     /** Storefront: lấy danh sách chương trình sale đang chạy */
     @GetMapping({"/active", "/sales/active"})
-    public ResponseEntity<List<SaleProgram>> getActivePrograms() {
+    public ResponseEntity<List<SaleProgramCacheDto>> getActivePrograms() {
         return ResponseEntity.ok(saleService.listActivePrograms());
     }
 
@@ -63,14 +66,31 @@ public class PublicSaleController {
 
     /** Storefront: lấy banner đang active */
     @GetMapping({"/banners", "/sales/banners"})
-    public ResponseEntity<List<PromoBanner>> getActiveBanners() {
+    public ResponseEntity<List<PromoBannerCacheDto>> getActiveBanners() {
         return ResponseEntity.ok(saleService.listActiveBanners());
     }
 
-    /** Lấy số lần sử dụng voucher của user */
+    /** Lấy số lần sử dụng voucher của user. Yêu cầu authentication (chỉ chính user/admin). */
     @GetMapping({"/vouchers/my-usage", "/sales/vouchers/my-usage"})
-    public ResponseEntity<Map<String, Integer>> getMyVoucherUsage(@RequestParam Long userId) {
+    public ResponseEntity<Map<String, Integer>> getMyVoucherUsage(
+            @RequestParam Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) String callerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
         if (userId == null) return ResponseEntity.badRequest().build();
+        // IDOR protection: chỉ admin hoặc chính user được xem.
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            if (callerUserId == null || callerUserId.trim().isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            try {
+                long caller = Long.parseLong(callerUserId.trim());
+                if (caller != userId.longValue()) {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+            } catch (NumberFormatException e) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
         return ResponseEntity.ok(saleService.getUserVoucherUsage(userId));
     }
 
@@ -106,7 +126,7 @@ public class PublicSaleController {
             saleService.consumeVoucher(code, userId, orderId);
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         }
     }
 
@@ -122,7 +142,7 @@ public class PublicSaleController {
             saleService.consumeSaleQty(req.getProductId(), req.getVariantId(), req.getQuantity());
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "BAD_REQUEST", "message", "Dữ liệu không hợp lệ"));
         }
     }
 

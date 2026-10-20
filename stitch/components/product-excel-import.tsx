@@ -180,42 +180,44 @@ export function ProductExcelImport({ accessToken, username, userId, brands, cate
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 relative">
+    <div className="rounded-3xl border border-white/10 bg-zinc-950/80 shadow-2xl backdrop-blur-2xl p-6 sm:p-8 relative text-zinc-100">
       {step === "upload" && (
         <div className="space-y-6">
-          <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-8 text-center bg-slate-50 dark:bg-slate-800/50">
-            <Download className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Bước 1: Tải file mẫu</h3>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
+          <div className="rounded-2xl border-2 border-dashed border-white/10 p-8 text-center bg-zinc-900/40 hover:bg-zinc-900/70 transition-colors">
+            <Download className="mx-auto h-12 w-12 text-cyan-400 mb-4" />
+            <h3 className="text-lg font-bold text-white">Bước 1: Tải file mẫu</h3>
+            <p className="mt-2 text-sm text-zinc-400 mb-6 max-w-lg mx-auto">
               Sử dụng file Excel chuẩn để điền thông tin sản phẩm và biến thể.
               Các sản phẩm cùng SKU sẽ được gộp chung.
             </p>
             <button
               onClick={handleDownloadTemplate}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 px-4 py-2 font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-5 py-2.5 font-bold text-cyan-300 hover:bg-cyan-500/20 transition-all shadow-sm"
             >
               <Download className="h-4 w-4" />
-              Tải Template
+              Tải File Template
             </button>
           </div>
 
-          <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-8 text-center bg-slate-50 dark:bg-slate-800/50">
-            <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Bước 2: Tải lên file Excel</h3>
-            <p className="mt-2 text-sm text-slate-500 mb-6">
-              Sau khi điền dữ liệu, tải file lên để hệ thống kiểm tra.
+          <div className="rounded-2xl border-2 border-dashed border-white/10 p-8 text-center bg-zinc-900/40 hover:bg-zinc-900/70 transition-colors">
+            <Upload className="mx-auto h-12 w-12 text-indigo-400 mb-4" />
+            <h3 className="text-lg font-bold text-white">Bước 2: Tải lên file Excel</h3>
+            <p className="mt-2 text-sm text-zinc-400 mb-6 max-w-lg mx-auto">
+              Sau khi điền dữ liệu theo mẫu, tải file lên để hệ thống phân tích và xác thực.
             </p>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
-            />
+            <div className="max-w-md mx-auto">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-cyan-500/10 file:text-cyan-300 hover:file:bg-cyan-500/20 file:border file:border-cyan-500/30 cursor-pointer"
+              />
+            </div>
             {file && (
               <button
                 onClick={handlePreview}
                 disabled={loading}
-                className="mt-6 inline-flex w-full justify-center items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:opacity-50"
+                className="mt-6 inline-flex w-full max-w-md justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 px-6 py-3.5 font-bold text-white shadow-xl shadow-cyan-500/25 hover:from-cyan-400 hover:to-indigo-600 disabled:opacity-50 transition-all"
               >
                 {loading ? "Đang xử lý..." : "Xem trước dữ liệu"}
               </button>
@@ -226,47 +228,50 @@ export function ProductExcelImport({ accessToken, username, userId, brands, cate
 
       {step === "preview" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Kiểm tra dữ liệu</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-white">Kiểm tra & Hiệu chỉnh dữ liệu</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Xác nhận các dòng hợp lệ trước khi nhập vào kho hàng.</p>
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setStep("upload")}
-                className="rounded-xl px-4 py-2 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-300 border border-white/10 hover:bg-zinc-800 transition-colors"
               >
                 Tải lại file khác
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={loading}
-                className="rounded-xl bg-blue-600 px-5 py-2 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-indigo-600 disabled:opacity-50 transition-all"
               >
                 {loading ? "Đang Import..." : "Xác nhận Import"}
               </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300">
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-zinc-900/90 text-zinc-400">
                 <tr>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Dòng</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">SKU</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Tên SP</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Thương hiệu</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Danh mục</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Size/Color</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Thông số</th>
-                  <th className="p-4 font-bold border-b border-slate-200 dark:border-slate-700">Trạng thái</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Dòng</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">SKU</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Tên SP</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Thương hiệu</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Danh mục</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Size/Color</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Thông số</th>
+                  <th className="p-4 font-bold border-b border-white/10 text-xs uppercase tracking-wider">Trạng thái</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-white/5">
                 {previewRows.map((row, i) => (
-                  <tr key={i} className={!row.valid ? "bg-red-50 dark:bg-red-900/10" : "bg-transparent"}>
-                    <td className="p-4 font-medium text-slate-900 dark:text-slate-100">{row.rowId}</td>
+                  <tr key={i} className={!row.valid ? "bg-rose-950/20" : "hover:bg-white/[0.02]"}>
+                    <td className="p-4 font-mono text-xs text-zinc-400">{row.rowId}</td>
                     <td className="p-4">
                       <input
                         type="text"
-                        className={`w-full rounded-lg border px-2 py-1 text-sm bg-transparent text-slate-900 dark:text-slate-100 ${(!row.sku || (!row.valid && row.errorMessages.some(e => e.includes('SKU')))) ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs bg-zinc-900 text-white outline-none focus:border-cyan-400 ${(!row.sku || (!row.valid && row.errorMessages.some(e => e.includes('SKU')))) ? 'border-rose-500/60 bg-rose-950/30' : 'border-white/10'}`}
                         value={row.sku || ""}
                         onChange={(e) => updateRow(i, { sku: e.target.value })}
                         title={row.sku}
@@ -275,7 +280,7 @@ export function ProductExcelImport({ accessToken, username, userId, brands, cate
                     <td className="p-4">
                       <input
                         type="text"
-                        className={`w-full rounded-lg border px-2 py-1 text-sm bg-transparent text-slate-900 dark:text-slate-100 ${(!row.productName || (!row.valid && row.errorMessages.some(e => e.includes('Tên sản phẩm')))) ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs bg-zinc-900 text-white outline-none focus:border-cyan-400 ${(!row.productName || (!row.valid && row.errorMessages.some(e => e.includes('Tên sản phẩm')))) ? 'border-rose-500/60 bg-rose-950/30' : 'border-white/10'}`}
                         value={row.productName || ""}
                         onChange={(e) => updateRow(i, { productName: e.target.value })}
                         title={row.productName}
@@ -284,56 +289,56 @@ export function ProductExcelImport({ accessToken, username, userId, brands, cate
                     <td className="p-4">
                       {/* Interactive Brand Select */}
                       <select 
-                        className={`w-full rounded-lg border px-2 py-1 text-sm bg-transparent text-slate-900 dark:text-slate-100 ${!row.brandId || (!row.valid && row.errorMessages.some(e => e.includes('Thương hiệu'))) ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs bg-zinc-900 text-white outline-none focus:border-cyan-400 ${!row.brandId || (!row.valid && row.errorMessages.some(e => e.includes('Thương hiệu'))) ? 'border-rose-500/60 bg-rose-950/30' : 'border-white/10'}`}
                         value={row.brandId || ""}
                         onChange={(e) => updateRow(i, { brandId: e.target.value ? Number(e.target.value) : undefined })}
                       >
-                        <option value="">-- Chọn Thương hiệu --</option>
+                        <option value="" className="bg-zinc-900 text-white">-- Chọn Thương hiệu --</option>
                         {brands.map(b => (
-                          <option key={b.id} value={b.id}>{b.name}</option>
+                          <option key={b.id} value={b.id} className="bg-zinc-900 text-white">{b.name}</option>
                         ))}
                       </select>
                     </td>
                     <td className="p-4">
                       {/* Interactive Category Select */}
                       <select 
-                        className={`w-full rounded-lg border px-2 py-1 text-sm bg-transparent text-slate-900 dark:text-slate-100 ${!row.categoryId || (!row.valid && row.errorMessages.some(e => e.includes('Danh mục'))) ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                        className={`w-full rounded-xl border px-3 py-1.5 text-xs bg-zinc-900 text-white outline-none focus:border-cyan-400 ${!row.categoryId || (!row.valid && row.errorMessages.some(e => e.includes('Danh mục'))) ? 'border-rose-500/60 bg-rose-950/30' : 'border-white/10'}`}
                         value={row.categoryId || ""}
                         onChange={(e) => updateRow(i, { categoryId: e.target.value ? Number(e.target.value) : undefined })}
                       >
-                        <option value="">-- Chọn Danh mục --</option>
+                        <option value="" className="bg-zinc-900 text-white">-- Chọn Danh mục --</option>
                         {categories.map(c => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
+                          <option key={c.id} value={c.id} className="bg-zinc-900 text-white">{c.name}</option>
                         ))}
                       </select>
                     </td>
-                    <td className="p-4 text-slate-700 dark:text-slate-300">
+                    <td className="p-4 text-zinc-300 text-xs">
                       {row.size} / {row.color}
                     </td>
                     <td className="p-4">
                       {row.specs && row.specs.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-xs font-semibold text-cyan-300">
                           {row.specs.length} TS
                         </span>
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-500">-</span>
+                        <span className="text-zinc-600">-</span>
                       )}
                     </td>
                     <td className="p-4">
                       {row.valid ? (
-                        <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 text-xs font-bold text-emerald-300">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Hợp lệ
                         </div>
                       ) : (
                         <div className="flex flex-col gap-1">
-                          <div className="inline-flex items-center gap-1.5 rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-400 w-fit">
+                          <div className="inline-flex items-center gap-1.5 rounded-full bg-rose-950/60 border border-rose-500/30 px-2.5 py-1 text-xs font-bold text-rose-300 w-fit">
                             <XCircle className="h-3.5 w-3.5" />
                             Lỗi
                           </div>
                           {row.errorMessages.map((err, idx) => (
-                            <span key={idx} className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" /> {err}
+                            <span key={idx} className="text-[11px] text-rose-400 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3 shrink-0" /> {err}
                             </span>
                           ))}
                         </div>
@@ -347,26 +352,26 @@ export function ProductExcelImport({ accessToken, username, userId, brands, cate
         </div>
       )}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 transform transition-all">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 mx-auto mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <div className="bg-zinc-950 rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/10 transform transition-all text-zinc-100">
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto mb-6">
               <AlertCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-black text-center text-slate-800 dark:text-white mb-3">Xác nhận bỏ qua lỗi</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
-              Có <span className="font-bold text-red-600 dark:text-red-400">{previewRows.filter(r => !r.valid).length}</span> dòng không hợp lệ trong danh sách tải lên. 
+            <h3 className="text-2xl font-black text-center text-white mb-3">Xác nhận bỏ qua lỗi</h3>
+            <p className="text-zinc-400 text-center mb-8 text-sm">
+              Có <span className="font-bold text-rose-400">{previewRows.filter(r => !r.valid).length}</span> dòng không hợp lệ trong danh sách tải lên. 
               Bạn có muốn bỏ qua chúng và tiếp tục import các dòng hợp lệ không?
             </p>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="flex-1 px-6 py-3 rounded-xl border border-white/10 font-bold text-zinc-300 hover:bg-zinc-900 transition-colors text-sm"
               >
                 Hủy
               </button>
               <button
                 onClick={executeImport}
-                className="flex-1 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors shadow-lg shadow-amber-500/30"
+                className="flex-1 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all shadow-lg shadow-amber-500/25 text-sm"
               >
                 Tiếp tục Import
               </button>

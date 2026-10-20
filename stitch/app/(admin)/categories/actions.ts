@@ -5,9 +5,11 @@ import { getUserIdFromAccessToken } from "@/lib/auth";
 import {
   createCategory,
   updateCategory,
+  getAdminCategory,
   deleteCategoryRequest,
   getCategoryDeletePreview,
   checkAdminCategoryName,
+  uploadAdminCategoryImage,
   getAdminUserBrief,
 } from "@/lib/api";
 import { revalidatePath } from "next/cache";
@@ -18,13 +20,32 @@ export async function checkCategoryNameAction(name: string, excludeId?: number):
   return checkAdminCategoryName(name, excludeId, { accessToken: session.token });
 }
 
-export async function createCategoryAction(data: { name: string; slug?: string | null }) {
+export async function uploadCategoryImageAction(formData: FormData): Promise<string> {
+  const session = await getAdminSession();
+  const uid = getUserIdFromAccessToken(session.token);
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file uploaded");
+  return uploadAdminCategoryImage(file, {
+    accessToken: session.token,
+    username: session.username,
+    userId: uid,
+  });
+}
+
+export async function createCategoryAction(data: {
+  name: string;
+  slug?: string | null;
+  imageUrl?: string | null;
+  hidden?: boolean;
+}) {
   const session = await getAdminSession();
   const uid = getUserIdFromAccessToken(session.token);
   const result = await createCategory(
     {
       name: data.name,
       slug: data.slug ?? undefined,
+      imageUrl: data.imageUrl ?? null,
+      hidden: data.hidden,
     },
     {
       accessToken: session.token,
@@ -45,7 +66,15 @@ export async function createCategoryAction(data: { name: string; slug?: string |
   return result;
 }
 
-export async function updateCategoryAction(id: number, data: { name: string; slug?: string | null }) {
+export async function updateCategoryAction(
+  id: number,
+  data: {
+    name: string;
+    slug?: string | null;
+    imageUrl?: string | null;
+    hidden?: boolean;
+  }
+) {
   const session = await getAdminSession();
   const uid = getUserIdFromAccessToken(session.token);
   const result = await updateCategory(
@@ -53,6 +82,8 @@ export async function updateCategoryAction(id: number, data: { name: string; slu
     {
       name: data.name,
       slug: data.slug ?? undefined,
+      imageUrl: data.imageUrl,
+      hidden: data.hidden,
     },
     {
       accessToken: session.token,
@@ -72,6 +103,36 @@ export async function updateCategoryAction(id: number, data: { name: string; slu
   revalidatePath("/admin/categories");
   revalidatePath(`/admin/categories/${id}`);
   return result;
+}
+
+export async function toggleCategoryHiddenAction(id: number, currentHidden: boolean) {
+  const session = await getAdminSession();
+  const uid = getUserIdFromAccessToken(session.token);
+  try {
+    const existing = await getAdminCategory(id, { accessToken: session.token });
+    if (!existing) {
+      return { success: false, error: "Không tìm thấy danh mục" };
+    }
+    const result = await updateCategory(
+      id,
+      {
+        name: existing.name,
+        slug: existing.slug ?? undefined,
+        imageUrl: existing.imageUrl,
+        hidden: !currentHidden,
+      },
+      {
+        accessToken: session.token,
+        username: session.username,
+        userId: uid,
+      }
+    );
+    revalidatePath("/admin/categories");
+    revalidatePath(`/admin/categories/${id}`);
+    return { success: true, hidden: !currentHidden };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Không thể đổi trạng thái danh mục" };
+  }
 }
 
 export async function getCategoryPreviewAction(id: number) {

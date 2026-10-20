@@ -1,0 +1,12 @@
+**/.git
+**/.vscode
+**/.cursor
+**/.settings
+**/node_modules
+**/stitch/.next
+**/logs
+**/*.log
+**/.DS_Store
+**/target/classes
+**/target/generated-sources
+**/target/maven-status

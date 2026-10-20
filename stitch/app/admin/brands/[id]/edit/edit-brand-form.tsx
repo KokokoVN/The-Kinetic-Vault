@@ -111,29 +111,29 @@ export default function EditBrandForm({ brand, gatewayOrigin }: { brand: AdminBr
       : null;
 
   return (
-    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 text-zinc-100">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Link
             href={`/admin/brands/${brand.id}`}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white/60 dark:bg-slate-800/60 shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-xl transition-transform hover:scale-105 hover:bg-white dark:hover:bg-slate-800"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900/80 border border-white/10 shadow-lg backdrop-blur-xl transition-all hover:scale-105 hover:bg-zinc-800 hover:border-cyan-500/40 text-zinc-300 hover:text-cyan-300"
           >
-            <span className="material-symbols-outlined text-slate-550 dark:text-slate-400">arrow_back</span>
+            <span className="material-symbols-outlined">arrow_back</span>
           </Link>
           <div>
-            <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-indigo-700 dark:from-purple-400 dark:to-indigo-400">
+            <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">
               Sửa thương hiệu
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Cập nhật cấu hình của thương hiệu <span className="font-bold text-slate-750 dark:text-slate-300">#{brand.id}</span>.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-400">
+              Cập nhật cấu hình của thương hiệu <span className="font-bold text-cyan-300">#{brand.id}</span>.
             </p>
           </div>
         </div>
 
         <Link
           href={`/admin/brands/${brand.id}/delete`}
-          className="group flex items-center gap-2 rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-500/10 px-5 py-3 text-xs sm:text-sm font-bold text-red-700 dark:text-red-400 transition-colors hover:bg-red-600 dark:hover:bg-red-500 hover:text-white dark:hover:text-white"
+          className="group flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-3 text-xs sm:text-sm font-bold text-rose-400 transition-all hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-600/20"
         >
           <span className="material-symbols-outlined text-[18px]">delete_forever</span>
           Xóa thương hiệu
@@ -141,8 +141,8 @@ export default function EditBrandForm({ brand, gatewayOrigin }: { brand: AdminBr
       </div>
 
       {/* Form Card */}
-      <section className="overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60 shadow-xl shadow-purple-900/5 dark:shadow-none backdrop-blur-xl">
-        <div className="h-2 w-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500" />
+      <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950/80 shadow-2xl backdrop-blur-2xl">
+        <div className="h-1.5 w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-rose-500" />
         <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-8">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             

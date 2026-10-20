@@ -120,6 +120,7 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             existing.setSlug(uniqueSlugExcludingId(patch.getSlug().trim(), id));
         }
+        existing.setImageUrl(patch.getImageUrl());
         String actor = (actorUsername != null && !actorUsername.trim().isEmpty())
                 ? actorUsername.trim()
                 : "system";
@@ -177,6 +178,7 @@ public class CategoryServiceImpl implements CategoryService {
         m.put("categoryId", c.getId());
         m.put("name", c.getName());
         m.put("slug", c.getSlug());
+        m.put("imageUrl", c.getImageUrl());
         m.put("hidden", Boolean.TRUE.equals(c.getHidden()));
         return m;
     }
@@ -270,13 +272,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     public List<Category> findAll(String deletedFilter) {
         String f = deletedFilter == null ? "active" : deletedFilter.trim().toLowerCase(Locale.ROOT);
+        List<Category> list;
         if ("deleted".equals(f)) {
-            return categoryRepository.findAllByDeletedAtIsNotNull();
+            list = categoryRepository.findAllByDeletedAtIsNotNull();
+        } else if ("all".equals(f)) {
+            list = categoryRepository.findAll();
+        } else {
+            list = categoryRepository.findAllByDeletedAtIsNull();
         }
-        if ("all".equals(f)) {
-            return categoryRepository.findAll();
+        for (Category c : list) {
+            c.setProductCount(productRepository.countLinkedToCategory(c.getId()));
         }
-        return categoryRepository.findAllByDeletedAtIsNull();
+        return list;
     }
 
     @Override
@@ -288,7 +295,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public Category findById(Long id) {
-        return categoryRepository.findByIdAndDeletedAtIsNull(id).orElse(null);
+        Category c = categoryRepository.findByIdAndDeletedAtIsNull(id).orElse(null);
+        if (c != null) {
+            c.setProductCount(productRepository.countLinkedToCategory(c.getId()));
+        }
+        return c;
     }
 
     @Override

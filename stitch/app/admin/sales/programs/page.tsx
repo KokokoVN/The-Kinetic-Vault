@@ -10,15 +10,33 @@ export const dynamic = "force-dynamic";
 export default async function AdminProgramsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string; success?: string; q?: string; page?: string }>;
+  searchParams?: Promise<{ error?: string; success?: string; q?: string; status?: string; page?: string }>;
 }) {
   const sp = searchParams ? await searchParams : undefined;
   const session = await getAdminSession();
   const userId = getUserIdFromAccessToken(session.token);
-  const canWrite = session.canMutateCatalog !== false; // Assuming true if undefined or something, or just use true
+  const canWrite = session.canMutateCatalog !== false;
 
-  let programs = await listAdminSalePrograms({ accessToken: session.token });
+  const allPrograms = await listAdminSalePrograms({ accessToken: session.token });
 
+  const now = new Date();
+  const activeCount = allPrograms.filter(p => p.active && new Date(p.startAt) <= now && new Date(p.endAt) >= now).length;
+  const upcomingCount = allPrograms.filter(p => p.active && new Date(p.startAt) > now).length;
+  const expiredCount = allPrograms.filter(p => new Date(p.endAt) < now || !p.active).length;
+
+  let programs = allPrograms;
+
+  // Filter by status tab
+  const statusFilter = sp?.status || "all";
+  if (statusFilter === "active") {
+    programs = programs.filter(p => p.active && new Date(p.startAt) <= now && new Date(p.endAt) >= now);
+  } else if (statusFilter === "upcoming") {
+    programs = programs.filter(p => p.active && new Date(p.startAt) > now);
+  } else if (statusFilter === "ended") {
+    programs = programs.filter(p => new Date(p.endAt) < now || !p.active);
+  }
+
+  // Filter by query
   const q = sp?.q?.trim().toLowerCase() || "";
   if (q) {
     programs = programs.filter(
@@ -53,200 +71,311 @@ export default async function AdminProgramsPage({
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <section className="flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white p-6 shadow-xl shadow-purple-900/40 shadow-2xl backdrop-blur-xl md:flex-row md:items-end">
-        <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/10 dark:border-slate-700/50 bg-white/5 backdrop-blur-xl text-slate-200/70 dark:bg-slate-800/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-            <span className="material-symbols-outlined text-sm">sell</span>
-            Catalog
-          </p>
-          <h1 className="mt-3 font-headline text-4xl font-black tracking-tight text-white">Chương trình Sale</h1>
-          <p className="mt-2 max-w-2xl text-slate-400">
-            Quản lý các đợt giảm giá, cấu hình mức giảm và thời gian áp dụng cho từng sản phẩm.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10/50 bg-white/5 backdrop-blur-xl text-slate-200/60 dark:bg-slate-800/50 px-5 py-3 backdrop-blur-sm shadow-sm">
-          <span className="material-symbols-outlined text-2xl text-purple-700 dark:text-purple-400">local_offer</span>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header Banner */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white/95 p-8 shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tổng</p>
-            <p className="font-headline text-2xl font-black text-white">{totalItems}</p>
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3.5 py-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              <span className="material-symbols-outlined text-[16px]">campaign</span>
+              Trung Tâm Khuyến Mãi
+            </div>
+            <h1 className="mt-3 font-headline text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+              Chiến Dịch Khuyến Mãi
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm font-medium text-slate-500 dark:text-slate-400">
+              Tạo và quản lý các đợt flash sale, ưu đãi giảm giá theo biến thể nhiều tầng hoặc áp dụng trên toàn bộ sản phẩm.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {canWrite && (
+              <Link
+                href="/admin/sales/programs/new"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:scale-[1.02] hover:shadow-indigo-500/35 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                Tạo chiến dịch mới
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Header Actions */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <form method="GET" action="/admin/sales/programs" className="flex items-center gap-2">
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">search</span>
+      {/* 4 KPI Metrics Cards */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            label: "Tổng chiến dịch",
+            value: allPrograms.length,
+            icon: "loyalty",
+            color: "text-indigo-600 dark:text-indigo-400",
+            bg: "bg-indigo-50 dark:bg-indigo-950/60",
+          },
+          {
+            label: "Đang diễn ra",
+            value: activeCount,
+            icon: "play_circle",
+            color: "text-emerald-600 dark:text-emerald-400",
+            bg: "bg-emerald-50 dark:bg-emerald-950/60",
+            pulse: true,
+          },
+          {
+            label: "Sắp diễn ra",
+            value: upcomingCount,
+            icon: "schedule",
+            color: "text-amber-600 dark:text-amber-400",
+            bg: "bg-amber-50 dark:bg-amber-950/60",
+          },
+          {
+            label: "Đã kết thúc / Tạm ngưng",
+            value: expiredCount,
+            icon: "history",
+            color: "text-slate-600 dark:text-slate-400",
+            bg: "bg-slate-100 dark:bg-slate-800",
+          },
+        ].map((kpi, idx) => (
+          <div
+            key={idx}
+            className="group relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm backdrop-blur-xl transition-all hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/95"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">{kpi.label}</span>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${kpi.bg} ${kpi.color}`}>
+                <span className="material-symbols-outlined text-[20px]">{kpi.icon}</span>
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="font-headline text-3xl font-black text-slate-900 dark:text-white">{kpi.value}</span>
+              {kpi.pulse && (
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* Filter Tabs & Search Bar */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Status Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { id: "all", label: `Tất cả (${allPrograms.length})` },
+            { id: "active", label: `Đang chạy (${activeCount})` },
+            { id: "upcoming", label: `Sắp diễn ra (${upcomingCount})` },
+            { id: "ended", label: `Đã kết thúc (${expiredCount})` },
+          ].map((tab) => {
+            const isCurrent = statusFilter === tab.id;
+            const queryParams = new URLSearchParams();
+            if (tab.id !== "all") queryParams.set("status", tab.id);
+            if (sp?.q) queryParams.set("q", sp.q);
+            const href = `/admin/sales/programs${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+
+            return (
+              <Link
+                key={tab.id}
+                href={href}
+                className={`rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
+                  isCurrent
+                    ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Search */}
+        <form method="GET" action="/admin/sales/programs" className="flex items-center gap-2 w-full lg:w-auto">
+          {statusFilter !== "all" && <input type="hidden" name="status" value={statusFilter} />}
+          <div className="relative w-full sm:w-80">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">search</span>
             <input
               type="text"
               name="q"
               defaultValue={sp?.q}
-              placeholder="Tìm kiếm chương trình..."
-              className="w-full sm:w-64 rounded-xl border border-white/10 dark:border-slate-700 bg-white/5 backdrop-blur-xl text-slate-200/60 dark:bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-slate-200 backdrop-blur-md outline-none transition-all focus:border-purple-500 focus:bg-white/5 backdrop-blur-xl text-slate-200 dark:focus:bg-slate-800 focus:ring-4 focus:ring-purple-500/10"
+              placeholder="Tìm kiếm theo tên chiến dịch..."
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-11 pr-4 text-sm font-semibold text-slate-900 dark:text-slate-100 shadow-xs outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
             />
           </div>
           <button
             type="submit"
-            className="rounded-xl bg-white/5 backdrop-blur-xl text-slate-200 dark:bg-slate-800 border border-white/10 dark:border-slate-700 px-5 py-2.5 text-sm font-bold text-slate-300 transition-colors hover:bg-white/10 border-white/10 text-white dark:hover:bg-slate-700 shadow-sm"
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             Tìm
           </button>
         </form>
-        {canWrite && (
-          <Link
-            href="/admin/sales/programs/new"
-            className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-purple-600/30 flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-sm">add</span>
-            Tạo mới
-          </Link>
-        )}
       </div>
 
-      {/* List */}
-      <section className="overflow-hidden rounded-3xl border border-white/10/60 dark:border-slate-800/60 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-xl shadow-blue-900/5 dark:shadow-none backdrop-blur-xl">
+      {/* Programs Table */}
+      <section className="overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left">
+          <table className="w-full min-w-[900px] border-collapse text-left">
             <thead>
-              <tr className="bg-white/10 border-white/10 text-white/80 dark:bg-slate-800/80">
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/50">
+                <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-wider text-slate-400 w-16">
                   STT
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">
                   Tên chương trình
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">
                   Mức giảm
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                  Thời gian
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">
+                  Thời gian áp dụng
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-6 py-4 text-center text-xs font-black uppercase tracking-wider text-slate-400">
                   Sản phẩm
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">
                   Trạng thái
                 </th>
-                <th className="border-b border-white/10/60 dark:border-slate-700/60 px-6 py-5 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-wider text-slate-400">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {currentPrograms.length === 0 && (
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {currentPrograms.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-400">
-                    Chưa có chương trình sale nào. Thêm chương trình đầu tiên bên trên.
+                  <td colSpan={7} className="px-6 py-16 text-center text-sm font-semibold text-slate-400">
+                    Chưa có chương trình sale nào phù hợp với điều kiện tìm kiếm.
                   </td>
                 </tr>
-              )}
-              {currentPrograms.map((p, idx) => {
-                const now = new Date();
-                const startAt = new Date(p.startAt);
-                const endAt = new Date(p.endAt);
-                const isExpired = endAt < now;
-                const isUpcoming = startAt > now;
-                const isActive = p.active && !isExpired && !isUpcoming;
+              ) : (
+                currentPrograms.map((p, idx) => {
+                  const startAt = new Date(p.startAt);
+                  const endAt = new Date(p.endAt);
+                  const isExpired = endAt < now;
+                  const isUpcoming = startAt > now;
+                  const isActive = p.active && !isExpired && !isUpcoming;
 
-                return (
-                  <tr key={p.id} className="group transition-colors hover:bg-white/10 border-white/10 text-white/50 dark:hover:bg-slate-800/50">
-                    <td className="px-6 py-4 text-right font-mono text-xs text-slate-400">{startIndex + idx + 1}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-headline text-sm font-bold text-white">{p.name}</p>
-                      <p className="mt-1 text-xs text-slate-400 line-clamp-1">{p.description || "—"}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-emerald-400">
-                        {p.discountType === "PERCENT" ? `${p.discountValue}%` : `${p.discountValue.toLocaleString("vi-VN")}đ`}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-300">
-                      <div>Từ: {startAt.toLocaleString("vi-VN")}</div>
-                      <div className="mt-1">Đến: {endAt.toLocaleString("vi-VN")}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-500/10 text-xs font-bold text-purple-400">
-                        {p.items.length}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {isActive ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                          Đang chạy
-                        </span>
-                      ) : isUpcoming && p.active ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                          Sắp diễn ra
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-                          {isExpired ? "Đã kết thúc" : "Tạm ngưng"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
+                  return (
+                    <tr 
+                      key={p.id} 
+                      className="group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                    >
+                      <td className="px-6 py-4 text-right font-mono text-xs text-slate-400">
+                        {startIndex + idx + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Link 
                           href={`/admin/sales/programs/${p.id}`}
-                          title="Xem chi tiết"
-                          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-purple-400 dark:hover:text-blue-400"
+                          className="font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400 line-clamp-1 transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[20px]">visibility</span>
+                          {p.name}
                         </Link>
-                        {canWrite && (
-                          <>
-                          <Link
-                            href={`/admin/sales/programs/${p.id}/edit`}
-                            title="Chỉnh sửa"
-                            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400"
-                          >
-                            <span className="material-symbols-outlined text-[20px]">edit</span>
-                          </Link>
-                          <form action={deleteAction}>
-                            <input type="hidden" name="id" value={p.id} />
-                            <ClientConfirmSubmitButton
-                              title="Xóa chương trình"
-                              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400"
-                              confirmMessage={`Xóa chương trình "${p.name}"? Hành động không thể hoàn tác.`}
-                            >
-                              <span className="material-symbols-outlined text-[20px]">delete</span>
-                            </ClientConfirmSubmitButton>
-                          </form>
-                          </>
+                        <p className="mt-0.5 text-xs text-slate-400 line-clamp-1">{p.description || "—"}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        {p.discountType === "PERCENT" ? (
+                          <span className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-3 py-1 text-xs font-black text-white shadow-xs">
+                            <span className="material-symbols-outlined text-[14px]">bolt</span>
+                            Giảm {p.discountValue}%
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1 text-xs font-black text-white shadow-xs">
+                            <span className="material-symbols-outlined text-[14px]">sell</span>
+                            Đồng giá {p.discountValue.toLocaleString("vi-VN")}đ
+                          </span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center gap-1">
+                          <span className="text-slate-400 font-normal">Từ:</span> {startAt.toLocaleString("vi-VN")}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1 text-slate-400 font-normal">
+                          <span>Đến:</span> <span className="font-semibold text-slate-600 dark:text-slate-300">{endAt.toLocaleString("vi-VN")}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex h-7 min-w-[28px] items-center justify-center rounded-lg bg-indigo-50 px-2 text-xs font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                          {p.items?.length || 0}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Đang chạy
+                          </span>
+                        ) : isUpcoming && p.active ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                            Sắp diễn ra
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                            {isExpired ? "Đã kết thúc" : "Tạm ngưng"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/admin/sales/programs/${p.id}`}
+                            title="Xem chi tiết"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950 dark:hover:text-indigo-300 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">visibility</span>
+                          </Link>
+                          {canWrite && (
+                            <>
+                              <Link
+                                href={`/admin/sales/programs/${p.id}/edit`}
+                                title="Chỉnh sửa"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950 dark:hover:text-emerald-400 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </Link>
+                              <form action={deleteAction}>
+                                <input type="hidden" name="id" value={p.id} />
+                                <ClientConfirmSubmitButton
+                                  title="Xóa chương trình"
+                                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 dark:hover:text-rose-400 transition-colors"
+                                  confirmMessage={`Xóa chương trình "${p.name}"? Hành động không thể hoàn tác.`}
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </ClientConfirmSubmitButton>
+                              </form>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
+
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 py-6 border-t border-slate-100 dark:border-slate-800 bg-white/10 border-white/10 text-white/30 dark:bg-slate-900/30">
+          <div className="flex items-center justify-center gap-3 border-t border-slate-100 bg-slate-50/50 py-4 dark:border-slate-800 dark:bg-slate-900/50">
             {currentPage > 1 && (
               <Link
-                href={`/admin/sales/programs?page=${currentPage - 1}${sp?.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`}
-                className="rounded-lg bg-white/5 backdrop-blur-xl text-slate-200 dark:bg-slate-800 border border-white/10 dark:border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 transition-colors hover:bg-white/10 border-white/10 text-white dark:hover:bg-slate-700 shadow-sm"
+                href={`/admin/sales/programs?page=${currentPage - 1}${statusFilter !== "all" ? `&status=${statusFilter}` : ""}${sp?.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               >
-                Trước
+                Trang trước
               </Link>
             )}
-            <span className="text-sm font-medium text-slate-400">
+            <span className="text-xs font-bold text-slate-500">
               Trang {currentPage} / {totalPages}
             </span>
             {currentPage < totalPages && (
               <Link
-                href={`/admin/sales/programs?page=${currentPage + 1}${sp?.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`}
-                className="rounded-lg bg-white/5 backdrop-blur-xl text-slate-200 dark:bg-slate-800 border border-white/10 dark:border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 transition-colors hover:bg-white/10 border-white/10 text-white dark:hover:bg-slate-700 shadow-sm"
+                href={`/admin/sales/programs?page=${currentPage + 1}${statusFilter !== "all" ? `&status=${statusFilter}` : ""}${sp?.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               >
-                Sau
+                Trang sau
               </Link>
             )}
           </div>

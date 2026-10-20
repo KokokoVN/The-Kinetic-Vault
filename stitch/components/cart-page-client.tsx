@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 type CartProduct = {
   id?: number | null;
@@ -34,6 +35,8 @@ type CartResponse = {
   total?: number | string | null;
   items?: CartItem[] | null;
 };
+
+const FREE_SHIPPING_THRESHOLD = 500000;
 
 function toCartResponseLike(raw: unknown): CartResponse {
   if (Array.isArray(raw)) {
@@ -71,7 +74,7 @@ function toCartResponseLike(raw: unknown): CartResponse {
 
 function asMoneyVnd(raw?: number | string | null): string {
   const n = Number(raw ?? 0);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "0₫";
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 }
 
@@ -88,7 +91,7 @@ function itemSubtitle(it: CartItem): string {
   if (v) return v;
   const sku = it.product?.sku?.trim();
   if (sku) return `SKU: ${sku}`;
-  return "—";
+  return "";
 }
 
 function safeQty(it: CartItem): number {
@@ -242,14 +245,14 @@ export function CartPageClient() {
     return mutate(key, () => fetch(`/api/cart?${qs}`, { method: "DELETE", cache: "no-store" }), "Đã xóa sản phẩm khỏi giỏ hàng.");
   }, [mutate]);
 
-  const summaryTotal = asMoneyVnd(cart?.total);
   const selectedItemsCount = useMemo(
     () => items.reduce((acc, it, idx) => acc + (selectedKeys[lineKey(it, idx)] && !isUnavailableItem(it) ? safeQty(it) : 0), 0),
     [items, selectedKeys],
   );
   
-  const { selectedTotal, savingsTotal } = useMemo(() => {
+  const { selectedTotal, originalSubTotal, savingsTotal } = useMemo(() => {
     let subT = 0;
+    let origT = 0;
     let savedT = 0;
     items.forEach((it, idx) => {
       if (!selectedKeys[lineKey(it, idx)] || isUnavailableItem(it)) return;
@@ -259,17 +262,18 @@ export function CartPageClient() {
       const origPrice = Number(it.originalPrice ?? it.product?.price ?? 0);
       const effPrice = it.product?.effectivePrice != null ? Number(it.product.effectivePrice) : origPrice;
       
-      subT += Number.isFinite(sub) ? sub : 0;
+      subT += Number.isFinite(sub) && sub > 0 ? sub : (effPrice * q);
+      origT += origPrice * q;
       
       if (origPrice > effPrice && Number.isFinite(origPrice) && Number.isFinite(effPrice)) {
         savedT += (origPrice - effPrice) * q;
       }
     });
-    return { selectedTotal: subT, savingsTotal: savedT };
+    return { selectedTotal: subT, originalSubTotal: origT, savingsTotal: savedT };
   }, [items, selectedKeys]);
 
   const allAvailableItems = items.filter((it) => !isUnavailableItem(it));
-  const allSelected = allAvailableItems.length > 0 && allAvailableItems.every((it, idx) => {
+  const allSelected = allAvailableItems.length > 0 && allAvailableItems.every((it) => {
     const realIdx = items.indexOf(it);
     return selectedKeys[lineKey(it, realIdx)];
   });
@@ -285,6 +289,9 @@ export function CartPageClient() {
   };
 
   const canProceedCheckout = !loading && items.length > 0 && busyKey == null && selectedItemsCount > 0;
+
+  const freeShippingProgress = Math.min(100, Math.round((selectedTotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - selectedTotal);
 
   const proceedToCheckout = useCallback(() => {
     const picked = items
@@ -306,7 +313,7 @@ export function CartPageClient() {
     window.sessionStorage.setItem("checkout:selectedItems", JSON.stringify(picked));
     window.sessionStorage.setItem("checkout:flow", "cart");
     router.push("/checkout");
-  }, [items, selectedKeys]);
+  }, [items, selectedKeys, router]);
 
   return (
     <>
@@ -317,92 +324,123 @@ export function CartPageClient() {
             className={[
               "pointer-events-auto flex items-start gap-3 rounded-2xl border px-5 py-4 shadow-2xl backdrop-blur-xl transition-all animate-in fade-in slide-in-from-top-5",
               toast.kind === "success"
-                ? "border-emerald-500/30 bg-emerald-50/90 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200"
-                : "border-red-500/30 bg-red-50/90 dark:bg-red-950/90 text-red-700 dark:text-red-200",
+                ? "border-emerald-500/30 bg-emerald-950/90 text-emerald-200"
+                : "border-red-500/30 bg-red-950/90 text-red-200",
             ].join(" ")}
             role="status"
             aria-live="polite"
           >
-            <span className={`material-symbols-outlined text-xl ${toast.kind === "success" ? "text-emerald-500" : "text-red-500"}`}>
+            <span className={`material-symbols-outlined text-xl ${toast.kind === "success" ? "text-emerald-400" : "text-red-400"}`}>
               {toast.kind === "success" ? "check_circle" : "error"}
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black uppercase tracking-widest opacity-60">{toast.kind === "success" ? "Thành công" : "Lỗi"}</p>
               <p className="mt-0.5 break-words text-sm font-semibold">{toast.message}</p>
             </div>
-            <button type="button" onClick={() => setToast(null)} className="rounded-xl p-1.5 text-current opacity-40 transition hover:bg-black/5 dark:hover:bg-white/10 hover:opacity-80">
-              <span className="material-symbols-outlined text-base">close</span>
+            <button type="button" onClick={() => setToast(null)} className="rounded-xl p-1.5 text-current opacity-40 transition hover:bg-white/10 hover:opacity-80">
+              <span className="material-symbols-outlined text-lg">close</span>
             </button>
           </div>
         </div>
       ) : null}
 
-      <div className="min-h-screen bg-gradient-to-br from-[#f8f9ff] via-[#fdfdff] to-[#f0f4ff] dark:from-[#050510] dark:via-[#0a0a1a] dark:to-[#050510] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans relative overflow-hidden">
-        {/* Abstract background elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl pointer-events-none" />
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl pointer-events-none" />
+      <div className="relative min-h-screen text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
+        {/* Abstract background ambient glows */}
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[500px] w-[1000px] rounded-full bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent dark:from-indigo-600/20 dark:via-purple-600/10 dark:to-transparent blur-[140px]" />
 
-        {/* Premium Page Header */}
-        <div className="relative border-b border-white/20 dark:border-white/5 bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 shadow-2xl shadow-indigo-900/20 px-6 py-20">
-          <div className="mx-auto max-w-screen-xl flex flex-col items-center text-center">
-            <h1 className="font-headline text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Giỏ Hàng
+        {/* Flagship Page Header */}
+        <div className="relative border-b border-slate-200/80 dark:border-white/[0.08] px-4 sm:px-6 lg:px-8 pt-8 pb-8 text-center">
+          <div className="mx-auto max-w-screen-xl flex flex-col items-center">
+            <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300 backdrop-blur-xl">
+              <span className="material-symbols-outlined text-sm">shopping_bag</span>
+              Túi Mua Sắm Cao Cấp
+            </span>
+            <h1 className="font-headline text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-sm">
+              Giỏ Hàng Của Bạn
             </h1>
-            <p className="mt-4 sm:mt-6 text-xs sm:text-sm font-bold text-indigo-200/60 dark:text-indigo-200/60 max-w-md uppercase tracking-[0.2em]">
-              {loading ? "Đang đồng bộ..." : items.length === 0 ? "Chưa có sản phẩm" : `${totalItems} sản phẩm đã chọn`}
+            <p className="mt-2 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              {loading ? "Đang đồng bộ dữ liệu..." : items.length === 0 ? "Chưa có sản phẩm nào" : `${totalItems} sản phẩm trong giỏ hàng`}
             </p>
           </div>
         </div>
 
-        <div className="mx-auto max-w-screen-xl px-4 py-16 lg:flex lg:gap-16 lg:items-start sm:px-6 relative z-10">
-          {/* Left — Cart Items */}
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 lg:flex lg:gap-10 lg:items-start relative z-10">
+          {/* Left — Cart Items Column */}
           <section className="flex-grow min-w-0">
             {error && (
-              <div className="mb-8 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-md px-5 py-4 sm:px-6 text-sm font-medium text-red-800 dark:text-red-300 shadow-xl shadow-red-500/5">
-                <span className="material-symbols-outlined text-red-500">error</span>
-                {error}
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 backdrop-blur-xl px-5 py-4 text-xs font-semibold text-rose-600 dark:text-rose-300 shadow-xl">
+                <span className="material-symbols-outlined text-rose-500 dark:text-rose-400">error</span>
+                <span>{error}</span>
               </div>
             )}
 
-            {/* Select All header */}
+            {/* Free Shipping Progress Meter */}
+            {!loading && items.length > 0 && selectedItemsCount > 0 && (
+              <div className="mb-6 rounded-[2rem] border border-indigo-500/25 bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 dark:from-indigo-950/50 dark:via-purple-950/30 dark:to-indigo-950/50 p-5 backdrop-blur-2xl shadow-sm dark:shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-bold gap-2 mb-2.5">
+                  {selectedTotal >= FREE_SHIPPING_THRESHOLD ? (
+                    <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black">
+                      <span className="material-symbols-outlined text-[18px]">verified</span>
+                      Chúc mừng! Đơn hàng của bạn đủ điều kiện MIỄN PHÍ VẬN CHUYỂN toàn quốc!
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                      <span className="material-symbols-outlined text-[18px] text-indigo-600 dark:text-indigo-400">local_shipping</span>
+                      Mua thêm <span className="text-indigo-600 dark:text-cyan-400 font-black">{asMoneyVnd(remainingForFreeShipping)}</span> để nhận <span className="text-emerald-600 dark:text-emerald-400 font-black uppercase">Freeship</span>!
+                    </span>
+                  )}
+                  <span className="text-indigo-600 dark:text-indigo-300 font-mono text-xs font-bold">{freeShippingProgress}%</span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/10 p-0.5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 transition-all duration-700 rounded-full shadow-sm" 
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Select All Bar */}
             {!loading && items.length > 0 && (
-              <div className="mb-6 flex items-center justify-between border-b border-indigo-500/10 pb-4">
-                <label className="group flex items-center gap-3 sm:gap-4 cursor-pointer select-none">
+              <div className="mb-6 flex items-center justify-between rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1017]/80 p-4 backdrop-blur-xl shadow-sm">
+                <label className="group flex items-center gap-3 cursor-pointer select-none">
                   <div className="relative flex items-center justify-center">
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleSelectAll}
-                      className="peer h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md border-2 border-slate-300 dark:border-slate-600 transition-all checked:border-indigo-500 dark:checked:border-indigo-400 checked:bg-indigo-500 dark:checked:bg-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-300 cursor-pointer shadow-sm"
+                      className="peer h-5 w-5 appearance-none rounded-lg border-2 border-slate-300 dark:border-white/20 transition-all checked:border-indigo-500 checked:bg-indigo-600 hover:border-indigo-400 cursor-pointer shadow-sm"
                     />
-                    <span className="material-symbols-outlined absolute text-white opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
+                    <span className="material-symbols-outlined absolute text-white font-black opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none text-sm">
                       check
                     </span>
                   </div>
-                  <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Chọn tất cả</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                    Chọn tất cả ({allAvailableItems.length} sản phẩm khả dụng)
+                  </span>
                 </label>
                 <button
                   type="button"
                   onClick={() => void clearCart()}
                   disabled={loading || items.length === 0 || busyKey != null}
-                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 transition hover:text-red-500 dark:hover:text-red-400 disabled:opacity-30 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors disabled:opacity-30 px-3 py-1.5 rounded-xl hover:bg-rose-500/10"
                 >
-                  <span className="material-symbols-outlined text-[16px]">delete</span>
-                  Xóa tất cả
+                  <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+                  <span>Xóa tất cả</span>
                 </button>
               </div>
             )}
 
             {/* Loading skeleton */}
             {loading && (
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-4">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex flex-row items-center gap-4 sm:gap-6 rounded-2xl sm:rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-4 sm:p-6 border border-white/50 dark:border-slate-800/50 shadow-xl shadow-indigo-900/5">
-                    <div className="h-20 w-20 sm:h-32 sm:w-32 bg-slate-200 dark:bg-slate-800 animate-pulse flex-shrink-0 rounded-xl sm:rounded-2xl" />
-                    <div className="flex-1 space-y-4 w-full">
-                      <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                      <div className="h-8 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                  <div key={i} className="flex items-center gap-4 rounded-3xl bg-[#0c1017]/70 backdrop-blur-xl p-6 border border-white/[0.06] animate-pulse">
+                    <div className="h-24 w-24 bg-white/5 rounded-2xl shrink-0" />
+                    <div className="flex-1 space-y-3">
+                      <div className="h-5 w-48 bg-white/5 rounded-full" />
+                      <div className="h-4 w-32 bg-white/5 rounded-full" />
+                      <div className="h-6 w-24 bg-white/5 rounded-full" />
                     </div>
                   </div>
                 ))}
@@ -411,25 +449,27 @@ export function CartPageClient() {
 
             {/* Empty state */}
             {!loading && items.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 sm:py-32 px-4 text-center rounded-2xl sm:rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-800/50 shadow-2xl shadow-indigo-900/5">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6">
-                  <span className="material-symbols-outlined text-4xl sm:text-5xl text-indigo-300 dark:text-indigo-500/50">shopping_cart</span>
+              <div className="flex flex-col items-center justify-center py-24 px-4 text-center rounded-[2.5rem] bg-white/90 dark:bg-[#0c1017]/60 backdrop-blur-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm dark:shadow-2xl">
+                <div className="h-24 w-24 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400 shadow-inner">
+                  <span className="material-symbols-outlined text-5xl">remove_shopping_cart</span>
                 </div>
-                <h2 className="font-headline text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Chưa có sản phẩm nào</h2>
-                <p className="mt-4 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm">Hàng ngàn sản phẩm công nghệ đang chờ bạn khám phá. Hãy lấp đầy giỏ hàng nhé!</p>
+                <h2 className="font-headline text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Giỏ hàng của bạn đang trống</h2>
+                <p className="mt-2 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md">
+                  Chưa có sản phẩm nào được chọn. Hãy khám phá hàng trăm sản phẩm công nghệ hot với giá ưu đãi ngay!
+                </p>
                 <Link
                   href="/products"
-                  className="mt-8 sm:mt-10 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-bold tracking-wider text-white transition-all hover:scale-105 active:scale-95 shadow-xl shadow-indigo-500/30 rounded-xl sm:rounded-2xl"
+                  className="mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 px-8 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-xl shadow-indigo-500/25 transition-all hover:scale-105"
                 >
-                  Khám phá ngay
+                  Khám phá mua sắm ngay
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </Link>
               </div>
             )}
 
-            {/* Cart Items list */}
+            {/* Cart Items List */}
             {!loading && items.length > 0 && (
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-4">
                 {items.map((it, idx) => {
                   const key = lineKey(it, idx);
                   const unavailable = isUnavailableItem(it);
@@ -444,21 +484,30 @@ export function CartPageClient() {
                   const originalPrice = Number(it.originalPrice ?? it.product?.price ?? 0);
                   const effectivePrice = it.product?.effectivePrice != null ? Number(it.product.effectivePrice) : originalPrice;
                   const isSale = originalPrice > effectivePrice && effectivePrice > 0;
+                  const discountPercent = isSale ? Math.round(((originalPrice - effectivePrice) / originalPrice) * 100) : 0;
+                  const lineSubtotal = Number(it.subTotal ?? (effectivePrice * q));
+
+                  // Multi-tier attributes breakdown
+                  const tiers = parseLabelToTiers(it.variantLabel);
 
                   return (
                     <div
                       key={`cart-row-${idx}-${rowKey(it)}`}
                       className={[
-                        "group relative flex flex-row gap-3 sm:gap-6 rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all duration-300 items-stretch",
-                        unavailable ? "bg-slate-50/50 dark:bg-slate-900/30 opacity-60 grayscale" : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 shadow-lg shadow-indigo-900/5 hover:shadow-xl hover:shadow-indigo-500/10",
+                        "group relative flex flex-col sm:flex-row gap-4 sm:gap-6 rounded-[2rem] p-4 sm:p-6 transition-all duration-300 border backdrop-blur-2xl",
+                        unavailable 
+                          ? "bg-slate-100/50 dark:bg-white/[0.01] border-slate-200 dark:border-white/5 opacity-50 grayscale" 
+                          : checked
+                            ? "bg-white dark:bg-[#0c1017]/90 border-indigo-500/50 dark:border-indigo-500/40 shadow-xl shadow-indigo-500/5 ring-1 ring-indigo-500/20"
+                            : "bg-white/80 dark:bg-[#0c1017]/70 border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-indigo-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-[#0c1017]/85 hover:shadow-md",
                       ].join(" ")}
                     >
-                      {/* Checkbox (Center on mobile, top on desktop) */}
-                      <div className="flex items-center sm:items-start pt-0 sm:pt-4">
-                        <div className="flex-shrink-0 sm:mt-12">
+                      {/* Left: Checkbox & Product Image */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0">
                           {unavailable ? (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                              <span className="material-symbols-outlined text-[14px] text-red-500">block</span>
+                            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+                              <span className="material-symbols-outlined text-sm">block</span>
                             </div>
                           ) : (
                             <div className="relative flex items-center justify-center">
@@ -466,19 +515,23 @@ export function CartPageClient() {
                                 type="checkbox"
                                 checked={checked}
                                 onChange={(e) => setSelectedKeys((prev) => ({ ...prev, [key]: e.target.checked }))}
-                                className="peer h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md border-2 border-slate-300 dark:border-slate-600 transition-all checked:border-indigo-500 dark:checked:border-indigo-400 checked:bg-indigo-500 dark:checked:bg-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-300 cursor-pointer shadow-sm"
+                                className="peer h-5 w-5 appearance-none rounded-lg border-2 border-slate-300 dark:border-white/20 transition-all checked:border-indigo-500 checked:bg-indigo-600 hover:border-indigo-400 cursor-pointer shadow-sm"
                                 aria-label={`Chọn ${itemTitle(it)}`}
                               />
-                              <span className="material-symbols-outlined absolute text-white opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none" style={{ fontSize: '14px' }}>
+                              <span className="material-symbols-outlined absolute text-white font-black opacity-0 transition-opacity peer-checked:opacity-100 pointer-events-none text-sm">
                                 check
                               </span>
                             </div>
                           )}
                         </div>
 
-                      {/* Image */}
-                      <div className="relative h-20 w-20 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
-                        {thumbUrl ? (
+                        {/* Image */}
+                        <Link 
+                          href={it.productId ? `/product/${it.productId}` : "#"}
+                          className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:border-indigo-500/30 transition-all"
+                        >
+                          {thumbUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={thumbUrl}
                               alt={itemTitle(it)}
@@ -487,86 +540,125 @@ export function CartPageClient() {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
-                              <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-700">image</span>
+                              <span className="material-symbols-outlined text-3xl text-slate-400 dark:text-slate-600">image</span>
                             </div>
                           )}
-                        </div>
+                        </Link>
                       </div>
 
-                      {/* Info & Price & Actions */}
-                      <div className="flex flex-1 flex-col justify-between min-w-0 py-0.5 sm:py-1">
-                        {/* Info & Delete */}
-                        <div className="flex items-start justify-between gap-2 sm:gap-4">
-                          <div className="min-w-0">
-                            {itemSubtitle(it) && (
-                              <span className="inline-block mb-1 sm:mb-2 rounded-md bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-800/50">
-                                {itemSubtitle(it)}
-                              </span>
-                            )}
-                            <Link href={it.productId ? `/product/${it.productId}` : "#"} className="block truncate font-headline text-sm sm:text-lg lg:text-xl font-bold text-slate-800 dark:text-slate-100 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">
+                      {/* Middle: Info, Multi-tier Badges, Stock Warning */}
+                      <div className="flex flex-1 flex-col justify-between min-w-0 py-0.5">
+                        <div className="space-y-1.5">
+                          {/* Title */}
+                          <div className="flex items-start justify-between gap-3">
+                            <Link 
+                              href={it.productId ? `/product/${it.productId}` : "#"} 
+                              className="font-headline text-sm sm:text-base font-bold text-slate-900 dark:text-white transition-colors hover:text-indigo-600 dark:hover:text-cyan-400 line-clamp-1"
+                            >
                               {itemTitle(it)}
                             </Link>
-                            
-                            {/* Stock warning */}
-                            {unavailable ? (
-                              <p className="mt-3 flex items-center gap-1 text-xs font-bold text-red-500 uppercase tracking-widest"><span className="material-symbols-outlined text-[14px]">error</span>Hết hàng</p>
-                            ) : it.variantId == null && stock != null ? (
-                              <p className={`mt-3 flex items-center gap-1 text-xs font-bold uppercase tracking-widest ${stock <= 5 ? "text-amber-500" : "text-emerald-500"}`}>
-                                <span className="material-symbols-outlined text-[14px]">{stock <= 5 ? "warning" : "check_circle"}</span>
-                                {stock <= 5 ? `Chỉ còn ${stock}` : `Còn hàng`}
-                              </p>
-                            ) : null}
+
+                            <button
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => void removeItem(it, key)}
+                              className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all disabled:opacity-40"
+                              title="Xóa sản phẩm"
+                            >
+                              <span className="material-symbols-outlined text-lg">delete</span>
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => void removeItem(it, key)}
-                            className="flex-shrink-0 flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all disabled:opacity-40"
-                            aria-label="Xóa sản phẩm"
-                          >
-                            <span className="material-symbols-outlined text-[16px] sm:text-[18px]">delete</span>
-                          </button>
+
+                          {/* Multi-tier variant chips */}
+                          {tiers.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                              {tiers.map((t, tidx) => (
+                                <span
+                                  key={tidx}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/80 dark:border-indigo-500/25 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:text-indigo-300"
+                                >
+                                  <span className="text-slate-500 dark:text-slate-400 font-medium">{t.name}:</span>
+                                  <span>{t.value}</span>
+                                </span>
+                              ))}
+                            </div>
+                          ) : itemSubtitle(it) ? (
+                            <span className="inline-block rounded-lg bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/80 dark:border-indigo-500/25 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                              {itemSubtitle(it)}
+                            </span>
+                          ) : null}
+
+                          {/* Stock status indicator */}
+                          {unavailable ? (
+                            <p className="flex items-center gap-1 text-[11px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">
+                              <span className="material-symbols-outlined text-xs">error</span>
+                              Sản phẩm hiện không khả dụng
+                            </p>
+                          ) : it.variantId == null && stock != null ? (
+                            <p className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${stock <= 5 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                              <span className="material-symbols-outlined text-xs">{stock <= 5 ? "warning" : "check_circle"}</span>
+                              {stock <= 5 ? `Chỉ còn ${stock} sản phẩm trong kho` : `Sẵn sàng giao`}
+                            </p>
+                          ) : null}
                         </div>
 
-                        {/* Price & Quantity */}
-                        <div className="mt-auto pt-2 sm:pt-4 flex items-end justify-between gap-2">
-                          <div className="flex-shrink-0">
+                        {/* Bottom Row: Prices & Quantity Stepper */}
+                        <div className="mt-4 pt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 dark:border-white/[0.06]">
+                          {/* Price Display */}
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-headline text-lg sm:text-xl font-black text-indigo-600 dark:text-cyan-400">
+                                {asMoneyVnd(effectivePrice)}
+                              </span>
+                              {isSale && (
+                                <span className="rounded-md bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 text-[10px] font-black text-rose-600 dark:text-rose-400">
+                                  -{discountPercent}%
+                                </span>
+                              )}
+                            </div>
                             {isSale && (
-                              <p className="text-[10px] sm:text-[12px] font-bold text-slate-400 line-through mb-0.5">
+                              <p className="text-xs font-semibold text-slate-400 line-through">
                                 {asMoneyVnd(originalPrice)}
                               </p>
                             )}
-                            <p className="font-headline text-sm sm:text-lg lg:text-xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                              {asMoneyVnd(effectivePrice)}
-                            </p>
                           </div>
-                          
-                          <div className="flex items-center gap-1 sm:gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-1">
-                            <button
-                              type="button"
-                              disabled={disabled || unavailable || q <= 1}
-                              onClick={() => void updateQty(it, q - 1, key)}
-                              className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-md bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-50 shadow-sm border border-slate-200/50 dark:border-slate-600"
-                            >
-                              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">remove</span>
-                            </button>
-                            <span className="w-6 sm:w-8 text-center text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 select-none">{q}</span>
-                            <button
-                              type="button"
-                              disabled={disabled || unavailable || atStockLimit}
-                              onClick={() => void updateQty(it, q + 1, key)}
-                              className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-md bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-50 shadow-sm border border-slate-200/50 dark:border-slate-600"
-                            >
-                              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">add</span>
-                            </button>
+
+                          {/* Stepper and Subtotal */}
+                          <div className="flex items-center gap-4">
+                            <div className="text-right hidden sm:block">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tạm tính</p>
+                              <p className="text-sm font-black text-slate-900 dark:text-white">{asMoneyVnd(lineSubtotal)}</p>
+                            </div>
+
+                            <div className="flex items-center gap-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-1 backdrop-blur-sm">
+                              <button
+                                type="button"
+                                disabled={disabled || unavailable || q <= 1}
+                                onClick={() => void updateQty(it, q - 1, key)}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 shadow-sm"
+                                title="Giảm số lượng"
+                              >
+                                <span className="material-symbols-outlined text-sm font-bold">remove</span>
+                              </button>
+                              <span className="w-9 text-center text-xs font-black text-slate-900 dark:text-white select-none">{q}</span>
+                              <button
+                                type="button"
+                                disabled={disabled || unavailable || atStockLimit}
+                                onClick={() => void updateQty(it, q + 1, key)}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 shadow-sm"
+                                title="Tăng số lượng"
+                              >
+                                <span className="material-symbols-outlined text-sm font-bold">add</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Busy spinner overlay */}
                       {disabled && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-[2px]">
-                          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent shadow-lg" />
+                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[2rem] bg-slate-950/60 backdrop-blur-sm">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 dark:border-cyan-400 border-t-transparent shadow-lg" />
                         </div>
                       )}
                     </div>
@@ -577,67 +669,83 @@ export function CartPageClient() {
 
             {/* Continue shopping link */}
             {!loading && items.length > 0 && (
-              <div className="mt-8 sm:mt-12 flex justify-center sm:justify-start">
-                <Link href="/products" className="group flex items-center gap-3 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 px-5 sm:px-6 py-3 text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-800">
-                  <span className="material-symbols-outlined text-[16px] sm:text-[18px] transition-transform group-hover:-translate-x-1">arrow_back</span>
-                  Tiếp tục mua sắm
+              <div className="mt-8 flex justify-center sm:justify-start">
+                <Link 
+                  href="/products" 
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all backdrop-blur-xl shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-base transition-transform group-hover:-translate-x-1">arrow_back</span>
+                  Tiếp tục khám phá sản phẩm khác
                 </Link>
               </div>
             )}
           </section>
 
-          {/* Right — Order Summary */}
+          {/* Right — Sticky Order Summary Sidebar */}
           <aside className="mt-8 lg:mt-0 w-full flex-shrink-0 lg:w-[380px] xl:w-[420px]">
-            <div className="sticky top-24 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/60 dark:border-slate-800/60 p-6 sm:p-8 shadow-2xl shadow-indigo-900/10">
-              {/* Decorative element */}
-              <div className="absolute -top-4 -right-4 h-24 w-24 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl rounded-full pointer-events-none" />
+            <div className="sticky top-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-[#0c1017]/85 p-6 sm:p-8 backdrop-blur-2xl shadow-xl dark:shadow-2xl relative overflow-hidden">
+              {/* Decorative ambient aura */}
+              <div className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 bg-gradient-to-br from-indigo-500/20 to-purple-500/10 blur-3xl rounded-full" />
               
-              <h2 className="flex items-center gap-3 font-headline text-lg sm:text-xl font-black text-slate-800 dark:text-white uppercase tracking-wider mb-6 sm:mb-8 relative z-10">
-                <span className="material-symbols-outlined text-indigo-500">receipt_long</span>
-                Tóm tắt đơn hàng
+              <h2 className="flex items-center gap-2.5 font-headline text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-wider mb-6 relative z-10">
+                <span className="material-symbols-outlined text-indigo-600 dark:text-cyan-400">receipt_long</span>
+                Tóm Tắt Đơn Hàng
               </h2>
 
-              <div className="space-y-5 text-sm font-medium relative z-10">
-                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+              <div className="space-y-4 text-xs font-medium relative z-10">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/[0.06]">
                   <span className="text-slate-500 dark:text-slate-400">Tổng sản phẩm</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{totalItems.toLocaleString("vi-VN")}</span>
+                  <span className="text-slate-900 dark:text-white font-bold bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-xl">
+                    {totalItems.toLocaleString("vi-VN")}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
-                  <span className="text-slate-500 dark:text-slate-400">Đã chọn</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full">{selectedItemsCount.toLocaleString("vi-VN")}</span>
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/[0.06]">
+                  <span className="text-slate-500 dark:text-slate-400">Đã chọn thanh toán</span>
+                  <span className="text-indigo-600 dark:text-cyan-400 font-bold bg-indigo-50 dark:bg-cyan-500/10 px-3 py-1 rounded-xl border border-indigo-200 dark:border-cyan-500/20">
+                    {selectedItemsCount.toLocaleString("vi-VN")} sản phẩm
+                  </span>
                 </div>
-                <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/[0.06]">
                   <span className="text-slate-500 dark:text-slate-400">Phí vận chuyển</span>
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                    <span className="material-symbols-outlined text-[16px]">local_shipping</span>
-                    Miễn phí
+                    <span className="material-symbols-outlined text-sm">local_shipping</span>
+                    {selectedTotal >= FREE_SHIPPING_THRESHOLD || selectedItemsCount === 0 ? "Miễn phí toàn quốc" : "30.000₫ (Tiêu chuẩn)"}
                   </span>
                 </div>
                 {savingsTotal > 0 && (
-                  <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/[0.06]">
                     <span className="text-slate-500 dark:text-slate-400">Tiết kiệm được</span>
-                    <span className="text-rose-500 font-black px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20">-{asMoneyVnd(savingsTotal)}</span>
+                    <span className="text-rose-600 dark:text-rose-400 font-black px-2.5 py-1 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20">
+                      -{asMoneyVnd(savingsTotal)}
+                    </span>
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t-2 border-indigo-500/20 relative z-10">
-                <div className="flex items-end justify-between mb-6 sm:mb-8">
-                  <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Tạm tính</p>
-                  <p className="font-headline text-2xl sm:text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{asMoneyVnd(selectedTotal)}</p>
+              {/* Total & Checkout button */}
+              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/[0.08] relative z-10">
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      Tổng tiền thanh toán ({selectedItemsCount} SP)
+                    </p>
+                    <p className="mt-1 font-headline text-2xl sm:text-3xl font-black bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 dark:from-white dark:via-slate-100 dark:to-cyan-300 bg-clip-text text-transparent">
+                      {asMoneyVnd(selectedTotal)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <button
                     type="button"
                     disabled={!canProceedCheckout}
                     onClick={proceedToCheckout}
-                    className="group relative w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 sm:py-5 text-xs sm:text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-[1.02] active:scale-95 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
+                    className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 px-6 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:pointer-events-none disabled:opacity-40"
                   >
                     <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform group-hover:translate-y-0" />
                     <span className="relative flex items-center justify-center gap-2">
-                      Thanh toán ngay
-                      <span className="material-symbols-outlined text-[16px] sm:text-[18px]">arrow_forward</span>
+                      Tiến hành đặt hàng ngay
+                      <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
                     </span>
                   </button>
                   
@@ -646,11 +754,27 @@ export function CartPageClient() {
                       type="button"
                       onClick={() => void clearCart()}
                       disabled={loading || busyKey != null}
-                      className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 disabled:opacity-40"
+                      className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-3 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30 disabled:opacity-40"
                     >
-                      Xóa toàn bộ giỏ hàng
+                      Xóa tất cả sản phẩm
                     </button>
                   )}
+                </div>
+
+                {/* Trust Badges */}
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/[0.06] grid grid-cols-3 gap-2 text-center">
+                  <div className="space-y-1">
+                    <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-lg">verified_user</span>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">Chính hãng 100%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-lg">local_shipping</span>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">Giao 2-3 ngày</p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="material-symbols-outlined text-cyan-600 dark:text-cyan-400 text-lg">published_with_changes</span>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">Đổi trả 7 ngày</p>
+                  </div>
                 </div>
               </div>
             </div>

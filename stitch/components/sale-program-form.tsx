@@ -6,10 +6,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import { createAdminSaleProgram, updateAdminSaleProgram, type SaleProgram, type SaleProgramItem } from "@/lib/sale-api";
+import { parseVariantTiers } from "@/lib/variant-tier-utils";
 import { toast } from "sonner";
 import { ProductPickerModal } from "./product-picker-modal";
 import { VariantPickerModal } from "./variant-picker-modal";
 import { SelectiveExportModal } from "./selective-export-modal";
+
+function moneyVnd(value: number): string {
+  if (!Number.isFinite(value) || value < 0) return "0₫";
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+}
 
 export function SaleProgramForm({
   initialData,
@@ -24,10 +30,8 @@ export function SaleProgramForm({
   userId: string;
   products?: { id: number; name: string; sku?: string; availability?: number }[];
 }) {
-
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!initialData;
@@ -190,6 +194,11 @@ export function SaleProgramForm({
       return;
     }
 
+    if (new Date(formData.endAt) <= new Date(formData.startAt)) {
+      toast.error("Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.");
+      return;
+    }
+
     if (items.length === 0) {
       toast.error("Vui lòng thêm ít nhất một sản phẩm.");
       return;
@@ -302,7 +311,6 @@ export function SaleProgramForm({
           setItems(prev => [...prev, ...newItems]);
           toast.success(`Đã thêm thành công ${validCount} dòng từ file Excel!`);
           
-          // Load variants for the newly imported products so the UI can display variant names
           newItems.forEach(item => {
             if (item.productId) loadVariants(item.productId);
           });
@@ -314,187 +322,255 @@ export function SaleProgramForm({
       }
     };
     reader.readAsBinaryString(file);
-    // Reset input
     e.target.value = '';
   };
 
+  // Live calculation preview
+  const sampleOriginalPrice = 500000;
+  const numDiscountValue = Number(formData.discountValue) || 0;
+  const sampleSalePrice = formData.discountType === "PERCENT"
+    ? Math.max(0, Math.round(sampleOriginalPrice * (1 - numDiscountValue / 100)))
+    : Math.max(0, numDiscountValue);
+  const sampleSaved = Math.max(0, sampleOriginalPrice - sampleSalePrice);
+
   return (
-    <section className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 text-white shadow-xl shadow-purple-900/40 shadow-2xl backdrop-blur-xl relative">
-      <div className="h-2 w-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500" />
-      <form onSubmit={handleSubmit} className="p-8 space-y-12">
-      <div className="relative flex items-center gap-6 pb-6 border-b border-white/10">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-          <span className="material-symbols-outlined text-3xl">loyalty</span>
-        </div>
-        <div>
-          <h2 className="font-headline text-2xl font-black tracking-tight text-white">{isEdit ? "Cập nhật Chương trình Sale" : "Tạo Chương trình Sale"}</h2>
-          <p className="mt-1 text-sm font-medium text-slate-400">Thiết lập chiến dịch giảm giá siêu tốc với giao diện quản lý cao cấp.</p>
-        </div>
-      </div>
-
-      <div className="relative grid gap-8 lg:grid-cols-2">
-        {/* Section 1: Thông tin cơ bản */}
-        <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-sm backdrop-blur-xl">
-          <div className="mb-6 flex items-center gap-3 border-b border-white/10/50 pb-4">
-            <span className="material-symbols-outlined text-purple-400">info</span>
-            <h3 className="font-headline text-lg font-bold text-white">Thông tin cơ bản</h3>
-          </div>
-
-          <div className="group">
-            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Tên Chương Trình Sale</label>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500">campaign</span>
-              <input
-                required
-                type="text"
-                className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 py-4 pl-14 pr-5 text-sm font-semibold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(59,130,246,0.15)] focus:ring-blue-400/20"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Flash Sale Giữa Tháng..."
-              />
-            </div>
-          </div>
-
-          <div className="group">
-            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-purple-400">Mô tả chi tiết (Tùy chọn)</label>
-            <textarea
-              className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-5 py-4 text-sm font-semibold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(59,130,246,0.15)] focus:ring-blue-400/20"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Nhập mô tả chương trình để dễ dàng quản lý..."
-              rows={4}
-            />
-          </div>
-          
-          <div className="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-6 py-5 shadow-sm transition-all hover:bg-white/5 backdrop-blur-xl text-slate-200/80">
-            <div className="relative flex items-center justify-center">
-              <input
-                type="checkbox"
-                id="active"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                className="peer h-7 w-7 cursor-pointer appearance-none rounded-lg border-2 border-slate-300 transition-all checked:border-blue-500 checked:bg-blue-500 hover:border-blue-400 focus:outline-none focus:ring-4 focus:ring-purple-500/20"
-              />
-              <span className="material-symbols-outlined pointer-events-none absolute text-[18px] font-bold text-white opacity-0 transition-opacity peer-checked:opacity-100">check</span>
+    <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95">
+      {/* Top accent gradient bar */}
+      <div className="h-2 w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600" />
+      
+      <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-10">
+        {/* Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/30">
+              <span className="material-symbols-outlined text-3xl">loyalty</span>
             </div>
             <div>
-              <label htmlFor="active" className="cursor-pointer text-sm font-bold text-white">Kích hoạt chiến dịch ngay</label>
-              <p className="text-xs text-slate-400">Cho phép chiến dịch chạy tự động khi đến thời gian áp dụng.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 rounded-2xl border border-blue-400/30 bg-blue-500/10 backdrop-blur-xl px-6 py-5 shadow-sm transition-all hover:bg-blue-500/20">
-            <div className="relative flex items-center justify-center">
-              <input
-                type="checkbox"
-                id="sendEmailNotification"
-                checked={formData.sendEmailNotification}
-                onChange={(e) => setFormData({ ...formData, sendEmailNotification: e.target.checked })}
-                className="peer h-7 w-7 cursor-pointer appearance-none rounded-lg border-2 border-slate-300 transition-all checked:border-blue-500 checked:bg-blue-500 hover:border-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
-              />
-              <span className="material-symbols-outlined pointer-events-none absolute text-[18px] font-bold text-white opacity-0 transition-opacity peer-checked:opacity-100">check</span>
-            </div>
-            <div>
-              <label htmlFor="sendEmailNotification" className="cursor-pointer text-sm font-bold text-blue-200">Gửi Email thông báo</label>
-              <p className="text-xs text-blue-300/80">Tự động gửi email quảng cáo chương trình này cho tất cả khách hàng (chạy ngầm).</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Cấu hình giảm giá & Thời gian */}
-        <div className="space-y-6 rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-sm backdrop-blur-xl">
-          <div className="mb-6 flex items-center gap-3 border-b border-white/10/50 pb-4">
-            <span className="material-symbols-outlined text-indigo-600">settings_suggest</span>
-            <h3 className="font-headline text-lg font-bold text-white">Cấu hình ưu đãi</h3>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="group">
-              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-indigo-600">Loại giảm giá</label>
-              <div className="relative">
-                <select
-                  className="w-full appearance-none rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-5 py-4 text-sm font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-indigo-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(99,102,241,0.15)] focus:ring-indigo-400/20"
-                  value={formData.discountType}
-                  onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
-                >
-                  <option value="PERCENT">Giảm phần trăm (%)</option>
-                  <option value="AMOUNT">Tiền cố định (VNĐ)</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
-              </div>
-            </div>
-
-            <div className="group">
-              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-indigo-600">Mức giảm</label>
-              <div className="relative">
-                <input
-                  required
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-5 py-4 text-sm font-bold text-white outline-none ring-4 ring-transparent transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(99,102,241,0.15)] focus:ring-indigo-400/20"
-                  value={formData.discountValue}
-                  onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                  placeholder={formData.discountType === "PERCENT" ? "VD: 20" : "VD: 50000"}
-                />
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                  {formData.discountType === "PERCENT" ? "%" : "₫"}
+              <div className="flex items-center gap-2.5">
+                <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                  {isEdit ? "Cập Nhật Chương Trình Sale" : "Tạo Mới Chương Trình Sale"}
+                </h2>
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  {isEdit ? `#${initialData?.id}` : "Studio White"}
                 </span>
               </div>
+              <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+                Thiết lập chiến dịch khuyến mãi chi tiết theo biến thể nhiều tầng hoặc toàn bộ sản phẩm.
+              </p>
             </div>
           </div>
 
-          <div className="mt-8 border-t border-white/10/50 pt-6">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="material-symbols-outlined text-cyan-600">schedule</span>
-              <h3 className="font-headline text-lg font-bold text-white">Thời gian áp dụng</h3>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/sales/programs"
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+            >
+              Hủy bỏ
+            </Link>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 px-7 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] hover:shadow-indigo-500/35 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {loading ? (
+                <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+              ) : (
+                <span className="material-symbols-outlined text-[18px]">save</span>
+              )}
+              {loading ? "Đang lưu..." : (isEdit ? "Lưu thay đổi" : "Lưu chương trình")}
+            </button>
+          </div>
+        </div>
+
+        {/* Form Sections Grid */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Section 1: Thông tin cơ bản */}
+          <div className="space-y-6 rounded-3xl border border-slate-200/80 bg-slate-50/60 p-6 md:p-8 dark:border-slate-800 dark:bg-slate-800/30">
+            <div className="flex items-center gap-3 border-b border-slate-200/60 pb-4 dark:border-slate-700/60">
+              <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400">info</span>
+              <h3 className="font-headline text-lg font-bold text-slate-900 dark:text-white">Thông tin cơ bản</h3>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="group">
-                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-cyan-600">Bắt đầu từ</label>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Tên Chương Trình Sale <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">campaign</span>
                 <input
                   required
-                  type="datetime-local"
-                  className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-5 py-4 text-sm font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-cyan-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(6,182,212,0.15)] focus:ring-cyan-400/20"
-                  value={formData.startAt}
-                  onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
+                  type="text"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3.5 pl-12 pr-4 text-sm font-semibold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Flash Sale Giữa Tháng, Đại Tiệc Giảm Giá..."
                 />
               </div>
+            </div>
 
-              <div className="group">
-                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400 transition-colors group-focus-within:text-cyan-600">Kết thúc lúc</label>
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Mô tả chi tiết (Tùy chọn)
+              </label>
+              <textarea
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Nhập ghi chú hoặc mô tả chiến dịch khuyến mãi..."
+                rows={3}
+              />
+            </div>
+            
+            {/* Toggles */}
+            <div className="space-y-3 pt-2">
+              <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-700">
                 <input
-                  required
-                  type="datetime-local"
-                  className="w-full rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/50 px-5 py-4 text-sm font-bold text-white outline-none ring-4 ring-transparent transition-all focus:border-cyan-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_30px_rgba(6,182,212,0.15)] focus:ring-cyan-400/20"
-                  value={formData.endAt}
-                  onChange={(e) => setFormData({ ...formData, endAt: e.target.value })}
+                  type="checkbox"
+                  id="active"
+                  checked={formData.active}
+                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                  className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
+                <div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">Kích hoạt chiến dịch ngay</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Cho phép chương trình chạy tự động khi nằm trong khung giờ áp dụng.</p>
+                </div>
+              </label>
+              
+              <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 shadow-sm transition-all hover:border-indigo-300 dark:border-indigo-900/50 dark:bg-indigo-950/30">
+                <input
+                  type="checkbox"
+                  id="sendEmailNotification"
+                  checked={formData.sendEmailNotification}
+                  onChange={(e) => setFormData({ ...formData, sendEmailNotification: e.target.checked })}
+                  className="h-5 w-5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div>
+                  <span className="text-sm font-bold text-indigo-950 dark:text-indigo-200">Gửi Email thông báo khách hàng</span>
+                  <p className="text-xs text-indigo-700/80 dark:text-indigo-400">Tự động kích hoạt email quảng bá chiến dịch giảm giá đến khách hàng.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Section 2: Cấu hình ưu đãi & Thời gian */}
+          <div className="space-y-6 rounded-3xl border border-slate-200/80 bg-slate-50/60 p-6 md:p-8 dark:border-slate-800 dark:bg-slate-800/30">
+            <div className="flex items-center gap-3 border-b border-slate-200/60 pb-4 dark:border-slate-700/60">
+              <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400">tune</span>
+              <h3 className="font-headline text-lg font-bold text-slate-900 dark:text-white">Cấu hình ưu đãi & Thời gian</h3>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Loại giảm giá</label>
+                <div className="relative">
+                  <select
+                    className="w-full appearance-none rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    value={formData.discountType}
+                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
+                  >
+                    <option value="PERCENT">Giảm phần trăm (%)</option>
+                    <option value="AMOUNT">Đồng giá (VNĐ)</option>
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">expand_more</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Mức giảm</label>
+                <div className="relative">
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    value={formData.discountValue}
+                    onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
+                    placeholder={formData.discountType === "PERCENT" ? "VD: 20" : "VD: 99000"}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">
+                    {formData.discountType === "PERCENT" ? "%" : "₫"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Interactive Preview Box */}
+            <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/50 p-4 dark:border-indigo-900/60 dark:bg-slate-850">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                  Xem trước huy hiệu & mức giá mô phỏng
+                </span>
+                {formData.discountType === "PERCENT" ? (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 px-2.5 py-0.5 text-xs font-black text-white shadow-xs">
+                    <span className="material-symbols-outlined text-[13px]">bolt</span>
+                    FLASH SALE -{numDiscountValue}%
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-0.5 text-xs font-black text-white shadow-xs">
+                    <span className="material-symbols-outlined text-[13px]">sell</span>
+                    ĐỒNG GIÁ {moneyVnd(numDiscountValue)}
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                Giá gốc: <span className="line-through text-slate-400">{moneyVnd(sampleOriginalPrice)}</span> ➔ Giá bán: <span className="font-black text-emerald-600 dark:text-emerald-400">{moneyVnd(sampleSalePrice)}</span>
+                {sampleSaved > 0 && (
+                  <span className="ml-2 font-bold text-rose-500">(Tiết kiệm {moneyVnd(sampleSaved)})</span>
+                )}
+              </p>
+            </div>
+
+            <div className="border-t border-slate-200/60 pt-4 dark:border-slate-700/60 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Bắt đầu từ</label>
+                  <input
+                    required
+                    type="datetime-local"
+                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    value={formData.startAt}
+                    onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Kết thúc lúc</label>
+                  <input
+                    required
+                    type="datetime-local"
+                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    value={formData.endAt}
+                    onChange={(e) => setFormData({ ...formData, endAt: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="relative rounded-[2rem] border border-white/60 bg-white/5 backdrop-blur-xl text-slate-200/40 p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] backdrop-blur-xl">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10/50 pb-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30">
-              <span className="material-symbols-outlined">inventory_2</span>
+        {/* Section 3: Sản phẩm áp dụng */}
+        <div className="space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 md:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+                <span className="material-symbols-outlined text-2xl">category</span>
+              </div>
+              <div>
+                <h3 className="font-headline text-xl font-black text-slate-900 dark:text-white">Danh sách sản phẩm áp dụng</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Thêm sản phẩm, chọn biến thể nhiều tầng hoặc áp dụng cho cả sản phẩm</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-headline text-2xl font-black text-white">Sản phẩm áp dụng</h2>
-              <p className="mt-1 text-sm font-medium text-slate-400">Thêm danh sách sản phẩm hoặc biến thể để giảm giá</p>
-            </div>
-          </div>
-            <div className="flex flex-wrap items-center gap-3">
+
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => setExportModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">download</span>
-                Tải Template
+                <span className="material-symbols-outlined text-[16px]">file_download</span>
+                Tải Template Excel
               </button>
 
               <input 
@@ -507,174 +583,267 @@ export function SaleProgramForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md"
+                className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 shadow-xs hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60 transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">upload</span>
+                <span className="material-symbols-outlined text-[16px]">file_upload</span>
                 Nhập Excel
               </button>
 
               <button
                 type="button"
-                onClick={() => setItems([...items, { productId: 0 }])}
-                className="flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-purple-700 hover:shadow-md hover:shadow-blue-500/30"
+                onClick={handleAddItem}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-500/20 hover:scale-[1.02] transition-all"
               >
-                <span className="material-symbols-outlined text-[18px]">add</span>
+                <span className="material-symbols-outlined text-[16px]">add</span>
                 Thêm sản phẩm
               </button>
             </div>
           </div>
 
-        <div className="space-y-4">
-          {items.map((item, index) => (
-            <div 
-              key={index} 
-              style={{ zIndex: 100 - index }}
-              className="group relative flex flex-wrap items-center gap-6 rounded-[1.5rem] border border-white bg-white/5 backdrop-blur-xl text-slate-200/50 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(59,130,246,0.15)] hover:border-blue-200"
-            >
-              {/* Vibrant gradient side accent */}
-              <div className="absolute bottom-0 left-0 top-0 w-1.5 rounded-l-[1.5rem] bg-gradient-to-b from-blue-400 via-indigo-500 to-purple-500 opacity-50 transition-opacity group-hover:opacity-100"></div>
-              
-              <div className="absolute -left-4 -top-4 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900 text-sm font-black text-white shadow-xl ring-4 ring-white transition-transform group-hover:scale-110">
-                {index + 1}
-              </div>
-              
-              <div className="flex-1 min-w-[280px]">
-                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors group-focus-within:text-purple-400">Chọn Sản phẩm <span className="text-rose-500">*</span></label>
-                <button
-                  type="button"
-                  onClick={() => setPickerOpenForIndex(index)}
-                  className="group flex w-full items-center justify-between rounded-xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/80 px-4 py-3.5 text-sm font-semibold text-white ring-4 ring-transparent transition-all hover:border-blue-300"
-                >
-                  <span className={item.productId ? "text-white truncate" : "text-slate-400 truncate"}>
-                    {item.productId ? products.find(p => p.id === item.productId)?.name || `Sản phẩm #${item.productId}` : "Bấm để chọn sản phẩm..."}
-                  </span>
-                  <span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">arrow_forward</span>
-                </button>
-              </div>
+          {/* Product Items List */}
+          <div className="space-y-4">
+            {items.map((item, index) => {
+              const selectedProduct = products.find(p => p.id === item.productId);
+              const productVariants = variantsCache[item.productId] || [];
+              const selectedVariant = item.variantId ? productVariants.find(v => v.id === item.variantId) : null;
+              const parsedVariant = selectedVariant ? parseVariantTiers(selectedVariant) : null;
 
-              <div className="flex-1 min-w-[220px]">
-                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors group-focus-within:text-purple-400">Biến thể áp dụng</label>
-                <button
-                  type="button"
-                  disabled={!item.productId || !(variantsCache[item.productId]?.length > 0)}
-                  onClick={() => setVariantPickerOpenForIndex(index)}
-                  className="group flex w-full items-center justify-between rounded-xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/80 px-4 py-3.5 text-sm font-semibold text-white ring-4 ring-transparent transition-all hover:border-blue-300 disabled:bg-white/10 disabled:text-slate-400 disabled:opacity-50"
+              return (
+                <div 
+                  key={index}
+                  className="group relative flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 shadow-xs transition-all hover:border-indigo-300 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-850 dark:hover:border-indigo-700"
                 >
-                  <span className="truncate">
-                    {(!item.productId || !(variantsCache[item.productId]?.length > 0)) 
-                      ? "Không có biến thể" 
-                      : item.variantId 
-                        ? (() => {
-                            const v = variantsCache[item.productId]?.find(v => v.id === item.variantId);
-                            return v ? `Màu: ${v.color || "N/A"} - Size: ${v.size || "N/A"}` : "Áp dụng toàn bộ";
-                          })()
-                        : "Áp dụng toàn bộ"
-                    }
-                  </span>
-                  <span className="material-symbols-outlined text-slate-400 transition-transform group-hover:translate-x-1">arrow_forward</span>
-                </button>
-              </div>
+                  {/* Order badge */}
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-xs font-black text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                    {index + 1}
+                  </div>
 
-              <div className="w-[140px]">
-                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors group-focus-within:text-purple-400">SL Giới hạn</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full rounded-xl border border-white/20 bg-white/5 backdrop-blur-xl text-slate-200/80 px-4 py-3.5 text-center font-black text-white outline-none ring-4 ring-transparent transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-blue-400 focus:bg-white/5 backdrop-blur-xl text-slate-200 focus:shadow-[0_0_20px_rgba(59,130,246,0.15)] focus:ring-blue-400/20"
-                    value={item.promoQtyLimit || ""}
-                    onChange={(e) => handleChangeItem(index, "promoQtyLimit", e.target.value)}
-                    placeholder="∞"
-                  />
-                </div>
-              </div>
+                  {/* Product Picker */}
+                  <div className="flex-1 min-w-[260px]">
+                    <label className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Sản phẩm <span className="text-rose-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpenForIndex(index)}
+                      className="group/btn flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-left shadow-xs transition-all hover:border-indigo-400"
+                    >
+                      <div className="min-w-0 pr-2">
+                        {item.productId ? (
+                          <>
+                            <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                              {selectedProduct?.name || `Sản phẩm #${item.productId}`}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              ID: #{item.productId} {selectedProduct?.sku && `• SKU: ${selectedProduct.sku}`}
+                              {selectedProduct?.availability != null && ` • Tồn: ${selectedProduct.availability}`}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm font-medium text-slate-400">Bấm để chọn sản phẩm...</p>
+                        )}
+                      </div>
+                      <span className="material-symbols-outlined text-slate-400 group-hover/btn:text-indigo-600 transition-colors">
+                        expand_more
+                      </span>
+                    </button>
+                  </div>
 
-              <div className="flex items-end pb-1 pl-2 border-l border-white/10/50">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveItem(index)}
-                  className="group/btn relative flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 border-white/10 text-white text-slate-400 transition-all hover:bg-rose-500 hover:text-white hover:shadow-lg hover:shadow-rose-500/30"
-                  title="Xóa sản phẩm này"
-                >
-                  <span className="material-symbols-outlined transition-transform group-hover/btn:rotate-12 group-hover/btn:scale-110">delete</span>
-                </button>
-              </div>
-              
-              {/* Inline Errors */}
-              {(overlapErrors[index] || qtyErrors[index]) && (
-                <div className="w-full mt-2 animate-in slide-in-from-top-2 flex flex-col gap-2">
-                  {overlapErrors[index] && (
-                    <div className="flex items-center gap-2 rounded-lg bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 border border-rose-100">
-                      <span className="material-symbols-outlined text-[18px]">warning</span>
-                      {overlapErrors[index]}
+                  {/* Variant Picker */}
+                  <div className="flex-1 min-w-[280px]">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="block text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Biến thể áp dụng
+                      </label>
+                      {item.variantId && (
+                        <button
+                          type="button"
+                          onClick={() => handleChangeItem(index, "variantId", undefined)}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 underline"
+                        >
+                          ✕ Đổi sang toàn bộ SP
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!item.productId || productVariants.length === 0}
+                      onClick={() => setVariantPickerOpenForIndex(index)}
+                      className="group/btn flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-left shadow-xs transition-all hover:border-indigo-400 disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-800/50"
+                    >
+                      <div className="min-w-0 pr-2">
+                        {!item.productId ? (
+                          <p className="text-xs font-medium text-slate-400">Chưa chọn sản phẩm</p>
+                        ) : productVariants.length === 0 ? (
+                          <p className="text-xs font-semibold text-slate-500">Sản phẩm không có biến thể</p>
+                        ) : item.variantId && parsedVariant ? (
+                          <div>
+                            {parsedVariant.tiers.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {parsedVariant.tiers.map((t, tidx) => (
+                                  <span key={tidx} className="inline-flex items-center gap-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                                    <span className="text-slate-400 font-medium">{t.name}:</span>
+                                    <span>{t.value}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{parsedVariant.fullLabel}</p>
+                            )}
+                            <p className="mt-1 text-[11px] font-mono text-slate-400">
+                              ID: #{item.variantId} • Tồn: {parsedVariant.availability ?? 0}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-300">
+                              <span className="material-symbols-outlined text-[14px]">all_inclusive</span>
+                              Áp dụng toàn bộ ({productVariants.length} biến thể)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="material-symbols-outlined text-slate-400 group-hover/btn:text-indigo-600 transition-colors">
+                        tune
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Quantity Limit with preset pills */}
+                  <div className="w-[160px]">
+                    <label className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      SL Giới Hạn
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-center text-sm font-bold text-slate-900 dark:text-slate-100 shadow-xs outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                      value={item.promoQtyLimit || ""}
+                      onChange={(e) => handleChangeItem(index, "promoQtyLimit", e.target.value)}
+                      placeholder="∞ Vô hạn"
+                    />
+                    {/* Presets */}
+                    <div className="mt-1.5 flex items-center justify-between gap-1">
+                      {[
+                        { label: "∞", val: "" },
+                        { label: "10", val: 10 },
+                        { label: "50", val: 50 },
+                        { label: "100", val: 100 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleChangeItem(index, "promoQtyLimit", preset.val)}
+                          className="flex-1 rounded-lg border border-slate-200 bg-white py-0.5 text-[10px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 transition-colors"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Delete Button */}
+                  <div className="flex items-end pb-3">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition-colors"
+                      title="Xóa dòng này"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                  </div>
+
+                  {/* Inline Errors */}
+                  {(overlapErrors[index] || qtyErrors[index]) && (
+                    <div className="w-full mt-1 flex flex-col gap-1.5 animate-in slide-in-from-top-1">
+                      {overlapErrors[index] && (
+                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
+                          <span className="material-symbols-outlined text-[16px]">error</span>
+                          <span>{overlapErrors[index]}</span>
+                        </div>
+                      )}
+                      {qtyErrors[index] && (
+                        <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300">
+                          <span className="material-symbols-outlined text-[16px]">warning</span>
+                          <span>{qtyErrors[index]}</span>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {qtyErrors[index] && (
-                    <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-600 border border-orange-100">
-                      <span className="material-symbols-outlined text-[18px]">inventory</span>
-                      {qtyErrors[index]}
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
-          ))}
-          
-          {items.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-[1.5rem] border-2 border-dashed border-slate-300/60 bg-white/5 backdrop-blur-xl text-slate-200/30 py-16 text-slate-400 transition-colors hover:border-blue-400/50 hover:bg-white/5 backdrop-blur-xl text-slate-200/50">
-              <span className="material-symbols-outlined mb-3 text-5xl opacity-40">shopping_bag</span>
-              <span className="font-headline text-lg font-bold text-slate-400">Chưa có sản phẩm nào</span>
-              <p className="mt-1 text-sm text-slate-400">Bấm nút "Thêm sản phẩm" phía trên để bắt đầu cấu hình.</p>
-            </div>
-          )}
+              );
+            })}
+
+            {items.length === 0 && (
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-slate-400 dark:border-slate-800">
+                <span className="material-symbols-outlined mb-2 text-4xl opacity-40">inventory_2</span>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Chưa có sản phẩm nào trong chương trình</p>
+                <p className="mt-1 text-xs text-slate-400">Bấm nút "Thêm sản phẩm" hoặc tải tệp Excel lên để bắt đầu</p>
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-4 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  Thêm sản phẩm ngay
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-end gap-4 pt-6 mt-8 border-t border-white/10">
-        <Link
-          href="/admin/sales/programs"
-          className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-400 transition-colors hover:bg-white/10 dark:hover:bg-slate-800"
-        >
-          Hủy bỏ
-        </Link>
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-purple-600/30 disabled:opacity-50 disabled:hover:scale-100"
-        >
-          {loading ? (
-            <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
-          ) : (
-            <span className="material-symbols-outlined text-[18px]">save</span>
-          )}
-          {loading ? "Đang lưu..." : "Lưu chương trình"}
-        </button>
-      </div>
-      
-      <ProductPickerModal 
-        isOpen={pickerOpenForIndex !== null}
-        onClose={() => setPickerOpenForIndex(null)}
-        onSelect={(productId) => {
-          if (pickerOpenForIndex !== null) {
-            handleChangeItem(pickerOpenForIndex, "productId", productId);
-          }
-        }}
-        products={products}
-        currentValue={pickerOpenForIndex !== null ? items[pickerOpenForIndex]?.productId : undefined}
-      />
-      
-      <VariantPickerModal
-        isOpen={variantPickerOpenForIndex !== null}
-        onClose={() => setVariantPickerOpenForIndex(null)}
-        onSelect={(variantId) => {
-          if (variantPickerOpenForIndex !== null) {
-            handleChangeItem(variantPickerOpenForIndex, "variantId", variantId);
-          }
-        }}
-        variants={variantPickerOpenForIndex !== null && items[variantPickerOpenForIndex]?.productId ? (variantsCache[items[variantPickerOpenForIndex].productId] || []) : []}
-        currentValue={variantPickerOpenForIndex !== null ? (items[variantPickerOpenForIndex]?.variantId ?? undefined) : undefined}
-      />
+        {/* Bottom Actions Bar */}
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <Link
+            href="/admin/sales/programs"
+            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+          >
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] hover:shadow-indigo-500/35 disabled:opacity-50 disabled:hover:scale-100"
+          >
+            {loading ? (
+              <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+            ) : (
+              <span className="material-symbols-outlined text-[18px]">save</span>
+            )}
+            {loading ? "Đang lưu..." : (isEdit ? "Cập nhật chương trình" : "Lưu chương trình")}
+          </button>
+        </div>
 
+        {/* Modals */}
+        <ProductPickerModal 
+          isOpen={pickerOpenForIndex !== null}
+          onClose={() => setPickerOpenForIndex(null)}
+          onSelect={(productId) => {
+            if (pickerOpenForIndex !== null) {
+              handleChangeItem(pickerOpenForIndex, "productId", productId);
+            }
+          }}
+          products={products}
+          currentValue={pickerOpenForIndex !== null ? items[pickerOpenForIndex]?.productId : undefined}
+        />
+        
+        <VariantPickerModal
+          isOpen={variantPickerOpenForIndex !== null}
+          onClose={() => setVariantPickerOpenForIndex(null)}
+          onSelect={(variantId) => {
+            if (variantPickerOpenForIndex !== null) {
+              handleChangeItem(variantPickerOpenForIndex, "variantId", variantId);
+            }
+          }}
+          variants={variantPickerOpenForIndex !== null && items[variantPickerOpenForIndex]?.productId ? (variantsCache[items[variantPickerOpenForIndex].productId] || []) : []}
+          currentValue={variantPickerOpenForIndex !== null ? (items[variantPickerOpenForIndex]?.variantId ?? undefined) : undefined}
+        />
+
+        <SelectiveExportModal
+          isOpen={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+        />
       </form>
     </section>
   );

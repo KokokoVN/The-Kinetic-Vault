@@ -9,6 +9,10 @@ public class ProductVariantRequest {
     @NotBlank
     private String color;
     private String variantImageUrl;
+    private String variantName;
+    private String attributesJson;
+    private String sku;
+    private BigDecimal originalPrice;
     private BigDecimal price;
     private Integer availability;
     private String performedBy;
@@ -35,6 +39,38 @@ public class ProductVariantRequest {
 
     public void setVariantImageUrl(String variantImageUrl) {
         this.variantImageUrl = variantImageUrl;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getAttributesJson() {
+        return attributesJson;
+    }
+
+    public void setAttributesJson(String attributesJson) {
+        this.attributesJson = attributesJson;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public BigDecimal getPrice() {

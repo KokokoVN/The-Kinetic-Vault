@@ -8,6 +8,7 @@ import com.rainbowforest.productcatalogservice.repository.ProductChangeLogReposi
 import com.rainbowforest.productcatalogservice.client.ActivityLogFeignClient;
 import com.rainbowforest.productcatalogservice.client.dto.ActivityLogRequest;
 import com.rainbowforest.productcatalogservice.repository.ProductRepository;
+import com.rainbowforest.productcatalogservice.utilities.FileUploadValidationUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,14 +144,22 @@ public class AdminProductCatalogController {
             Files.createDirectories(PRODUCT_UPLOAD_DIR);
             int startSort = p.getImages().stream().mapToInt(ProductImage::getSortOrder).max().orElse(0) + 1;
             boolean hasPrimary = !p.getImages().isEmpty() && p.getImages().stream().anyMatch(ProductImage::isPrimaryImage);
-            
+
             // Xử lý song song bằng IntStream.range().parallel() để tăng tốc độ ghi đĩa
             List<ProductImage> uploadedImages = java.util.stream.IntStream.range(0, files.size())
                     .parallel()
                     .mapToObj(i -> {
                         MultipartFile f = files.get(i);
                         if (f == null || f.isEmpty()) return null;
-                        
+
+                        // Validate file trước khi upload - reject sớm nếu invalid.
+                        try {
+                            FileUploadValidationUtils.validateImageOrVideoUpload(f);
+                        } catch (IllegalArgumentException ex) {
+                            log.warn("Reject upload productId={} reason={}", productId, ex.getMessage());
+                            return null;
+                        }
+
                         try {
                             String original = f.getOriginalFilename() != null ? f.getOriginalFilename() : "image";
                             String ext = "";
@@ -159,8 +168,13 @@ public class AdminProductCatalogController {
                                 ext = original.substring(dot);
                             }
                             String filename = UUID.randomUUID().toString().replace("-", "") + ext;
-                            Path out = PRODUCT_UPLOAD_DIR.resolve(filename);
-                            f.transferTo(out.toAbsolutePath().toFile());
+                            Path out = PRODUCT_UPLOAD_DIR.resolve(filename).normalize().toAbsolutePath();
+                            // Đảm bảo đường dẫn nằm trong thư mục cho phép.
+                            if (!out.startsWith(PRODUCT_UPLOAD_DIR.toAbsolutePath())) {
+                                log.warn("Path traversal attempt in upload: {}", out);
+                                return null;
+                            }
+                            f.transferTo(out.toFile());
 
                             ProductImage img = new ProductImage();
                             img.setProduct(p);
@@ -229,14 +243,30 @@ public class AdminProductCatalogController {
     @GetMapping("/images/file/{filename:.+}")
     public ResponseEntity<Resource> serveImage(@PathVariable String filename) {
         try {
-            Path filePath = PRODUCT_UPLOAD_DIR.resolve(filename).normalize();
+            // Chống path traversal: reject nếu filename chứa path separators hoặc "..".
+            if (filename == null || filename.contains("..")
+                    || filename.contains("/") || filename.contains("\\")
+                    || filename.startsWith(".")) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            Path filePath = PRODUCT_UPLOAD_DIR.resolve(filename).normalize().toAbsolutePath();
+            // Đảm bảo file nằm trong thư mục cho phép.
+            if (!filePath.startsWith(PRODUCT_UPLOAD_DIR.toAbsolutePath())) {
+                log.warn("Path traversal attempt: filename={}, resolved={}", filename, filePath);
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
             if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
             Resource resource = new UrlResource(filePath.toUri());
             String type = Files.probeContentType(filePath);
             MediaType mt = type != null ? MediaType.parseMediaType(type) : MediaType.APPLICATION_OCTET_STREAM;
-            return ResponseEntity.ok().contentType(mt).body(resource);
+            // Set Content-Disposition: inline + kiểm soát MIME để chống XSS via content sniffing
+            return ResponseEntity.ok()
+                    .contentType(mt)
+                    .header("X-Content-Type-Options", "nosniff")
+                    .header("Content-Disposition", "inline; filename=\"" + filename.replace("\"", "") + "\"")
+                    .body(resource);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -291,12 +321,23 @@ public class AdminProductCatalogController {
         }
 
         if (filenameToDelete != null && !filenameToDelete.trim().isEmpty()) {
-            try {
-                Path filePath = PRODUCT_UPLOAD_DIR.resolve(filenameToDelete).normalize();
-                Files.deleteIfExists(filePath);
-                log.info("Deleted physical file: {}", filePath);
-            } catch (Exception e) {
-                log.warn("Không thể xóa file vật lý: {}", filenameToDelete, e);
+            // Chống path traversal: reject nếu filename chứa ký tự nguy hiểm.
+            if (filenameToDelete.contains("..") || filenameToDelete.contains("/")
+                    || filenameToDelete.contains("\\") || filenameToDelete.startsWith(".")) {
+                log.warn("Path traversal attempt in deleteImage: {}", filenameToDelete);
+            } else {
+                try {
+                    Path filePath = PRODUCT_UPLOAD_DIR.resolve(filenameToDelete).normalize().toAbsolutePath();
+                    // Đảm bảo file nằm trong thư mục cho phép.
+                    if (!filePath.startsWith(PRODUCT_UPLOAD_DIR.toAbsolutePath())) {
+                        log.warn("Path traversal detected, abort delete: {}", filePath);
+                    } else {
+                        Files.deleteIfExists(filePath);
+                        log.info("Deleted physical file: {}", filePath);
+                    }
+                } catch (Exception e) {
+                    log.warn("Không thể xóa file vật lý: {}", filenameToDelete, e);
+                }
             }
         }
 

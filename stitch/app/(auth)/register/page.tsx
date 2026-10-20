@@ -1,8 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { registerUserAccount } from "@/lib/api";
 import { RegisterLiveForm } from "@/components/auth/register-live-form";
 import { FloatingNotice } from "@/components/floating-notice";
 import { redirect, unstable_rethrow } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Đăng Ký Tài Khoản Mới",
+};
 
 export default async function RegisterPage({
   searchParams,
@@ -35,7 +40,18 @@ export default async function RegisterPage({
       unstable_rethrow(e);
       const message = e instanceof Error ? e.message : "REGISTER_UNKNOWN";
       if (message.startsWith("REGISTER_409")) {
-        return { error: "Tài khoản, email hoặc số điện thoại đã tồn tại." };
+        try {
+          const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8900/api";
+          const res = await fetch(`${apiBase}/registration/check?username=${encodeURIComponent(username)}&contact=${encodeURIComponent(email)}`, { cache: "no-store" });
+          const data = (await res.json()) as { usernameExists?: boolean; contactExists?: boolean; identityExists?: boolean };
+          if (data?.usernameExists) {
+            return { error: `Tên đăng nhập "${username}" đã có người sử dụng. Vui lòng chọn username khác.` };
+          }
+          if (data?.contactExists || data?.identityExists) {
+            return { error: `Địa chỉ Gmail "${email}" đã được đăng ký. Vui lòng chọn Gmail khác hoặc Đăng Nhập.` };
+          }
+        } catch {}
+        return { error: "Tên đăng nhập hoặc Email đã tồn tại trong hệ thống." };
       }
       if (message.startsWith("REGISTER_NETWORK")) {
         return { error: "Không kết nối được gateway/backend. Vui lòng thử lại." };
@@ -76,61 +92,119 @@ export default async function RegisterPage({
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden relative">
+    <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans">
       {noticeMessage ? <FloatingNotice message={noticeMessage} variant={noticeVariant} /> : null}
-      
-      {/* Background Orbs */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] h-[800px] w-[800px] rounded-full bg-kinetic/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute top-[20%] -right-[10%] h-[600px] w-[600px] rounded-full bg-secondary/5 blur-[100px] animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }} />
-        <div className="absolute -bottom-[20%] left-[20%] h-[700px] w-[700px] rounded-full bg-blue-400/5 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+
+      {/* Dynamic Animated Background Mesh */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[30%] -right-[10%] w-[700px] h-[700px] rounded-full bg-gradient-to-br from-indigo-600/30 to-purple-500/20 blur-[130px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[10%] -left-[15%] w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-blue-600/25 to-cyan-600/20 blur-[140px] animate-pulse" style={{ animationDuration: '11s', animationDelay: '1s' }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
-      {/* Form Container */}
-      <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-12 relative z-10">
-        <div className="mx-auto w-full max-w-[560px]">
+      {/* Main Container Card */}
+      <div className="relative z-10 w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-12 rounded-[2.5rem] bg-slate-900/60 backdrop-blur-2xl border border-slate-800/80 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+        
+        {/* Left Side: Brand & Benefits Showcase */}
+        <div className="lg:col-span-5 relative hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-indigo-950/80 via-slate-900/90 to-blue-950/80 border-r border-slate-800/60 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.15),transparent_50%)] pointer-events-none" />
           
-          {/* Logo Header */}
-          <div className="mb-12 flex flex-col items-center justify-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000">
-            <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30">
-              <span className="material-symbols-outlined font-bold text-[48px]">person_add</span>
-            </div>
-            <div className="text-center">
-              <span className="font-headline text-5xl font-black text-slate-900 dark:text-white tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
-              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400 mt-2 block">Tạo tài khoản</span>
-            </div>
+          {/* Brand Header */}
+          <div className="relative z-10">
+            <Link href="/" className="inline-flex items-center gap-3.5 group">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-[28px] font-black">person_add</span>
+              </div>
+              <div>
+                <span className="font-headline text-2xl font-black tracking-tight text-white block">Kinetic Vault</span>
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-indigo-300 block">Thành Viên Mới</span>
+              </div>
+            </Link>
           </div>
 
-          {/* Glass Card */}
-          <div className="relative rounded-[3rem] bg-white/70 dark:bg-slate-900/50 backdrop-blur-3xl border border-white dark:border-slate-800 p-10 sm:p-14 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-700">
-            <div className="mb-10 text-center">
-              <h1 className="mb-3 font-headline text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Mở khoá kỷ nguyên mới</h1>
-              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                Tài khoản mới sẽ có quyền <code className="rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-1.5 py-0.5">ROLE_USER</code>. Vui lòng dùng tên đăng nhập không dấu và email hợp lệ (Gmail) để kích hoạt.
-              </p>
-            </div>
-
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both">
-              <RegisterLiveForm action={registerAction} />
-            </div>
-
-            <div className="mt-10 flex items-center justify-center gap-4 animate-in fade-in duration-700 delay-200 fill-mode-both">
-               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
-               <span className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Hoặc</span>
-               <div className="h-px flex-1 bg-slate-300 dark:bg-slate-700"></div>
+          {/* Benefits Content */}
+          <div className="relative z-10 my-auto py-8 space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 px-3.5 py-1.5 text-xs font-bold text-indigo-300 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-indigo-400 animate-ping" />
+              Đặc Quyền Hội Viên Kinetic
             </div>
             
-            <div className="mt-8 flex flex-col gap-4 animate-in fade-in duration-700 delay-300 fill-mode-both">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
-              >
-                <span className="material-symbols-outlined text-[24px]">login</span>
-                Tôi đã có tài khoản (Đăng nhập)
-              </Link>
+            <h2 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-[1.2]">
+              Gia Nhập Cộng Đồng <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-cyan-400 to-blue-400">Mua Sắm Thông Minh</span>
+            </h2>
+            
+            <p className="text-slate-300 text-sm leading-relaxed font-normal">
+              Tạo tài khoản chính thức để tích điểm đổi quà, nhận coupon giảm giá ưu đãi và nhận thông báo khuyến mãi độc quyền từ các thương hiệu hàng đầu.
+            </p>
+
+            {/* Benefit Items */}
+            <div className="pt-2 space-y-3">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300">
+                  <span className="material-symbols-outlined text-[20px]">card_giftcard</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Voucher Đón Chào Đơn Đầu</h4>
+                  <p className="text-[11px] text-slate-400">Tặng mã giảm giá trực tiếp vào ví quà tặng</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300">
+                  <span className="material-symbols-outlined text-[20px]">notifications_active</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Cập Nhật Trạng Thái Tức Thì</h4>
+                  <p className="text-[11px] text-slate-400">Hộp thư thông báo riêng biệt về đơn hàng & khuyến mãi</p>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Footer note */}
+          <div className="relative z-10 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span>© 2026 The Kinetic Vault</span>
+            <span className="flex items-center gap-1 text-cyan-400 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-cyan-400" /> Kích hoạt qua OTP Gmail
+            </span>
+          </div>
         </div>
+
+        {/* Right Side: Form Container */}
+        <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-slate-900/80 backdrop-blur-xl">
+          {/* Mobile Header Logo */}
+          <div className="lg:hidden mb-8 flex items-center justify-between border-b border-slate-800 pb-5">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white shadow-md">
+                <span className="material-symbols-outlined text-[22px]">person_add</span>
+              </div>
+              <span className="font-headline text-xl font-black text-white">Kinetic Vault</span>
+            </Link>
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-800/50">Đăng Ký</span>
+          </div>
+
+          {/* Title Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">Tạo Tài Khoản Mới</h1>
+            <p className="text-slate-400 text-sm font-medium">Vui lòng sử dụng Username viết liền không dấu và Email Gmail chính chủ</p>
+          </div>
+
+          {/* Form Component */}
+          <RegisterLiveForm action={registerAction} />
+
+          {/* Footer Redirect */}
+          <div className="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-between text-sm">
+            <span className="text-slate-400">Đã có tài khoản từ trước?</span>
+            <Link 
+              href="/login"
+              className="inline-flex items-center gap-2 font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/50 px-4 py-2 rounded-xl border border-indigo-800/50 transition-all"
+            >
+              <span className="material-symbols-outlined text-[18px]">login</span>
+              Đăng nhập ngay
+            </Link>
+          </div>
+        </div>
+
       </div>
     </div>
   );

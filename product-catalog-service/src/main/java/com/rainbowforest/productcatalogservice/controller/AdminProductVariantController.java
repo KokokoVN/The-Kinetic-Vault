@@ -96,6 +96,13 @@ public class AdminProductVariantController {
         v.setColor(color);
         v.setVariantImageUrl(req.getVariantImageUrl() != null && !req.getVariantImageUrl().trim().isEmpty()
                 ? req.getVariantImageUrl().trim() : null);
+        v.setVariantName(req.getVariantName() != null && !req.getVariantName().trim().isEmpty()
+                ? req.getVariantName().trim() : null);
+        v.setAttributesJson(req.getAttributesJson() != null && !req.getAttributesJson().trim().isEmpty()
+                ? req.getAttributesJson().trim() : null);
+        v.setSku(req.getSku() != null && !req.getSku().trim().isEmpty()
+                ? req.getSku().trim() : null);
+        v.setOriginalPrice(req.getOriginalPrice());
         v.setPrice(req.getPrice());
         v.setAvailability(availability);
         if (req.getPerformedBy() != null && !req.getPerformedBy().trim().isEmpty()) {
@@ -130,11 +137,20 @@ public class AdminProductVariantController {
                 String url = v.getVariantImageUrl();
                 int lastSlash = url.lastIndexOf('/');
                 String filename = lastSlash >= 0 ? url.substring(lastSlash + 1) : url;
-                
-                // 1. Delete physical file
-                Path filePath = PRODUCT_UPLOAD_DIR.resolve(filename).normalize();
-                Files.deleteIfExists(filePath);
-                log.info("Deleted physical image for variant: {}", filePath);
+                // Chống path traversal.
+                if (filename.contains("..") || filename.contains("/")
+                        || filename.contains("\\") || filename.startsWith(".")) {
+                    log.warn("Path traversal attempt in deleteVariant: {}", filename);
+                } else {
+                    // 1. Delete physical file
+                    Path filePath = PRODUCT_UPLOAD_DIR.resolve(filename).normalize().toAbsolutePath();
+                    if (!filePath.startsWith(PRODUCT_UPLOAD_DIR.toAbsolutePath())) {
+                        log.warn("Path traversal detected, abort delete: {}", filePath);
+                    } else {
+                        Files.deleteIfExists(filePath);
+                        log.info("Deleted physical image for variant: {}", filePath);
+                    }
+                }
 
                 // 2. Delete from ProductImage table
                 List<ProductImage> images = productImageRepository.findByProduct_IdOrderBySortOrderAsc(productId);
@@ -202,6 +218,13 @@ public class AdminProductVariantController {
         v.setColor(color);
         v.setVariantImageUrl(req.getVariantImageUrl() != null && !req.getVariantImageUrl().trim().isEmpty()
                 ? req.getVariantImageUrl().trim() : null);
+        v.setVariantName(req.getVariantName() != null && !req.getVariantName().trim().isEmpty()
+                ? req.getVariantName().trim() : null);
+        v.setAttributesJson(req.getAttributesJson() != null && !req.getAttributesJson().trim().isEmpty()
+                ? req.getAttributesJson().trim() : null);
+        v.setSku(req.getSku() != null && !req.getSku().trim().isEmpty()
+                ? req.getSku().trim() : null);
+        v.setOriginalPrice(req.getOriginalPrice());
         v.setPrice(req.getPrice());
         v.setAvailability(availability);
         if (req.getPerformedBy() != null && !req.getPerformedBy().trim().isEmpty()) {

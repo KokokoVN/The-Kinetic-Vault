@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@FeignClient(name = "inventory-service", url = "http://localhost:8900/")
+@FeignClient(name = "inventory-service", url = "${inventory.service.url:http://localhost:8900/}")
 public interface InventoryClient {
 
     @PostMapping(value = "/api/inventory/admin/stock/outbound")

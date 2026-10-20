@@ -1,0 +1,33 @@
+# ==============================================================================
+# HỆ THỐNG E-COMMERCE MICROSERVICES - HẠ TẦNG DATABASE & REDIS
+# ==============================================================================
+# Dành cho ai muốn chạy Backend Java bằng Batch script / IDE trên máy thật
+# và chỉ muốn đưa MySQL 8 + Redis 7 vào Docker.
+#
+# Lệnh chạy: docker compose -f docker-compose.infra.yml up -d
+# ==============================================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ecommerce-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:

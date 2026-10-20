@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@FeignClient(name = "cart-service", url = "http://localhost:8821/")
+@FeignClient(name = "cart-service", url = "${cart.service.url:http://localhost:8821/}")
 public interface CartClient {
     @GetMapping(value = "/cart")
     List<Item> getCart(@RequestHeader(value = "Cookie") String cartId);

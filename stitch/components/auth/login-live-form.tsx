@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { requestOtpAction } from "@/app/actions/auth";
+import { FloatingNotice } from "@/components/floating-notice";
 
 type Props = {
   action: (state: any, formData: FormData) => Promise<any>;
@@ -11,27 +12,28 @@ type Props = {
   extraFields?: React.ReactNode;
 };
 
-function scorePassword(pwd: string): { score: number; label: string } {
+function scorePassword(pwd: string): { score: number; label: string; color: string } {
   let score = 0;
   if (pwd.length >= 8) score++;
   if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
   if (/\d/.test(pwd)) score++;
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
   if (pwd.length >= 12) score++;
-  if (score <= 1) return { score, label: "Yếu" };
-  if (score <= 3) return { score, label: "Trung bình" };
-  return { score, label: "Mạnh" };
+  if (score <= 1) return { score, label: "Yếu", color: "text-amber-400" };
+  if (score <= 3) return { score, label: "Trung bình", color: "text-cyan-400" };
+  return { score, label: "Rất mạnh", color: "text-emerald-400" };
 }
 
-export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ thống", rememberContext = "user", extraFields }: Props) {
+export function LoginLiveForm({ action, submitLabel = "Đăng Nhập Vào Hệ Thống", rememberContext = "user", extraFields }: Props) {
   const [state, formAction, isPending] = useActionState(action, null);
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [identityExists, setIdentityExists] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [hasChecked, setHasChecked] = useState(false);
 
-  // Thêm state cho luồng OTP
+  // OTP flow state
   const [loginMode, setLoginMode] = useState<"password" | "otp">("password");
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
@@ -41,8 +43,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
   const deviceFingerprint = useMemo(() => {
     if (typeof window === "undefined" || !identity.trim()) return "";
     try {
-      const generated = window.btoa(identity.trim()).replace(/=+$/g, "").slice(0, 32);
-      return generated;
+      return window.btoa(identity.trim()).replace(/=+$/g, "").slice(0, 32);
     } catch {
       return "";
     }
@@ -78,7 +79,7 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
   return (
     <form
       action={formAction}
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={() => {
         try {
           if (deviceFingerprint) {
@@ -99,68 +100,35 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
       }}
     >
       {extraFields}
-      {state?.error && (
-        <div className="rounded-2xl bg-red-50 p-4 border border-red-200">
-          <p className="text-sm font-bold text-red-600">{state.error}</p>
+
+      {/* Floating error notice at top-right corner */}
+      {state?.error && <FloatingNotice key={state.error} message={state.error} variant="error" />}
+      {otpError && <FloatingNotice key={otpError} message={otpError} variant="error" />}
+
+      {/* Prominent Inline Error Banner */}
+      {(state?.error || otpError) && (
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-950/50 p-4 text-xs font-medium text-rose-200 shadow-xl shadow-rose-950/30 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 flex items-start gap-3 my-2">
+          <span className="material-symbols-outlined text-rose-400 text-[22px] shrink-0 mt-0.5">error</span>
+          <div className="flex-1 leading-relaxed">
+            <strong className="block text-rose-100 font-bold text-sm mb-0.5">Đăng nhập không thành công</strong>
+            {state?.error || otpError}
+          </div>
         </div>
       )}
-      <input type="hidden" name="deviceFingerprint" value={deviceFingerprint} />
-      <div className="relative">
-        <input
-          id="identity"
-          name="username"
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
-          placeholder=" "
-          type="text"
-          required
-          value={identity}
-          onChange={(e) => setIdentity(e.target.value.replace(/\s+/g, ""))}
-          autoComplete="username"
-          inputMode="text"
-          spellCheck={false}
-        />
-        <label
-          htmlFor="identity"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-        >
-          {loginMode === "otp" ? "Địa chỉ Email của bạn" : "Username / Email / Số điện thoại"}
-        </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-          person
-        </span>
-        {identity.trim() ? (
-          <div className="absolute -bottom-6 left-1 flex gap-3">
-            {checking ? (
-              <p className="text-xs text-on-surface-variant animate-pulse">Đang kiểm tra tài khoản...</p>
-            ) : hasChecked ? (
-              identityExists ? (
-                <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Hợp lệ
-                </p>
-              ) : (
-                <p className="text-xs text-red-500 font-medium flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">error</span> Chưa tồn tại
-                </p>
-              )
-            ) : null}
-            {loginMode === "otp" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.trim()) && (
-              <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">warning</span> Vui lòng nhập đúng định dạng Email
-              </p>
-            )}
-          </div>
-        ) : null}
-      </div>
 
-      <div className="relative mx-auto flex w-full rounded-2xl bg-slate-100 dark:bg-slate-800 p-1.5 shadow-inner mt-6">
+      <input type="hidden" name="deviceFingerprint" value={deviceFingerprint} />
+
+      {/* Mode Switcher Tabs */}
+      <div className="relative flex rounded-2xl bg-slate-950/80 p-1.5 border border-slate-800/80 mb-6">
         <button
           type="button"
           onClick={() => setLoginMode("password")}
-          className={`relative z-10 flex-1 rounded-xl py-3.5 text-base font-extrabold transition-all duration-300 ${
-            loginMode === "password" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
+            loginMode === "password" ? "text-white shadow-lg" : "text-slate-400 hover:text-slate-200"
           }`}
         >
-          Mật khẩu
+          <span className="material-symbols-outlined text-[18px]">lock</span>
+          Mật Khẩu
         </button>
         <button
           type="button"
@@ -168,60 +136,116 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
             setLoginMode("otp");
             setOtpSent(false);
           }}
-          className={`relative z-10 flex-1 rounded-xl py-3.5 text-base font-extrabold transition-all duration-300 ${
-            loginMode === "otp" ? "text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
+            loginMode === "otp" ? "text-white shadow-lg" : "text-slate-400 hover:text-slate-200"
           }`}
         >
+          <span className="material-symbols-outlined text-[18px]">mark_email_read</span>
           Mã OTP
         </button>
         <div
-          className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md transition-all duration-500 ease-out ${
-            loginMode === "password" ? "left-1.5" : "left-[calc(50%+4px)]"
+          className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 transition-all duration-400 ease-out shadow-md ${
+            loginMode === "password" ? "left-1.5" : "left-[calc(50%+3px)]"
           }`}
         />
       </div>
 
+      {/* Identity Input Field */}
+      <div className="space-y-1.5">
+        <label htmlFor="identity" className="text-xs font-bold text-slate-300 uppercase tracking-wider block ml-1">
+          {loginMode === "otp" ? "Địa chỉ Email" : "Tài Khoản / Email / Số Điện Thoại"}
+        </label>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+            <span className="material-symbols-outlined text-[20px]">person</span>
+          </div>
+          <input
+            id="identity"
+            name="username"
+            className="w-full rounded-2xl bg-slate-950/70 border border-slate-700/80 py-3.5 pl-14 pr-28 text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 transition-all"
+            placeholder={loginMode === "otp" ? "nhap.email@gmail.com" : "Nhập username hoặc email"}
+            type="text"
+            required
+            value={identity}
+            onChange={(e) => setIdentity(e.target.value.replace(/\s+/g, ""))}
+            autoComplete="username"
+            spellCheck={false}
+          />
+
+          {/* Identity validation status indicator */}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 z-10">
+            {checking ? (
+              <span className="text-[11px] font-semibold text-cyan-400 animate-pulse flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" /> Kiểm tra...
+              </span>
+            ) : hasChecked && identity.trim() ? (
+              identityExists ? (
+                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Tồn tại
+                </span>
+              ) : (
+                <span className="text-[11px] font-bold text-red-400 bg-red-950/60 px-2 py-0.5 rounded-full border border-red-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">cancel</span> Chưa có
+                </span>
+              )
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Password Mode Fields */}
       {loginMode === "password" && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="relative mt-2">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
-              placeholder=" "
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <label
-              htmlFor="password"
-              className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-            >
-              Mật khẩu
-            </label>
-            <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-              key
-            </span>
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between ml-1">
+              <label htmlFor="password" className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                Mật Khẩu
+              </label>
+              <Link href="/forgot-password" className="text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors">
+                Quên mật khẩu?
+              </Link>
+            </div>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+                <span className="material-symbols-outlined text-[20px]">lock</span>
+              </div>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                className="w-full rounded-2xl bg-slate-950/70 border border-slate-700/80 py-3.5 pl-14 pr-12 text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 transition-all"
+                placeholder="Nhập mật khẩu của bạn"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-white transition-colors z-10"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center justify-between px-2 pt-1">
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Bảo mật: <span className="font-extrabold text-blue-600 dark:text-blue-400">{pwd.label}</span></p>
-            <Link className="text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline" href="/forgot-password">
-              Quên mật khẩu?
-            </Link>
-          </div>
+
+          {password ? (
+            <div className="flex items-center justify-between text-xs px-1 pt-0.5">
+              <span className="text-slate-400">Độ bảo mật: <strong className={pwd.color}>{pwd.label}</strong></span>
+            </div>
+          ) : null}
         </div>
       )}
 
+      {/* OTP Mode Block */}
       {loginMode === "otp" && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4 rounded-3xl border-2 border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 p-6 mt-2">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4 rounded-2xl border border-blue-900/60 bg-blue-950/20 p-5">
           {!otpSent ? (
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                <span className="material-symbols-outlined text-[32px]">mark_email_read</span>
-              </div>
-              <p className="mb-6 text-base font-medium text-slate-700 dark:text-slate-300">
-                Hệ thống sẽ gửi một mã OTP 8 số qua Email được liên kết với tài khoản của bạn.
+            <div className="text-center space-y-4">
+              <p className="text-xs text-slate-300">
+                Mã OTP 8 chữ số sẽ được gửi trực tiếp đến hộp thư Email đã đăng ký.
               </p>
               <button
                 type="button"
@@ -234,25 +258,30 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
                   if (res.success) {
                     setOtpSent(true);
                   } else {
-                    setOtpError(res.error || "Không thể gửi OTP.");
+                    setOtpError(res.error || "Không thể gửi mã OTP.");
                   }
                 }}
-                className="w-full rounded-2xl bg-blue-600 py-4 text-lg font-extrabold text-white shadow-xl shadow-blue-600/30 transition-all hover:-translate-y-1 hover:shadow-blue-600/50 hover:bg-blue-700 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+                className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
               >
                 {sendingOtp ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Đang gửi OTP...
-                  </span>
+                  </>
                 ) : (
-                  "Nhận mã OTP"
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">send</span>
+                    Gửi Mã OTP Đến Email
+                  </>
                 )}
               </button>
-              {otpError && <p className="mt-3 text-sm font-bold text-red-500 animate-in fade-in">{otpError}</p>}
             </div>
           ) : (
-            <div className="animate-in fade-in zoom-in-95 duration-300">
-              <p className="mb-5 text-center text-base font-bold text-emerald-600">Đã gửi mã xác nhận đến Email của bạn!</p>
+            <div className="space-y-4 animate-in fade-in zoom-in-95">
+              <p className="text-xs font-bold text-emerald-400 text-center flex items-center justify-center gap-1">
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                Đã gửi mã OTP thành công! Vui lòng kiểm tra Email.
+              </p>
               <div className="relative">
                 <input
                   id="otpCode"
@@ -262,23 +291,17 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
                   maxLength={8}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                  className="peer w-full rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 pb-3 pt-8 pl-4 text-center text-3xl font-black tracking-[0.5em] text-blue-700 dark:text-blue-400 outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-600/20"
-                  placeholder=" "
+                  className="w-full rounded-2xl bg-slate-950 border-2 border-blue-500 py-3 text-center text-2xl font-black tracking-[0.4em] text-cyan-300 outline-none focus:ring-4 focus:ring-blue-500/20"
+                  placeholder="00000000"
                 />
-                <label
-                  htmlFor="otpCode"
-                  className="pointer-events-none absolute left-1/2 top-5 origin-[0] -translate-x-1/2 -translate-y-3 scale-75 transform text-base font-extrabold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:-translate-y-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-bold peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:font-extrabold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-                >
-                  Nhập mã 8 số
-                </label>
               </div>
-              <div className="mt-5 flex justify-center">
+              <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={() => setOtpSent(false)}
-                  className="text-sm font-extrabold text-blue-600 dark:text-blue-400 transition-all hover:text-indigo-800 dark:hover:text-indigo-400 hover:underline"
+                  className="text-xs font-bold text-cyan-400 hover:underline"
                 >
-                  Gửi lại mã OTP
+                  Gửi lại mã mới
                 </button>
               </div>
             </div>
@@ -286,21 +309,35 @@ export function LoginLiveForm({ action, submitLabel = "Đăng nhập vào hệ t
         </div>
       )}
 
-      <label className="flex w-fit cursor-pointer items-center gap-3 mt-4">
-        <input className="h-6 w-6 rounded-lg border-slate-300 dark:border-slate-700 text-blue-600 dark:text-blue-500 focus:ring-blue-600 dark:focus:ring-blue-500" type="checkbox" />
-        <span className="text-base font-semibold text-slate-700 dark:text-slate-300">Giữ đăng nhập trong 30 ngày</span>
+      {/* Remember Me Checkbox */}
+      <label className="flex items-center gap-3 cursor-pointer pt-2">
+        <input 
+          type="checkbox" 
+          defaultChecked 
+          className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900" 
+        />
+        <span className="text-xs font-semibold text-slate-300">Ghi nhớ đăng nhập trên thiết bị này (30 ngày)</span>
       </label>
 
-      <button 
-        type="submit" 
+      {/* Main Submit Button */}
+      <button
+        type="submit"
         disabled={(loginMode === "otp" && !otpSent) || isPending}
-        className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.25rem] bg-gradient-to-r from-blue-600 to-indigo-700 py-5 font-black text-lg text-white shadow-xl shadow-blue-600/30 transition-all hover:-translate-y-1 hover:shadow-blue-600/50 hover:shadow-2xl disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none mt-8"
+        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 py-4 font-black text-sm text-white shadow-xl shadow-blue-600/25 transition-all hover:scale-[1.01] hover:shadow-blue-500/40 active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none mt-4"
       >
-        <span className="relative z-10 uppercase tracking-wider">{isPending ? "Đang xử lý..." : (loginMode === "otp" ? "Xác nhận & Đăng nhập" : submitLabel)}</span>
-        <span className="material-symbols-outlined relative z-10 text-[24px] font-bold transition-transform group-hover:translate-x-2">
-          arrow_forward
-        </span>
-        <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
+        {isPending ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <span>Đang xử lý đăng nhập...</span>
+          </>
+        ) : (
+          <>
+            <span className="uppercase tracking-wider">{loginMode === "otp" ? "Xác Nhận & Đăng Nhập" : submitLabel}</span>
+            <span className="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">
+              arrow_forward
+            </span>
+          </>
+        )}
       </button>
     </form>
   );

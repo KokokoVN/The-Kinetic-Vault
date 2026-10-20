@@ -8,7 +8,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table (name = "orders")
+@Table (name = "orders", indexes = {
+    @Index(name = "idx_orders_user_id", columnList = "user_id"),
+    @Index(name = "idx_orders_status", columnList = "status"),
+    @Index(name = "idx_orders_user_status_date", columnList = "user_id, status, ordered_date"),
+    @Index(name = "idx_orders_payment_status", columnList = "payment_status"),
+    @Index(name = "idx_orders_ordered_date", columnList = "ordered_date")
+})
 public class Order extends AuditableEntity {
 
     @Id
@@ -32,7 +38,8 @@ public class Order extends AuditableEntity {
     @Column(name = "payment_method", length = 32)
     private String paymentMethod;
 
-    @Column(name = "shipping_address", length = 500)
+    @javax.persistence.Convert(converter = com.rainbowforest.orderservice.security.OrderEncryptedStringConverter.class)
+    @Column(name = "shipping_address", length = 1000)
     private String shippingAddress;
 
     @Column(name = "mvd", unique = true, length = 32)
@@ -53,7 +60,7 @@ public class Order extends AuditableEntity {
     @Column (name = "total")
     private BigDecimal total;
 
-    @ManyToMany (cascade = CascadeType.ALL)
+    @ManyToMany (cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinTable (name = "order_items" , joinColumns = @JoinColumn(name = "order_id"), inverseJoinColumns = @JoinColumn (name = "item_id"))
     private List<Item> items;
 

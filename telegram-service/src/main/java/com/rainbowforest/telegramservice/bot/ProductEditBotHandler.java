@@ -8,16 +8,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class ProductEditBotHandler {
+    private static final Logger log = LoggerFactory.getLogger(ProductEditBotHandler.class);
 
     @Autowired
     private ProductClient productClient;
@@ -89,32 +90,48 @@ public class ProductEditBotHandler {
             }
         } else if (session.getState() == BotState.WAITING_FOR_VARIANT_INFO) {
             String[] parts = text.split(",");
-            if (parts.length != 4) {
-                bot.sendMessage(chatId, "Sai format. Vui lòng nhập lại (VD: L, Trắng, 200000, 50):");
+            if (parts.length != 3 && parts.length != 4) {
+                bot.sendMessage(chatId, "Sai format. Vui lòng nhập theo:\n- Cách 1: Tên biến thể, Giá, Số lượng (VD: Đỏ - Size XL, 200000, 50)\n- Cách 2: Kích thước, Màu sắc, Giá, Số lượng (VD: L, Trắng, 200000, 50)");
                 return;
             }
             try {
-                String size = parts[0].trim();
-                String color = parts[1].trim();
-                Double price = Double.parseDouble(parts[2].trim());
-                int quantity = Integer.parseInt(parts[3].trim());
-                
-                JsonNode existingVariants = productClient.getProductVariants(session.getTargetProductId());
-                if (existingVariants != null && existingVariants.isArray()) {
-                    for (JsonNode v : existingVariants) {
-                        String exSize = v.hasNonNull("size") ? v.get("size").asText() : "";
-                        String exColor = v.hasNonNull("color") ? v.get("color").asText() : "";
-                        if (exSize.equalsIgnoreCase(size) && exColor.equalsIgnoreCase(color)) {
-                            bot.sendMessage(chatId, "❌ Lỗi: Biến thể Kích thước '" + size + "' và Màu '" + color + "' đã tồn tại! Vui lòng nhập khác:");
-                            return;
-                        }
-                    }
-                }
-
                 ObjectMapper mapper = new ObjectMapper();
                 ObjectNode variant = mapper.createObjectNode();
-                variant.put("size", size);
-                variant.put("color", color);
+                Double price;
+                int quantity;
+
+                if (parts.length == 3) {
+                    String variantName = parts[0].trim();
+                    price = Double.parseDouble(parts[1].trim());
+                    quantity = Integer.parseInt(parts[2].trim());
+                    variant.put("variantName", variantName);
+                    
+                    if (variantName.contains(":") || variantName.contains("/")) {
+                        String[] segments = variantName.split("[/·•]");
+                        com.fasterxml.jackson.databind.node.ArrayNode attrsArray = mapper.createArrayNode();
+                        for (String seg : segments) {
+                            String[] kv = seg.split(":", 2);
+                            if (kv.length == 2 && !kv[0].trim().isEmpty() && !kv[1].trim().isEmpty()) {
+                                ObjectNode attrNode = mapper.createObjectNode();
+                                attrNode.put("name", kv[0].trim());
+                                attrNode.put("value", kv[1].trim());
+                                attrsArray.add(attrNode);
+                            }
+                        }
+                        if (attrsArray.size() > 0) {
+                            variant.put("attributesJson", mapper.writeValueAsString(attrsArray));
+                        }
+                    }
+                } else {
+                    String size = parts[0].trim();
+                    String color = parts[1].trim();
+                    price = Double.parseDouble(parts[2].trim());
+                    quantity = Integer.parseInt(parts[3].trim());
+                    variant.put("size", size);
+                    variant.put("color", color);
+                    variant.put("variantName", color + " / " + size);
+                }
+
                 variant.put("price", price);
                 variant.put("availability", quantity);
 
@@ -231,7 +248,7 @@ public class ProductEditBotHandler {
             Long id = Long.parseLong(data.substring("ADD_VARIANT_".length()));
             session.setState(BotState.WAITING_FOR_VARIANT_INFO);
             session.setTargetProductId(id);
-            bot.sendMessage(chatId, "Vui lòng nhập thông tin biến thể theo format:\nKích thước, Màu sắc, Giá biến thể, Số lượng\n\nVí dụ: L, Trắng, 200000, 50");
+            bot.sendMessage(chatId, "Vui lòng nhập thông tin biến thể theo format:\n- Cách 1: Tên biến thể, Giá, Số lượng (VD: Đỏ - Size XL, 200000, 50)\n- Cách 2: Kích thước, Màu sắc, Giá, Số lượng (VD: L, Trắng, 200000, 50)");
         } else if (data.startsWith("ADD_SPEC_")) {
             Long id = Long.parseLong(data.substring("ADD_SPEC_".length()));
             session.setState(BotState.WAITING_FOR_SPEC_INFO);
@@ -330,7 +347,7 @@ public class ProductEditBotHandler {
             message.setReplyMarkup(markup);
             bot.execute(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi lấy danh sách sản phẩm qua Telegram bot: ", e);
             bot.sendMessage(chatId, "Lỗi khi lấy danh sách sản phẩm: " + e.getClass().getName() + " - " + e.getMessage());
         }
     }
@@ -359,13 +376,12 @@ public class ProductEditBotHandler {
             if (variants != null && variants.isArray() && variants.size() > 0) {
                 sb.append("\n🌈 **Biến thể:**\n");
                 for (JsonNode v : variants) {
-                    String vColor = v.hasNonNull("color") ? v.get("color").asText() : "";
-                    String vSize = v.hasNonNull("size") ? v.get("size").asText() : "";
+                    String label = formatVariantDisplay(v);
                     String vPrice = v.hasNonNull("price") ? v.get("price").asText() + "đ" : "N/A";
                     String vAvail = v.hasNonNull("availability") ? v.get("availability").asText() : "0";
                     
                     String vId = v.hasNonNull("id") ? v.get("id").asText() : "?";
-                    sb.append("- [ID: ").append(vId).append("] ").append(vColor).append(" / ").append(vSize)
+                    sb.append("- [ID: ").append(vId).append("] ").append(label)
                       .append(" (").append(vPrice).append(" - Kho: ").append(vAvail).append(")\n");
                 }
             }
@@ -468,7 +484,7 @@ public class ProductEditBotHandler {
             message.setReplyMarkup(markup);
             bot.execute(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi lấy chi tiết sản phẩm qua Telegram bot: ", e);
             bot.sendMessage(chatId, "Lỗi khi lấy chi tiết sản phẩm: " + e.getMessage());
         }
     }
@@ -517,8 +533,48 @@ public class ProductEditBotHandler {
             bot.sendMessage(chatId, "✅ Cập nhật thành công!");
             sendProductDetails(chatId, id, bot);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Lỗi khi cập nhật sản phẩm qua Telegram bot: ", e);
             bot.sendMessage(chatId, "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
         }
+    }
+
+    private String formatVariantDisplay(JsonNode v) {
+        if (v == null) return "Mặc định";
+        if (v.hasNonNull("variantName") && !v.get("variantName").asText().trim().isEmpty()) {
+            return v.get("variantName").asText().trim();
+        }
+        if (v.hasNonNull("attributesJson") && !v.get("attributesJson").asText().trim().isEmpty()) {
+            String rawJson = v.get("attributesJson").asText().trim();
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode arrayNode = mapper.readTree(rawJson);
+                if (arrayNode.isArray() && arrayNode.size() > 0) {
+                    List<String> list = new ArrayList<>();
+                    for (JsonNode node : arrayNode) {
+                        String n = node.hasNonNull("name") ? node.get("name").asText() : "";
+                        String val = node.hasNonNull("value") ? node.get("value").asText() : "";
+                        if (!n.isEmpty() && !val.isEmpty()) {
+                            list.add(n + ": " + val);
+                        } else if (!val.isEmpty()) {
+                            list.add(val);
+                        }
+                    }
+                    if (!list.isEmpty()) {
+                        return String.join(" · ", list);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        String color = v.hasNonNull("color") ? v.get("color").asText() : "";
+        String size = v.hasNonNull("size") ? v.get("size").asText() : "";
+        if (!color.isEmpty() && !size.isEmpty()) {
+            return color + " / " + size;
+        } else if (!color.isEmpty()) {
+            return color;
+        } else if (!size.isEmpty()) {
+            return size;
+        }
+        return "Mặc định";
     }
 }

@@ -103,11 +103,17 @@ export function CategoryListFilters({ q, deleted, pageSize, page, sortBy, sortDi
 
   return (
     <>
-      <div className="grid gap-3.5 sm:gap-4 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 bg-white/60 dark:bg-slate-900/60 p-4 sm:p-5 shadow-sm md:grid-cols-2 xl:grid-cols-5 backdrop-blur-xl animate-in fade-in duration-200">
-        <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tìm kiếm</label>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+      {/* Luxury White Filter Panel with Ambient Styling */}
+      <div className="rounded-[2rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-5 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        
+        {/* Top Row: Search & Status Tabs */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          
+          {/* Live Search Input */}
+          <div className="relative flex-1 max-w-lg">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 text-[20px]">
+              search
+            </span>
             <input
               type="text"
               value={localQ}
@@ -116,101 +122,148 @@ export function CategoryListFilters({ q, deleted, pageSize, page, sortBy, sortDi
                 setLocalQ(v);
                 schedulePush(v);
               }}
-              placeholder="Tên, slug hoặc ID..."
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 pl-9 pr-3 py-2.5 text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-500/10 backdrop-blur-md"
+              placeholder="Tìm theo tên danh mục, slug hoặc ID..."
+              className="w-full rounded-2xl border border-slate-200/90 dark:border-white/10 bg-slate-50/80 dark:bg-zinc-900/80 pl-11 pr-10 py-3 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none transition-all focus:border-blue-500 dark:focus:border-cyan-400 focus:bg-white dark:focus:bg-zinc-900 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-cyan-500/20 shadow-xs"
             />
+            {localQ && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalQ("");
+                  pushNow({ q: "" });
+                }}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                title="Xóa tìm kiếm"
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+              </button>
+            )}
           </div>
-        </div>
-        
-        <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Lọc trạng thái</label>
-          <div className="relative">
-            <select
-              value={localDeleted}
-              onChange={(e) => {
-                const v = (e.target.value as "active" | "deleted" | "all") ?? "active";
-                setLocalDeleted(v);
-                pushNow({ deleted: v });
-              }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-3.5 py-2.5 pr-8 text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-500/10 backdrop-blur-md appearance-none"
-            >
-              <option value="active">Còn hoạt động</option>
-              <option value="deleted">Đã ẩn (Xóa mềm)</option>
-              <option value="all">Tất cả</option>
-            </select>
-            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">keyboard_arrow_down</span>
+
+          {/* Status Tabs: Segmented Pill Controller */}
+          <div className="flex items-center gap-1.5 rounded-2xl bg-slate-100/90 dark:bg-zinc-900/90 p-1.5 border border-slate-200/70 dark:border-white/5 self-start lg:self-auto">
+            {(
+              [
+                { id: "active", label: "Đang hoạt động", icon: "check_circle" },
+                { id: "deleted", label: "Thùng rác", icon: "delete" },
+                { id: "all", label: "Tất cả", icon: "apps" },
+              ] as const
+            ).map((tab) => {
+              const active = localDeleted === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setLocalDeleted(tab.id);
+                    pushNow({ deleted: tab.id });
+                  }}
+                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                    active
+                      ? tab.id === "deleted"
+                        ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-cyan-500 dark:to-blue-600 text-white shadow-md shadow-blue-500/20"
+                      : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Số dòng / trang</label>
-          <div className="relative">
-            <select
-              value={String(localPageSize)}
-              onChange={(e) => {
-                const n = clampPageSize(Number(e.target.value));
-                setLocalPageSize(n);
-                pushNow({ pageSize: String(n) });
-              }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-3.5 py-2.5 pr-8 text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-500/10 backdrop-blur-md appearance-none"
-            >
-              <option value="10">10 dòng/trang</option>
-              <option value="20">20 dòng/trang</option>
-              <option value="50">50 dòng/trang</option>
-              <option value="100">100 dòng/trang</option>
-            </select>
-            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">keyboard_arrow_down</span>
+        {/* Bottom Row: Secondary Filters (SortBy, SortDir, PageSize) */}
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          
+          {/* Sort By Field */}
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+              Sắp xếp theo
+            </label>
+            <div className="relative">
+              <select
+                value={localSortBy}
+                onChange={(e) => {
+                  const v = normalizeSortBy(e.target.value);
+                  setLocalSortBy(v);
+                  pushNow({ sortBy: v });
+                }}
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-zinc-900/80 px-3 py-2 pr-8 text-xs font-semibold text-slate-800 dark:text-zinc-200 outline-none transition-all focus:border-blue-500 dark:focus:border-cyan-400 appearance-none"
+              >
+                <option value="updatedAt">Mới cập nhật</option>
+                <option value="createdAt">Mới tạo nhất</option>
+                <option value="name">Tên danh mục</option>
+                <option value="id">ID danh mục</option>
+                <option value="slug">Đường dẫn slug</option>
+              </select>
+              <span className="material-symbols-outlined text-[18px] text-slate-400 dark:text-zinc-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sắp xếp theo</label>
-          <div className="relative">
-            <select
-              value={localSortBy}
-              onChange={(e) => {
-                const v = normalizeSortBy(e.target.value);
-                setLocalSortBy(v);
-                pushNow({ sortBy: v });
-              }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-3.5 py-2.5 pr-8 text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-500/10 backdrop-blur-md appearance-none"
-            >
-              <option value="updatedAt">Mới cập nhật</option>
-              <option value="createdAt">Mới tạo</option>
-              <option value="name">Tên danh mục</option>
-              <option value="id">ID</option>
-              <option value="slug">Slug</option>
-            </select>
-            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">keyboard_arrow_down</span>
+          {/* Sort Direction */}
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+              Thứ tự hiển thị
+            </label>
+            <div className="relative">
+              <select
+                value={localSortDir}
+                onChange={(e) => {
+                  const v = normalizeSortDir(e.target.value);
+                  setLocalSortDir(v);
+                  pushNow({ sortDir: v });
+                }}
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-zinc-900/80 px-3 py-2 pr-8 text-xs font-semibold text-slate-800 dark:text-zinc-200 outline-none transition-all focus:border-blue-500 dark:focus:border-cyan-400 appearance-none"
+              >
+                <option value="asc">Tăng dần (A-Z / Cũ trước)</option>
+                <option value="desc">Giảm dần (Z-A / Mới trước)</option>
+              </select>
+              <span className="material-symbols-outlined text-[18px] text-slate-400 dark:text-zinc-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Chiều sắp xếp</label>
-          <div className="relative">
-            <select
-              value={localSortDir}
-              onChange={(e) => {
-                const v = normalizeSortDir(e.target.value);
-                setLocalSortDir(v);
-                pushNow({ sortDir: v });
-              }}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 px-3.5 py-2.5 pr-8 text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-500/10 backdrop-blur-md appearance-none"
-            >
-              <option value="asc">Tăng dần (A-Z)</option>
-              <option value="desc">Giảm dần (Z-A)</option>
-            </select>
-            <span className="material-symbols-outlined text-[18px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">keyboard_arrow_down</span>
+          {/* Page Size */}
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+              Số lượng / trang
+            </label>
+            <div className="relative">
+              <select
+                value={String(localPageSize)}
+                onChange={(e) => {
+                  const n = clampPageSize(Number(e.target.value));
+                  setLocalPageSize(n);
+                  pushNow({ pageSize: String(n) });
+                }}
+                className="w-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-zinc-900/80 px-3 py-2 pr-8 text-xs font-semibold text-slate-800 dark:text-zinc-200 outline-none transition-all focus:border-blue-500 dark:focus:border-cyan-400 appearance-none"
+              >
+                <option value="10">10 danh mục / trang</option>
+                <option value="20">20 danh mục / trang</option>
+                <option value="50">50 danh mục / trang</option>
+                <option value="100">100 danh mục / trang</option>
+              </select>
+              <span className="material-symbols-outlined text-[18px] text-slate-400 dark:text-zinc-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
+              </span>
+            </div>
           </div>
+
         </div>
       </div>
       
-      <div className="mt-8">
+      {/* Dynamic Content Container */}
+      <div className="mt-6">
         {isPending ? (
-          <div className="overflow-hidden rounded-3xl border border-slate-200/60 dark:border-slate-800/60 bg-white/60 dark:bg-slate-900/60 shadow-xl shadow-blue-900/5 dark:shadow-none backdrop-blur-xl">
-            <div className="p-10 text-center text-slate-500 dark:text-slate-400">
-              <span className="material-symbols-outlined animate-spin text-4xl">sync</span>
-              <p className="mt-2 text-sm font-bold">Đang tải dữ liệu...</p>
+          <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/80 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+            <div className="p-16 text-center text-slate-500 dark:text-zinc-400">
+              <span className="material-symbols-outlined animate-spin text-4xl text-blue-600 dark:text-cyan-400">sync</span>
+              <p className="mt-3 text-sm font-bold text-slate-700 dark:text-zinc-300">Đang lọc danh mục sản phẩm...</p>
             </div>
           </div>
         ) : (

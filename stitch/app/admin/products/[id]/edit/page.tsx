@@ -3,13 +3,16 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { getUserIdFromAccessToken } from "@/lib/auth";
 import { getAdminSession } from "@/lib/auth-server";
-import { ProductMediaUploadSection } from "@/components/product-media-upload-section";
+import { ProductEditMediaManager } from "@/components/product-edit-media-manager";
+import { ProductEditTabContainer } from "@/components/product-edit-tab-container";
 import { ProductEditForm } from "@/components/product-edit-form";
 import { SpecEditFormLiveCheck } from "@/components/spec-edit-form-live-check";
 import { SpecFormLiveCheck } from "@/components/spec-form-live-check";
 import { SpecGroupCard } from "@/components/spec-group-card";
 import { VariantEditFormLiveCheck } from "@/components/variant-edit-form-live-check";
 import { VariantFormLiveCheck } from "@/components/variant-form-live-check";
+import { ProductEditVariantMatrixAdder } from "@/components/product-edit-variant-matrix-adder";
+import { ProductEditVariantList } from "@/components/product-edit-variant-list";
 import { StatusToast } from "@/components/status-toast";
 import { notifyAdminWebBestEffort } from "@/lib/admin-web-notify";
 import {
@@ -79,15 +82,24 @@ export default async function AdminEditProductPage({
   const session = await getAdminSession();
   if (!session.canMutateCatalog) redirect("/admin/products?error=readonly");
 
-  let product = await getAdminBackendProductById(String(id), { accessToken: session.token });
-  if (!product) product = await getBackendProductById(String(id));
-  if (!product) notFound();
+  const pid = String(id);
+  const numId = Number(pid);
+  if (!Number.isFinite(numId) || numId <= 0) notFound();
 
-  const [categories, allProducts, brands] = await Promise.all([
+  // Load all product data and related lookup entities in parallel for optimal SSR speed
+  const [productRaw, categories, allProducts, brands, specs, variants, galleryImages] = await Promise.all([
+    getAdminBackendProductById(pid, { accessToken: session.token }).then((p) => p || getBackendProductById(pid)),
     listAdminCategories({ deletionFilter: "active", accessToken: session.token }),
     getAdminProductsForUi({ accessToken: session.token, username: session.username }),
     listAdminBrands({ accessToken: session.token }),
+    listAdminProductSpecs(numId, { accessToken: session.token }),
+    listAdminProductVariants(numId, { accessToken: session.token }),
+    listAdminProductImages(numId, { accessToken: session.token }),
   ]);
+
+  if (!productRaw) notFound();
+  const product = productRaw;
+
   const activeCategoryOptions = activeCategories(categories);
   const categoryOptions = (() => {
     const cid = product.categoryId != null ? Number(product.categoryId) : null;
@@ -95,14 +107,6 @@ export default async function AdminEditProductPage({
     if (activeCategoryOptions.some((c) => c.id === cid)) return activeCategoryOptions;
     return [...activeCategoryOptions, { id: cid, name: `Danh mục #${cid} (không còn trong danh sách)`, deletedAt: null }];
   })();
-
-  const pid = String(product.id);
-  const numId = Number(pid);
-  const [specs, variants, galleryImages] = await Promise.all([
-    listAdminProductSpecs(numId, { accessToken: session.token }),
-    listAdminProductVariants(numId, { accessToken: session.token }),
-    listAdminProductImages(numId, { accessToken: session.token }),
-  ]);
 
   async function updateAction(formData: FormData) {
     "use server";
@@ -360,6 +364,11 @@ export default async function AdminEditProductPage({
     const size = String(formData.get("editSize") ?? "").trim();
     const color = String(formData.get("editColor") ?? "").trim();
     const price = Number(String(formData.get("editVariantPrice") ?? "").trim());
+    const variantName = String(formData.get("editVariantName") ?? "").trim() || undefined;
+    const sku = String(formData.get("editSku") ?? "").trim() || undefined;
+    const originalPriceRaw = String(formData.get("editOriginalPrice") ?? "").trim();
+    const originalPrice = originalPriceRaw !== "" && Number.isFinite(Number(originalPriceRaw)) ? Number(originalPriceRaw) : undefined;
+    const attributesJson = String(formData.get("editAttributesJson") ?? "").trim() || undefined;
     const preserveRaw = String(formData.get("variantAvailabilityPreserve") ?? "").trim();
     const availabilityParsed = preserveRaw === "" ? 0 : Math.max(0, Math.floor(Number(preserveRaw)));
     const availability = Number.isFinite(availabilityParsed) ? availabilityParsed : 0;
@@ -381,7 +390,7 @@ export default async function AdminEditProductPage({
       await updateAdminProductVariant(
         numId,
         variantId,
-        { size, color, variantImageUrl, price, availability, performedBy: session2.username ?? undefined },
+        { size, color, variantImageUrl, price, availability, variantName, sku, originalPrice, attributesJson, performedBy: session2.username ?? undefined },
         { accessToken: session2.token, username: session2.username, userId: getUserIdFromAccessToken(session2.token) },
       );
     } catch (err: any) {
@@ -424,376 +433,253 @@ export default async function AdminEditProductPage({
       {ok === "update" && (
         <StatusToast tone="success" title="Thành công" message="Cập nhật sản phẩm thành công." />
       )}
-      {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-5">
-        <div className="flex items-center gap-4">
-          <Link
-            prefetch
-            href="/admin/products"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm transition-all hover:scale-105 hover:border-indigo-200 dark:hover:border-indigo-500 hover:shadow-indigo-100 dark:hover:shadow-indigo-900/50"
-          >
-            <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[22px]">arrow_back</span>
-          </Link>
-          <div>
-            <h1 className="font-headline text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-indigo-700 to-violet-700 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 sm:text-3xl">
-              Chỉnh sửa sản phẩm
-            </h1>
-            <p className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono font-bold text-slate-600 dark:text-slate-300">#{pid}</span>
-              <span className="text-slate-300 dark:text-slate-600 dark:text-slate-300">•</span>
-              Tồn kho:
-              <Link
-                prefetch
-                href={`/admin/products/${encodeURIComponent(pid)}/detail#section-stock`}
-                className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                nhập kho
-              </Link>
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            prefetch
-            href={`/admin/products/${encodeURIComponent(pid)}/detail#section-stock`}
-            className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:scale-[1.02] hover:shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[16px]">inventory</span>
-            Nhập kho
-          </Link>
-          <Link
-            prefetch
-            href={`/admin/products/${encodeURIComponent(pid)}/detail`}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700 hover:scale-[1.02] hover:shadow-md"
-          >
-            <span className="material-symbols-outlined text-[16px]">visibility</span>
-            Xem chi tiết
-          </Link>
-        </div>
-      </div>
 
-      {/* ── Product info hero card ── */}
-      <div className="relative overflow-hidden rounded-[2rem] border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-xl shadow-slate-900/5 dark:shadow-none">
-        {/* Gradient top strip */}
-        <div className="h-0.5 w-full bg-gradient-to-r from-blue-400 via-indigo-500 to-violet-500" />
-        {/* Blur blobs */}
-        <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-indigo-500/5 blur-2xl" />
-        <div className="pointer-events-none absolute bottom-0 left-20 h-32 w-32 rounded-full bg-blue-500/5 blur-xl" />
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500">
+        <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          Tổng quan
+        </Link>
+        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+        <Link href="/admin/products" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          Sản phẩm
+        </Link>
+        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span className="text-slate-700 dark:text-slate-300 font-black truncate max-w-xs">
+          {product.productName} (#{pid})
+        </span>
+      </nav>
 
-        <div className="relative flex flex-wrap items-center gap-5 p-5 sm:p-6">
-          {/* Thumbnail */}
-          <div className="relative shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={heroImg}
-              alt=""
-              className="h-20 w-20 rounded-[16px] border border-slate-100 dark:border-slate-700 object-cover shadow-md ring-2 ring-white"
-            />
-            <div className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 ring-2 ring-white shadow-sm">
-              <span className="material-symbols-outlined text-[14px] text-white">inventory_2</span>
+      {/* ── Compact Header & Product Status Bar ── */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-4 sm:p-5 shadow-sm dark:shadow-xl backdrop-blur-2xl">
+        <div className="h-1 w-full absolute top-0 inset-x-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600" />
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <Link
+              prefetch
+              href="/admin/products"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-white/10 shadow-2xs transition-all hover:scale-105 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+              title="Quay lại danh sách sản phẩm"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </Link>
+
+            {/* Thumbnail */}
+            <div className="relative shrink-0 hidden sm:block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroImg}
+                alt=""
+                className="h-12 w-12 rounded-xl border border-slate-200 dark:border-slate-700 object-cover shadow-xs"
+              />
             </div>
-          </div>
 
-          {/* Info */}
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-headline text-xl font-black text-slate-900 dark:text-white">
-              {product.productName}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 ring-1 ring-slate-200/60">
-                <span className="material-symbols-outlined text-[13px]">barcode</span>
-                {product.sku ?? "Không có SKU"}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200/60">
-                <span className="material-symbols-outlined text-[13px]">inventory_2</span>
-                Tồn kho: {Number(product.availability ?? 0)}
-              </span>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold ring-1 ${
-                  isHidden
-                    ? "bg-amber-50 text-amber-700 ring-amber-200/60"
-                    : "bg-emerald-50 text-emerald-700 ring-emerald-200/60"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[13px]">
-                  {isHidden ? "visibility_off" : "public"}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-headline text-lg sm:text-xl font-black text-slate-900 dark:text-white truncate max-w-md">
+                  {product.productName}
+                </h1>
+                <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                  #{pid}
                 </span>
-                {isHidden ? "Đang ẩn" : "Hiển thị"}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-1.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200/60">
-                <span className="material-symbols-outlined text-[13px]">payments</span>
-                {moneyVnd(priceDisplay)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    isHidden
+                      ? "bg-amber-50 text-amber-700 border border-amber-200/60"
+                      : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[11px]">
+                    {isHidden ? "visibility_off" : "public"}
+                  </span>
+                  {isHidden ? "Đang ẩn" : "Hiển thị"}
+                </span>
+              </div>
 
-
-      <ProductEditForm
-        product={product}
-        categoryOptions={categoryOptions}
-        brands={brands}
-        allProducts={allProducts}
-        action={updateAction}
-      />
-
-      {/* ─── Media Upload ─── */}
-      <section className="rounded-[2rem] border border-outline-variant/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 dark:shadow-none sm:p-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="relative z-10 mb-8">
-          <h2 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-            <span className="material-symbols-outlined text-indigo-500 text-3xl">perm_media</span>
-            Ảnh / Video sản phẩm
-          </h2>
-          <p className="mt-2 text-[13px] text-slate-500 font-medium">
-            Hiện có <span className="font-bold text-indigo-600">{imageRows.length}</span> phương tiện. Ảnh và video được tải riêng, mỗi lần upload có hiệu ứng tiến trình.
-          </p>
-        </div>
-
-        {/* Current gallery */}
-        {imageRows.length > 0 ? (
-          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 relative z-10 mb-8">
-            {imageRows.map((img) => {
-              const isVideo = isVideoUrl(img.displayUrl);
-              return (
-                <article key={img.id} className="group relative overflow-hidden rounded-[1.5rem] border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500 flex flex-col justify-between">
-                  <div className="flex items-center justify-center bg-slate-900 p-0 relative aspect-square overflow-hidden">
-                    {isVideo ? (
-                      <video src={img.displayUrl} className="h-full w-full object-contain bg-black/90 transition-transform duration-700 group-hover:scale-105" muted playsInline controls />
-                    ) : (
-                      <img src={img.displayUrl} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    )}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
-                      {img.primaryImage && (
-                        <div className="backdrop-blur-md bg-white/90 dark:bg-slate-900/90 shadow-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-indigo-600 ring-1 ring-indigo-500/20">
-                          <span className="material-symbols-outlined text-[12px] fill-current">star</span>
-                          <span className="text-[9px] font-black uppercase tracking-wider">Ảnh chính</span>
-                        </div>
-                      )}
-                      <div className="backdrop-blur-md bg-black/40 text-white shadow-sm px-2.5 py-1 rounded-full flex items-center gap-1 ring-1 ring-white/10">
-                        <span className="material-symbols-outlined text-[12px]">{isVideo ? 'movie' : 'image'}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider">{isVideo ? 'Video' : 'Ảnh'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3 p-4 bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-800/80">
-                    <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                      <span className="font-mono bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md">#{img.id}</span>
-                    </div>
-                    <p className="truncate text-xs text-slate-400 font-medium" title={img.storagePath ?? ""}>{img.storagePath}</p>
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                      {!img.primaryImage && !isVideo ? (
-                        <form action={setPrimaryImageAction} className="flex-1">
-                          <input type="hidden" name="imageId" value={String(img.id)} />
-                          <button type="submit" className="w-full rounded-xl bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors">Đặt làm chính</button>
-                        </form>
-                      ) : null}
-                      <form action={deleteImageAction} className="flex-1">
-                        <input type="hidden" name="imageId" value={String(img.id)} />
-                        <button type="submit" className="w-full rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors">Xóa</button>
-                      </form>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {/* Upload panels – client-side XHR with progress */}
-        <div className="relative z-10">
-          <ProductMediaUploadSection
-            productId={numId}
-            onUploadComplete={async () => {
-              "use server";
-              revalidatePath(`/admin/products/${encodeURIComponent(pid)}/edit`);
-              revalidatePath(`/admin/products/${encodeURIComponent(pid)}/detail`);
-              revalidatePath("/admin/products");
-            }}
-          />
-        </div>
-      </section>
-
-      <div className="flex w-full max-w-none flex-col gap-10">
-        {(() => {
-          const existingGroups = Array.from(new Set(specs.map(s => s.specGroup?.trim()).filter(Boolean))) as string[];
-          return (
-            <section className="w-full rounded-2xl border border-outline-variant/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-headline text-lg font-black text-blue-900 dark:text-white">Thông số kỹ thuật</h2>
-              <p className="mt-1 max-w-3xl text-sm text-slate-500 dark:text-slate-400">
-                Mỗi thông số một hàng toàn ngang; form chỉnh sửa xếp theo lưới ngang (khóa | giá trị | đơn vị/thứ tự). Khóa không trùng.
-              </p>
-            </div>
-            <p className="text-xs font-semibold text-slate-500">{specs.length} thông số</p>
-          </div>
-          {specs.length > 0 ? (
-            <div className="mt-5 max-h-[min(60vh,48rem)] overflow-y-auto pr-2 custom-scrollbar">
-              <div className="flex w-full flex-col gap-8">
-                {Object.entries(
-                  specs.reduce((acc, spec) => {
-                    const group = spec.specGroup?.trim() || "Chung";
-                    if (!acc[group]) acc[group] = [];
-                    acc[group].push(spec);
-                    return acc;
-                  }, {} as Record<string, typeof specs>)
-                ).map(([groupName, groupSpecs]) => (
-                  <SpecGroupCard
-                    key={groupName}
-                    groupName={groupName}
-                    groupSpecs={groupSpecs}
-                    allSpecs={specs}
-                    existingGroups={existingGroups}
-                    deleteSpecAction={deleteSpecAction}
-                    updateSpecAction={updateSpecAction}
-                  />
-                ))}
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                {product.sku && (
+                  <span className="font-mono font-bold text-slate-700 dark:text-zinc-300">
+                    SKU: {product.sku}
+                  </span>
+                )}
+                <span>·</span>
+                <span>Giá: <strong className="text-violet-600 dark:text-violet-400">{moneyVnd(priceDisplay)}</strong></span>
+                <span>·</span>
+                <span>Tồn kho: <strong className="text-blue-600 dark:text-blue-400">{Number(product.availability ?? 0)}</strong></span>
               </div>
             </div>
-          ) : (
-            <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 px-4 py-8 text-center text-sm font-semibold text-slate-500">
-              Chưa có thông số kỹ thuật nào.
-            </p>
-          )}
-
-          <div className="mt-8 rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 shadow-inner sm:p-8">
-            <h3 className="font-headline text-lg font-black uppercase tracking-wider text-indigo-900 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-indigo-600">add_circle</span>
-              Thêm thông số mới
-            </h3>
-            <p className="mt-1 mb-6 text-sm font-medium text-slate-500">Khóa phải duy nhất và chưa tồn tại trong danh sách phía trên.</p>
-            <SpecFormLiveCheck action={addSpecAction} fieldClass={fieldClass} existingSpecs={specs.map((s) => ({ specKey: String(s.specKey ?? "") }))} existingGroups={existingGroups} />
           </div>
-        </section>
-        );
-        })()}
 
-        <section className="w-full rounded-[2rem] border border-outline-variant/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 dark:shadow-none sm:p-10 relative overflow-hidden">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-8">
-            <div>
-              <h2 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-                <span className="material-symbols-outlined text-indigo-500 text-3xl">style</span>
-                Biến thể (size / màu)
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm font-medium text-slate-500">
-                Quản lý các lựa chọn của khách hàng. Mỗi biến thể có thể có ảnh riêng, giá riêng và tồn kho độc lập.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-sm ring-1 ring-indigo-500/20 shadow-sm">
-              <span className="material-symbols-outlined text-[18px]">view_list</span>
-              {variants.length} biến thể
-            </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Link
+              prefetch
+              href={`/admin/products/${encodeURIComponent(pid)}/detail#section-stock`}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition-all shadow-2xs hover:scale-[1.02]"
+            >
+              <span className="material-symbols-outlined text-[15px]">warehouse</span>
+              <span>Nhập kho</span>
+            </Link>
+            <Link
+              prefetch
+              href={`/admin/products/${encodeURIComponent(pid)}/detail`}
+              className="flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200/80 dark:border-white/10 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all shadow-2xs hover:scale-[1.02]"
+            >
+              <span className="material-symbols-outlined text-[15px]">visibility</span>
+              <span>Chi tiết</span>
+            </Link>
           </div>
-          {variants.length > 0 ? (
-            <div className="mt-6 max-h-[min(70vh,52rem)] overflow-y-auto pr-2 custom-scrollbar">
-              <ul className="flex w-full flex-col gap-5">
-                {variants.map((v) => {
-                  const variantPriceNum = Number(v.price);
-                  const safePrice = Number.isFinite(variantPriceNum) && variantPriceNum >= 1 ? Math.round(variantPriceNum) : 1;
-                  const variantThumb = v.variantImageUrl?.trim()
-                    ? resolveCatalogImageUrl(v.variantImageUrl)
-                    : null;
-                  return (
-                    <li key={v.id} className="min-w-0 w-full group/card">
-                      <article className="flex w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-200 dark:hover:border-indigo-500 hover:-translate-y-1">
-                        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50">
-                          <div className="relative mx-auto shrink-0 sm:mx-0">
-                            {variantThumb ? (
-                              <a
-                                href={variantThumb}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="block relative overflow-hidden rounded-2xl border-2 border-slate-100 dark:border-slate-700 shadow-sm"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={variantThumb}
-                                  alt={`${v.size} ${v.color}`}
-                                  className="h-28 w-28 object-cover transition-transform duration-500 hover:scale-110 sm:h-32 sm:w-32"
-                                />
-                              </a>
-                            ) : (
-                              <div className="flex h-28 w-28 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 sm:h-32 sm:w-32">
-                                <span className="material-symbols-outlined text-3xl opacity-50">image_not_supported</span>
-                                <span className="text-[10px] font-bold">Chưa có ảnh</span>
-                              </div>
-                            )}
-                            <span className="absolute -bottom-2 -right-2 rounded-xl bg-indigo-600 px-2.5 py-1 font-mono text-[11px] font-black tracking-widest text-white shadow-lg ring-2 ring-white">
-                              #{v.id}
-                            </span>
-                          </div>
-                          <div className="min-w-0 flex-1 text-center sm:text-left">
-                            <p className="font-headline text-2xl font-black leading-tight text-slate-800 dark:text-slate-100 transition-colors group-hover/card:text-indigo-700">
-                              <span className="text-indigo-900">{v.size}</span>
-                              <span className="mx-3 font-light text-slate-300">|</span>
-                              <span className="">{v.color}</span>
-                            </p>
-                            <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
-                              <span className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-sm ring-1 ring-slate-200/80">
-                                <span className="material-symbols-outlined text-[18px] text-emerald-500">payments</span>
-                                {v.price != null ? moneyVnd(Number(v.price)) : "—"}
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-4 py-2.5 text-sm font-bold text-indigo-800 shadow-sm ring-1 ring-indigo-500/20">
-                                <span className="material-symbols-outlined text-[18px] text-indigo-500">inventory_2</span>
-                                Tồn kho: {v.availability ?? 0}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4 sm:flex-row sm:items-center sm:p-5">
-                          <div className="flex-1 min-w-0">
-                            <VariantEditFormLiveCheck
-                              action={updateVariantAction}
-                              variantId={v.id}
-                              defaultSize={String(v.size ?? "")}
-                              defaultColor={String(v.color ?? "")}
-                              defaultPrice={safePrice}
-                              defaultVariantImageUrl={String(v.variantImageUrl ?? "")}
-                              availabilityPreserve={Number(v.availability ?? 0)}
-                              otherVariants={variants.filter((x) => x.id !== v.id).map((x) => ({ size: String(x.size ?? ""), color: String(x.color ?? "") }))}
-                              inputClassName={variantEditInputClass}
-                            />
-                          </div>
-                          <form action={deleteVariantAction} className="shrink-0 w-full sm:w-auto">
-                            <input type="hidden" name="variantId" value={String(v.id)} />
-                            <button
-                              type="submit"
-                              className="h-[52px] w-full sm:w-auto px-6 rounded-2xl border border-rose-200 bg-white dark:bg-slate-900 text-rose-600 shadow-sm transition-all hover:bg-rose-50 hover:border-rose-300 hover:shadow-md flex items-center justify-center gap-2 font-bold text-sm"
-                            >
-                              <span className="material-symbols-outlined text-[20px]">delete</span>
-                              Xóa biến thể
-                            </button>
-                          </form>
-                        </div>
-                      </article>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : (
-            <div className="mt-6 flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[1.5rem] bg-slate-50/50 dark:bg-slate-800/50">
-              <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_size</span>
-              <p className="text-sm font-bold text-slate-400">Chưa có biến thể nào được tạo.</p>
-            </div>
-          )}
- 
-          <div className="mt-8 rounded-[2rem] border border-blue-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 shadow-inner sm:p-8">
-            <h3 className="font-headline text-lg font-black uppercase tracking-wider text-indigo-900 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-indigo-600">add_box</span>
-              Thêm biến thể mới
-            </h3>
-            <p className="mt-1 mb-6 text-sm font-medium text-slate-500">Điền kích thước, màu sắc và giá. Có thể tải ảnh riêng cho biến thể (hỗ trợ xem trước).</p>
-            <VariantFormLiveCheck
-              action={addVariantAction}
-              fieldClass={fieldClass}
-              existingVariants={variants.map((v) => ({ size: String(v.size ?? ""), color: String(v.color ?? "") }))}
-              defaultPrice={priceDisplay}
+        </div>
+      </div>
+
+      {/* ── Compact Tabbed Sections ── */}
+      <ProductEditTabContainer
+        mediaCount={galleryImages.length}
+        specsCount={specs.length}
+        variantsCount={variants.length}
+      >
+        {{
+          basic: (
+            <ProductEditForm
+              product={product}
+              categoryOptions={categoryOptions}
+              brands={brands}
+              allProducts={allProducts}
+              action={updateAction}
             />
-          </div>
-        </section>
+          ),
+          media: (
+            <section className="rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-8 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
+              <ProductEditMediaManager
+                productId={numId}
+                mediaList={imageRows}
+                setPrimaryImageAction={setPrimaryImageAction}
+                deleteImageAction={deleteImageAction}
+                onUploadComplete={async () => {
+                  "use server";
+                  revalidatePath(`/admin/products/${encodeURIComponent(pid)}/edit`);
+                  revalidatePath(`/admin/products/${encodeURIComponent(pid)}/detail`);
+                  revalidatePath("/admin/products");
+                }}
+              />
+            </section>
+          ),
+          specs: (() => {
+            const existingGroups = Array.from(new Set(specs.map(s => s.specGroup?.trim()).filter(Boolean))) as string[];
+            return (
+              <section className="w-full rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="font-headline text-lg font-black text-blue-900 dark:text-white flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-500 text-2xl">settings</span>
+                      <span>Thông số kỹ thuật</span>
+                    </h2>
+                    <p className="mt-1 max-w-3xl text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                      Mỗi thông số một hàng ngang, phân theo nhóm linh kiện hoặc thông số chung. Khóa không trùng lặp.
+                    </p>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500">{specs.length} thông số</p>
+                </div>
+                {specs.length > 0 ? (
+                  <div className="mt-5 max-h-[min(60vh,48rem)] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="flex w-full flex-col gap-8">
+                      {Object.entries(
+                        specs.reduce((acc, spec) => {
+                          const group = spec.specGroup?.trim() || "Chung";
+                          if (!acc[group]) acc[group] = [];
+                          acc[group].push(spec);
+                          return acc;
+                        }, {} as Record<string, typeof specs>)
+                      ).map(([groupName, groupSpecs]) => (
+                        <SpecGroupCard
+                          key={groupName}
+                          groupName={groupName}
+                          groupSpecs={groupSpecs}
+                          allSpecs={specs}
+                          existingGroups={existingGroups}
+                          deleteSpecAction={deleteSpecAction}
+                          updateSpecAction={updateSpecAction}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 px-4 py-8 text-center text-sm font-semibold text-slate-500">
+                    Chưa có thông số kỹ thuật nào.
+                  </p>
+                )}
+
+                <div className="mt-8 rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 shadow-inner sm:p-8">
+                  <h3 className="font-headline text-lg font-black uppercase tracking-wider text-indigo-900 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px] text-indigo-600">add_circle</span>
+                    Thêm thông số mới
+                  </h3>
+                  <p className="mt-1 mb-6 text-sm font-medium text-slate-500">Khóa phải duy nhất và chưa tồn tại trong danh sách phía trên.</p>
+                  <SpecFormLiveCheck action={addSpecAction} fieldClass={fieldClass} existingSpecs={specs.map((s) => ({ specKey: String(s.specKey ?? "") }))} existingGroups={existingGroups} />
+                </div>
+              </section>
+            );
+          })(),
+          variants: (
+            <section className="w-full rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden">
+              <ProductEditVariantList
+                variants={variants}
+                pid={pid}
+                numId={numId}
+                updateVariantAction={updateVariantAction}
+                deleteVariantAction={deleteVariantAction}
+                variantEditInputClass={variantEditInputClass}
+              />
+            </section>
+          ),
+          matrix: (
+            <section className="w-full rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden">
+              <div className="mb-6">
+                <h2 className="font-headline text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-500 text-2xl">grid_on</span>
+                  <span>Tạo / Mở rộng ma trận biến thể</span>
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Thêm hoặc cấu hình thuộc tính đa tầng (Màu sắc, Kích cỡ, Cấu hình RAM/Ổ cứng...). Biến thể cũ sẽ được tự động bảo toàn ID và tồn kho.
+                </p>
+              </div>
+              <ProductEditVariantMatrixAdder
+                productId={numId}
+                productSku={product.sku || "SP"}
+                defaultPrice={priceDisplay}
+                fieldClass={fieldClass}
+                existingVariants={variants.map((v) => ({ size: String(v.size ?? ""), color: String(v.color ?? "") }))}
+                rawVariants={variants}
+                singleAddAction={addVariantAction}
+              />
+            </section>
+          ),
+        }}
+      </ProductEditTabContainer>
+
+      {/* ── Floating Quick Action Pill ── */}
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl">
+        <Link
+          href={`/admin/products/${encodeURIComponent(pid)}/detail`}
+          className="flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[16px]">visibility</span>
+          <span className="hidden sm:inline">Xem chi tiết</span>
+        </Link>
+        <Link
+          href={`/admin/products/${encodeURIComponent(pid)}/detail#section-stock`}
+          className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[16px]">warehouse</span>
+          <span className="hidden sm:inline">Nhập kho</span>
+        </Link>
+        <a
+          href="#section-matrix"
+          className="flex items-center gap-1.5 rounded-full bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-indigo-500 shadow-md shadow-indigo-500/25 transition-all"
+        >
+          <span className="material-symbols-outlined text-[16px]">grid_on</span>
+          <span>+ Ma trận</span>
+        </a>
       </div>
     </div>
   );

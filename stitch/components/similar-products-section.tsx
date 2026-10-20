@@ -12,21 +12,15 @@ type Props = {
   activePrograms?: SaleProgram[];
 };
 
-function asCurrency(value: number): string {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
-}
-
 function SkeletonCard() {
   return (
-    <div
-      className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
-    >
-      <div className="animate-pulse">
-        <div className="bg-slate-200 dark:bg-slate-800" style={{ aspectRatio: "1/1" }} />
-        <div className="space-y-2 p-4">
-          <div className="h-3 rounded-full bg-slate-300 dark:bg-slate-700" style={{ width: "70%" }} />
-          <div className="h-3 rounded-full bg-slate-300 dark:bg-slate-700" style={{ width: "50%" }} />
-          <div className="h-5 rounded-full bg-indigo-105 dark:bg-indigo-950/40" style={{ width: "60%" }} />
+    <div className="overflow-hidden rounded-[2rem] border border-slate-200/60 dark:border-white/[0.06] bg-slate-100/60 dark:bg-slate-900/40 p-4">
+      <div className="animate-pulse space-y-4">
+        <div className="rounded-2xl bg-slate-200 dark:bg-slate-800" style={{ aspectRatio: "1/1" }} />
+        <div className="space-y-2">
+          <div className="h-3.5 rounded-full bg-slate-200 dark:bg-slate-800" style={{ width: "75%" }} />
+          <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-800" style={{ width: "50%" }} />
+          <div className="h-5 rounded-full bg-indigo-500/20" style={{ width: "60%" }} />
         </div>
       </div>
     </div>
@@ -39,35 +33,34 @@ export function SimilarProductsSection({ productId, limit = 8, activePrograms = 
   return (
     <>
       <style>{`
-        @keyframes shimmer { from{background-position:-200% 0} to{background-position:200% 0} }
-        @keyframes fadeUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        .sim-card { animation: fadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .sim-card { animation: fadeUp .45s cubic-bezier(.22,1,.36,1) both; }
       `}</style>
 
-      <section className="mt-20 mb-12">
+      <section className="relative mt-20 mb-12">
         {/* Section header */}
-        <div className="mb-8 flex items-end justify-between">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="mb-1 text-xs font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-400">
-              Có thể bạn thích
-            </p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white tracking-tight"
-            >
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+              <span>Gợi ý cho bạn</span>
+            </div>
+            <h2 className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               Sản phẩm tương tự
             </h2>
           </div>
           <Link
             href="/"
-            className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-indigo-650 dark:text-indigo-400 border border-indigo-200 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all"
+            className="group inline-flex items-center gap-2 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 backdrop-blur hover:border-indigo-500/50 hover:bg-indigo-500/5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
           >
-            Xem thêm
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            <span>Khám phá thêm</span>
+            <span className="material-symbols-outlined text-sm transition-transform duration-200 group-hover:translate-x-1">arrow_forward</span>
           </Link>
         </div>
 
         {/* Loading skeletons */}
         {loading && (
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -76,21 +69,21 @@ export function SimilarProductsSection({ productId, limit = 8, activePrograms = 
 
         {/* Error state */}
         {!loading && error && (
-          <div className="flex flex-col items-center justify-center rounded-2xl py-12 bg-rose-50/20 dark:bg-rose-950/10 border border-dashed border-rose-200 dark:border-rose-900/40"
-          >
-            <span className="material-symbols-outlined text-4xl text-rose-500/40 dark:text-rose-500/30">error_outline</span>
-            <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-              Không thể tải sản phẩm gợi ý lúc này.
+          <div className="flex flex-col items-center justify-center rounded-3xl py-12 bg-rose-50/30 dark:bg-rose-950/10 border border-dashed border-rose-200 dark:border-rose-900/40 text-center">
+            <span className="material-symbols-outlined text-4xl text-rose-400">error_outline</span>
+            <p className="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
+              Không thể tải gợi ý sản phẩm lúc này.
             </p>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && !error && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-2xl py-12 bg-indigo-50/20 dark:bg-indigo-950/10 border border-dashed border-indigo-200 dark:border-indigo-900/40"
-          >
-            <span className="material-symbols-outlined text-5xl text-indigo-400/30 dark:text-indigo-400/20">search_off</span>
-            <p className="mt-3 text-sm font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col items-center justify-center rounded-3xl py-14 bg-indigo-500/[0.02] border border-dashed border-slate-200 dark:border-white/10 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
+              <span className="material-symbols-outlined text-3xl">search_off</span>
+            </div>
+            <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-400">
               Hiện chưa có gợi ý tương tự cho sản phẩm này.
             </p>
           </div>
@@ -98,7 +91,7 @@ export function SimilarProductsSection({ productId, limit = 8, activePrograms = 
 
         {/* Product grid */}
         {!loading && items.length > 0 && (
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
             {items.map((item, idx) => {
               let finalPrice = item.rawPrice ?? item.price ?? 0;
               let isSale = false;
@@ -163,3 +156,4 @@ export function SimilarProductsSection({ productId, limit = 8, activePrograms = 
     </>
   );
 }
+

@@ -14,6 +14,10 @@ public interface SaleProgramRepository extends JpaRepository<SaleProgram, Long> 
 
     List<SaleProgram> findByActiveTrue();
 
-    @Query("SELECT sp FROM SaleProgram sp WHERE sp.active = true AND sp.startAt <= :now AND sp.endAt >= :now")
+    /**
+     * Tìm các chương trình đang active và trong khoảng thời gian hiệu lực.
+     * Dùng JOIN FETCH items để tránh N+1 query khi serialize cache.
+     */
+    @Query("SELECT DISTINCT sp FROM SaleProgram sp LEFT JOIN FETCH sp.items WHERE sp.active = true AND sp.startAt <= :now AND sp.endAt >= :now")
     List<SaleProgram> findCurrentlyActive(@Param("now") LocalDateTime now);
 }

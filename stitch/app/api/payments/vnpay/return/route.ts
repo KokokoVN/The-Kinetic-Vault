@@ -27,15 +27,15 @@ function hmacSha512Hex(secret: string, data: string): string {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const next = (url.searchParams.get("next") ?? "/checkout").trim() || "/checkout";
+  const next = (url.searchParams.get("next") ?? "/checkout/success").trim() || "/checkout/success";
   const secureHash = (url.searchParams.get("vnp_SecureHash") ?? "").trim();
   if (!secureHash) {
-    return NextResponse.redirect(new URL(`${next}?payment=failed&reason=missing_hash`, url.origin));
+    return NextResponse.redirect(new URL("/checkout?payment=failed&reason=missing_hash", url.origin));
   }
 
   const hashSecret = (process.env.VNP_HASH_SECRET ?? "").trim();
   if (!hashSecret) {
-    return NextResponse.redirect(new URL(`${next}?payment=failed&reason=missing_secret`, url.origin));
+    return NextResponse.redirect(new URL("/checkout?payment=failed&reason=missing_secret", url.origin));
   }
 
   const sorted = sortQuery(url.searchParams);
@@ -88,7 +88,8 @@ export async function GET(req: Request) {
   if (txnRef) q.set("vnp_TxnRef", txnRef);
   if (orderId != null) q.set("orderId", String(orderId));
   if (orderNumber) q.set("orderNumber", orderNumber);
-  const res = NextResponse.redirect(new URL(`${next}?${q.toString()}`, url.origin));
+  const targetPath = ok ? next : "/checkout";
+  const res = NextResponse.redirect(new URL(`${targetPath}?${q.toString()}`, url.origin));
   res.cookies.delete("vnpayTxnRef");
   res.cookies.delete("vnpayPaymentId");
   res.cookies.delete("vnpayOrderId");

@@ -57,7 +57,7 @@ export function ChangeEmailForm({
         setLoading(true);
         const ok = await requestEmailOtp(userId, currentEmail, accessToken, currentEmail);
         if (!cancelled) {
-          setMessage(ok ? "OTP đã được gửi về Gmail hiện tại" : "Không gửi được OTP ban đầu");
+          setMessage(ok ? "Mã OTP đã được gửi về Gmail hiện tại của bạn." : "Không gửi được OTP ban đầu");
         }
       } catch {
         if (!cancelled) {
@@ -176,7 +176,7 @@ export function ChangeEmailForm({
 
   async function handleVerifyOldOtp() {
     if (oldOtpCode.length !== 8) {
-      setMessage("Vui lòng nhập đủ OTP Gmail hiện tại");
+      setMessage("Vui lòng nhập đủ 8 chữ số OTP Gmail hiện tại");
       return;
     }
 
@@ -184,12 +184,12 @@ export function ChangeEmailForm({
     try {
       const ok = await verifyEmailOtp(userId, currentEmail, oldOtpCode, accessToken);
       if (!ok) {
-        setMessage("OTP hiện tại không đúng hoặc đã bị huỷ. Vui lòng gửi lại.");
-        setOldOtp(Array(8).fill("")); // Clear OTP after 1 failed attempt
+        setMessage("Mã OTP không hợp lệ hoặc đã hết hạn.");
+        setOldOtp(Array(8).fill(""));
         return;
       }
       setStep("newEmail");
-      setMessage("Xác thực thành công. Vui lòng nhập Gmail mới.");
+      setMessage("Xác thực Gmail cũ thành công. Vui lòng nhập Gmail mới.");
     } catch {
       setMessage("Không thể xác thực OTP hiện tại");
     } finally {
@@ -205,7 +205,7 @@ export function ChangeEmailForm({
         return;
       }
       if (!email.includes("@")) {
-        setEmailError("Gmail không hợp lệ.");
+        setEmailError("Địa chỉ Gmail không hợp lệ.");
         return;
       }
       if (email.trim() === currentEmail) {
@@ -227,7 +227,6 @@ export function ChangeEmailForm({
   }, [email, currentEmail, accessToken, step]);
 
   async function handleEmailBlur() {
-    // Rely on auto-check useEffect instead, but keep this to trigger immediately on blur
     if (!email.trim() || !email.includes("@") || email.trim() === currentEmail) return;
     try {
       const emailExists = await checkEmailExists(email.trim(), accessToken);
@@ -241,7 +240,7 @@ export function ChangeEmailForm({
   async function handleSendOtp() {
     if (loading) return;
     if (!email.trim()) {
-      setMessage("Vui lòng nhập Gmail mới");
+      setMessage("Vui lòng nhập địa chỉ Gmail mới");
       return;
     }
 
@@ -265,13 +264,13 @@ export function ChangeEmailForm({
 
       const ok = await requestEmailOtp(userId, email.trim(), accessToken, currentEmail);
       if (!ok) {
-        setMessage("Không gửi được OTP");
+        setMessage("Không gửi được OTP tới Gmail mới");
         return;
       }
       setConfirmedNewEmail(email.trim().toLowerCase());
       setStep("newOtp");
       setCooldown(60);
-      setMessage(`OTP đã được gửi tới ${email.trim().toLowerCase()}`);
+      setMessage(`Đã gửi OTP 8 chữ số tới ${email.trim().toLowerCase()}`);
     } catch {
       setMessage("Không gửi được OTP");
     } finally {
@@ -312,7 +311,7 @@ export function ChangeEmailForm({
 
   async function handleVerify() {
     if (newOtpCode.length !== 8) {
-      setMessage("Vui lòng nhập đủ 8 số OTP");
+      setMessage("Vui lòng nhập đủ 8 chữ số OTP");
       return;
     }
 
@@ -320,77 +319,99 @@ export function ChangeEmailForm({
     try {
       const ok = await confirmEmailChange(userId, confirmedNewEmail || email, newOtpCode, accessToken);
       if (!ok) {
-        setMessage("OTP mới không đúng hoặc đã bị huỷ. Vui lòng gửi lại.");
-        setNewOtp(Array(8).fill("")); // Clear OTP after 1 failed attempt
+        setMessage("Mã OTP mới không đúng hoặc đã hết hạn.");
+        setNewOtp(Array(8).fill(""));
         return;
       }
 
-      setMessage("Đổi Gmail thành công");
+      setMessage("Đổi Gmail thành công!");
       onSuccess?.((confirmedNewEmail || email).trim());
     } catch {
-      setMessage("Có lỗi xảy ra");
+      setMessage("Có lỗi xảy ra khi xác thực Gmail mới");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-6 pt-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
-            Security
-          </p>
-
-          <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white sm:text-[28px]">
-            Thay đổi Gmail
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Nhập 8 số OTP, bạn có thể dán cả mã vào ô đầu tiên.
-          </p>
+    <div className="space-y-6">
+      {/* Steps Indicator */}
+      <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-zinc-900/80 p-2 text-xs font-bold text-center">
+        <div className={`py-2 rounded-lg transition-all ${step === "oldOtp" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-zinc-400 opacity-60"}`}>
+          1. OTP Gmail cũ
+        </div>
+        <div className={`py-2 rounded-lg transition-all ${step === "newEmail" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-zinc-400 opacity-60"}`}>
+          2. Gmail mới
+        </div>
+        <div className={`py-2 rounded-lg transition-all ${step === "newOtp" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-zinc-400 opacity-60"}`}>
+          3. OTP Gmail mới
         </div>
       </div>
 
       {step === "oldOtp" && (
-        <div className="space-y-5">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Nhập OTP gửi tới Gmail hiện tại
-          </p>
+        <div className="space-y-5 animate-in fade-in duration-300">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-3 block flex items-center space-x-1.5">
+              <span className="material-symbols-outlined text-cyan-400 text-sm">mark_email_unread</span>
+              <span>Nhập mã OTP 8 chữ số (Đã gửi tới Gmail hiện tại)</span>
+            </label>
 
-          <div className="flex flex-wrap gap-1 sm:gap-2 justify-between" aria-label="OTP Gmail hiện tại">
-            {oldOtp.map((item, index) => (
-              <input
-                key={index}
-                ref={(el) => { oldOtpRefs.current[index] = el; }}
-                id={`old-otp-${index}`}
-                value={item}
-                maxLength={1}
-                inputMode="numeric"
-                autoComplete={index === 0 ? "one-time-code" : "off"}
-                onChange={(e) => handleOldOtpChange(e.target.value, index)}
-                onKeyDown={(e) => handleOtpKeyDown(e, index, oldOtpRefs, oldOtp, setOldOtp)}
-                onPaste={(e) => handlePasteOtp(e, oldOtpRefs, oldOtp, setOldOtp)}
-                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center text-xl font-black text-blue-600 dark:text-blue-400 shadow-sm outline-none transition-all focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20"
-              />
-            ))}
+            <div className="flex w-full flex-nowrap items-center justify-between gap-1.5 sm:gap-2 overflow-x-auto pb-1" aria-label="OTP Gmail hiện tại">
+              {oldOtp.map((item, index) => {
+                const hasVal = Boolean(item);
+                return (
+                  <input
+                    key={index}
+                    ref={(el) => { oldOtpRefs.current[index] = el; }}
+                    id={`old-otp-${index}`}
+                    value={item}
+                    maxLength={1}
+                    inputMode="numeric"
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
+                    onChange={(e) => handleOldOtpChange(e.target.value, index)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, index, oldOtpRefs, oldOtp, setOldOtp)}
+                    onPaste={(e) => handlePasteOtp(e, oldOtpRefs, oldOtp, setOldOtp)}
+                    className={`h-12 w-9 sm:h-14 sm:w-11 flex-none rounded-xl border text-center font-mono text-xl sm:text-2xl font-black outline-none transition-all shadow-inner ${
+                      hasVal
+                        ? "border-cyan-400/80 bg-cyan-950/40 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+                        : "border-zinc-700/80 bg-zinc-900/90 text-zinc-100 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20"
+                    }`}
+                  />
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleVerifyOldOtp} className="rounded-2xl bg-blue-600 dark:bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
-              {loading ? "Đang xác thực..." : "Xác thực OTP"}
+          <div className="flex flex-col gap-2.5 pt-2">
+            <button
+              type="button"
+              disabled={loading || oldOtpCode.length !== 8}
+              onClick={handleVerifyOldOtp}
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
+            >
+              <span>{loading ? "Đang xác thực..." : "Xác nhận mã OTP"}</span>
+              <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+                arrow_forward
+              </span>
             </button>
-            <button type="button" disabled={loading} onClick={handleResendOldOtp} className="rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-transparent px-5 py-3 font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
-              Gửi lại OTP
+            
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleResendOldOtp}
+              className="rounded-xl px-4 py-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-all hover:underline disabled:opacity-50 text-center"
+            >
+              Gửi lại OTP tới Gmail hiện tại
             </button>
           </div>
         </div>
       )}
 
       {step === "newEmail" && (
-        <div className="space-y-4">
+        <div className="space-y-5 animate-in fade-in duration-300">
           <div>
-            <label className="mb-2 block text-sm font-bold text-blue-900 dark:text-blue-400">
-              Gmail mới
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Địa chỉ Gmail mới
             </label>
 
             <input
@@ -401,64 +422,99 @@ export function ChangeEmailForm({
                 if (emailError) setEmailError("");
               }}
               onBlur={handleEmailBlur}
-              placeholder="example@gmail.com"
-              className={`w-full rounded-2xl border-2 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-slate-900 dark:text-white outline-none transition-colors ${
-                emailError ? "border-red-500 focus:border-red-500" : "border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500"
+              placeholder="nhap-gmail-moi@gmail.com"
+              className={`w-full rounded-xl border px-4 py-3 text-sm text-zinc-100 outline-none transition-all shadow-inner ${
+                emailError
+                  ? "border-red-500/80 bg-red-950/20 text-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
+                  : "border-zinc-700/80 bg-zinc-900/90 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
               }`}
             />
             {emailError && (
-              <p className="mt-1 text-sm text-red-500">{emailError}</p>
+              <p className="mt-1.5 text-xs font-semibold text-red-400 flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">error</span>
+                {emailError}
+              </p>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleSendOtp} className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
-              {loading ? "Đang gửi..." : "Gửi OTP"}
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={loading || !email.trim() || Boolean(emailError)}
+            onClick={handleSendOtp}
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
+          >
+            <span>{loading ? "Đang gửi OTP..." : "Gửi OTP xác thực Gmail mới"}</span>
+            <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+              send
+            </span>
+          </button>
         </div>
       )}
 
       {step === "newOtp" && (
-        <div className="space-y-5">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Nhập OTP gửi tới:
-            <strong className="text-slate-900 dark:text-white"> {confirmedNewEmail || email}</strong>
-          </p>
+        <div className="space-y-5 animate-in fade-in duration-300">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-3 block flex items-center space-x-1.5">
+              <span className="material-symbols-outlined text-cyan-400 text-sm">mark_email_read</span>
+              <span>Mã OTP 8 số gửi tới <strong className="text-cyan-300 font-mono">{confirmedNewEmail || email}</strong></span>
+            </label>
 
-          <div className="flex flex-wrap gap-1 sm:gap-2 justify-between" aria-label="OTP Gmail mới">
-            {newOtp.map((item, index) => (
-              <input
-                key={index}
-                ref={(el) => { newOtpRefs.current[index] = el; }}
-                id={`new-otp-${index}`}
-                value={item}
-                maxLength={1}
-                inputMode="numeric"
-                autoComplete={index === 0 ? "one-time-code" : "off"}
-                onChange={(e) => handleNewOtpChange(e.target.value, index)}
-                onKeyDown={(e) => handleOtpKeyDown(e, index, newOtpRefs, newOtp, setNewOtp)}
-                onPaste={(e) => handlePasteOtp(e, newOtpRefs, newOtp, setNewOtp)}
-                className="h-12 w-9 sm:h-14 sm:w-12 flex-1 max-w-[3rem] rounded-2xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-center text-xl font-black text-blue-600 dark:text-blue-400 shadow-sm outline-none transition-all focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20"
-              />
-            ))}
+            <div className="flex w-full flex-nowrap items-center justify-between gap-1.5 sm:gap-2 overflow-x-auto pb-1" aria-label="OTP Gmail mới">
+              {newOtp.map((item, index) => {
+                const hasVal = Boolean(item);
+                return (
+                  <input
+                    key={index}
+                    ref={(el) => { newOtpRefs.current[index] = el; }}
+                    id={`new-otp-${index}`}
+                    value={item}
+                    maxLength={1}
+                    inputMode="numeric"
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
+                    onChange={(e) => handleNewOtpChange(e.target.value, index)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, index, newOtpRefs, newOtp, setNewOtp)}
+                    onPaste={(e) => handlePasteOtp(e, newOtpRefs, newOtp, setNewOtp)}
+                    className={`h-12 w-9 sm:h-14 sm:w-11 flex-none rounded-xl border text-center font-mono text-xl sm:text-2xl font-black outline-none transition-all shadow-inner ${
+                      hasVal
+                        ? "border-cyan-400/80 bg-cyan-950/40 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+                        : "border-zinc-700/80 bg-zinc-900/90 text-zinc-100 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20"
+                    }`}
+                  />
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" disabled={loading} onClick={handleVerify} className="rounded-2xl bg-blue-600 dark:bg-blue-600 px-5 py-3 font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20">
-              {loading ? "Đang xác nhận..." : "Xác nhận đổi Gmail"}
+          <div className="flex flex-col gap-2.5 pt-2">
+            <button
+              type="button"
+              disabled={loading || newOtpCode.length !== 8}
+              onClick={handleVerify}
+              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:via-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:shadow-none"
+            >
+              <span>{loading ? "Đang xác nhận..." : "Hoàn tất xác thực đổi Gmail"}</span>
+              <span className="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
+                check_circle
+              </span>
             </button>
-            <button type="button" disabled={loading || cooldown > 0} onClick={handleResendNewOtp} className="rounded-2xl border-2 border-slate-300 dark:border-slate-600 bg-transparent px-5 py-3 font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
-              {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi lại OTP"}
+
+            <button
+              type="button"
+              disabled={loading || cooldown > 0}
+              onClick={handleResendNewOtp}
+              className="rounded-xl px-4 py-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-all hover:underline disabled:opacity-50 text-center"
+            >
+              {cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : "Gửi lại OTP tới Gmail mới"}
             </button>
           </div>
         </div>
       )}
 
       {message && (
-        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-          {message}
-        </p>
+        <div className="flex items-center gap-2 rounded-xl bg-cyan-950/40 border border-cyan-500/40 p-3 text-xs font-bold text-cyan-300">
+          <span className="material-symbols-outlined text-base">info</span>
+          <span>{message}</span>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { DeviceApprovalPendingAutoLogin } from "@/components/auth/device-approval-pending-auto-login";
+
+export const metadata: Metadata = {
+  title: "Xác Thực Thiết Bị Mới (Device Approval)",
+};
 
 export default async function DeviceApprovalPendingPage({
   searchParams,
@@ -10,63 +15,127 @@ export default async function DeviceApprovalPendingPage({
   const fromAdmin = String(sp?.from ?? "").trim().toLowerCase() === "admin";
 
   return (
-    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low overflow-hidden relative">
-      {/* Background Orbs */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] h-[800px] w-[800px] rounded-full bg-kinetic/5 blur-[120px] animate-pulse" style={{ animationDuration: "8s" }} />
-        <div className="absolute top-[20%] -right-[10%] h-[600px] w-[600px] rounded-full bg-secondary/5 blur-[100px] animate-pulse" style={{ animationDuration: "12s", animationDelay: "2s" }} />
-        <div className="absolute -bottom-[20%] left-[20%] h-[700px] w-[700px] rounded-full bg-blue-400/5 blur-[120px] animate-pulse" style={{ animationDuration: "10s", animationDelay: "1s" }} />
+    <div className="relative min-h-screen w-full bg-[#07090e] text-zinc-100 flex items-center justify-center p-4 sm:p-6 lg:p-10 overflow-x-hidden">
+      {/* Background ambient glowing gradient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[650px] w-[650px] rounded-full bg-gradient-to-tr from-cyan-500/20 via-indigo-600/10 to-blue-500/15 blur-[150px]" />
+        <div className="absolute top-1/3 -right-40 h-[700px] w-[700px] rounded-full bg-gradient-to-bl from-indigo-500/20 via-purple-600/10 to-cyan-500/15 blur-[160px]" />
+        <div className="absolute -bottom-40 left-1/3 h-[550px] w-[550px] rounded-full bg-blue-600/10 blur-[140px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
-      <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-12 relative z-10">
-        <div className="mx-auto w-full max-w-[560px]">
+      {/* Unified Luxury Container */}
+      <div className="relative z-10 w-full max-w-[1100px] rounded-3xl border border-white/10 bg-zinc-950/80 p-6 sm:p-10 lg:p-12 backdrop-blur-2xl shadow-2xl shadow-cyan-950/40">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          <div className="mb-12 flex flex-col items-center justify-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000">
-            <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30">
-              <span className="material-symbols-outlined font-bold text-[48px]">security</span>
+          {/* Left Panel: Security Brand Showcase */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-8 border-b lg:border-b-0 lg:border-r border-white/10 pb-8 lg:pb-0 lg:pr-8">
+            <div className="space-y-6">
+              {/* Brand Logo Header */}
+              <div className="flex items-center space-x-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-blue-600 shadow-lg shadow-cyan-500/25">
+                  <span className="material-symbols-outlined text-2xl text-white font-bold">security</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-black tracking-tight text-white font-headline">The Kinetic Vault</h1>
+                  <span className="inline-block text-[11px] font-extrabold uppercase tracking-widest text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 rounded-full px-2.5 py-0.5 mt-0.5">
+                    XÁC THỰC THIẾT BỊ MỚI
+                  </span>
+                </div>
+              </div>
+
+              {/* Main Heading */}
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight text-white font-headline">
+                  Phê duyệt thiết bị lạ
+                </h2>
+                <p className="mt-3 text-sm text-zinc-400 leading-relaxed font-normal">
+                  Phát hiện đăng nhập từ thiết bị hoặc trình duyệt chưa được phê duyệt. Vui lòng nhập mã xác thực OTP 8 chữ số được gửi tới Gmail của bạn.
+                </p>
+              </div>
+
+              {/* Security Badges */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                    <span className="material-symbols-outlined text-xl">fingerprint</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Nhận diện vân tay trình duyệt</h4>
+                    <p className="text-[11px] text-zinc-400">Tự động phát hiện vị trí & thiết bị truy cập</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+                    <span className="material-symbols-outlined text-xl">mark_email_unread</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Mã OTP 8 chữ số</h4>
+                    <p className="text-[11px] text-zinc-400">Gửi trực tiếp đến hòm thư Gmail chính chủ</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <span className="material-symbols-outlined text-xl">verified_user</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Bảo vệ phiên làm việc</h4>
+                    <p className="text-[11px] text-zinc-400">Ngăn chặn các truy cập giả mạo trái phép</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <span className="font-headline text-5xl font-black text-slate-900 tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
-              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-blue-600 mt-2 block">Xác thực đăng nhập</span>
+
+            {/* Footer Tag */}
+            <div className="pt-2 text-[12px] text-zinc-400">
+              © 2026 The Kinetic Vault. Hệ thống Microservices an toàn.
             </div>
           </div>
 
-          <div className="relative rounded-[3rem] bg-white/70 backdrop-blur-3xl border border-white p-10 sm:p-12 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] animate-in zoom-in-95 duration-700">
-            <div className="mb-10 text-center">
-              <h1 className="mb-3 font-headline text-3xl font-extrabold tracking-tight text-slate-900">Thiết bị mới</h1>
-              <p className="text-base text-slate-600 font-medium">Bạn đang đăng nhập từ một thiết bị hoặc trình duyệt chưa được phê duyệt.</p>
+          {/* Right Panel: OTP Form & Actions */}
+          <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
+            <div className="mb-2">
+              <div className="inline-flex items-center space-x-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1 text-xs font-bold text-cyan-300 mb-2">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span>PHÊ DUYỆT TRUY CẬP</span>
+              </div>
+              <h3 className="text-2xl font-black text-white font-headline tracking-tight">
+                Nhập mã OTP xác thực
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Hệ thống đã gửi mã OTP (8 số) về Gmail của bạn. Điền 8 chữ số bên dưới để tiếp tục:
+              </p>
             </div>
 
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4 rounded-3xl border-2 border-blue-100 bg-blue-50/50 p-6 mb-8 text-center">
-               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 mx-auto">
-                 <span className="material-symbols-outlined text-[32px]">mark_email_read</span>
-               </div>
-               <p className="text-base font-medium text-slate-700">
-                 Hệ thống đã gửi một <strong>mã xác thực OTP (8 số)</strong>. Vui lòng kiểm tra email của bạn.
-               </p>
-            </div>
-
+            {/* OTP Form Component */}
             <DeviceApprovalPendingAutoLogin fromAdmin={fromAdmin} />
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            {/* Action Buttons */}
+            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
               <a
                 href="https://mail.google.com/"
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 rounded-[1.25rem] bg-blue-600 py-4 text-center text-base font-extrabold text-white shadow-xl shadow-blue-600/30 transition-all hover:-translate-y-1 hover:shadow-blue-600/50 hover:bg-blue-700"
+                className="flex-1 flex items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500"
               >
-                Mở Gmail
+                <span className="material-symbols-outlined text-lg">mail</span>
+                <span>Mở Gmail</span>
               </a>
               <Link
                 href={fromAdmin ? "/admin/login" : "/login"}
-                className="flex-1 rounded-[1.25rem] border-2 border-slate-200 bg-white py-4 text-center text-base font-extrabold text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-300"
+                className="flex-1 flex items-center justify-center space-x-2 rounded-xl border border-white/10 bg-white/5 py-3.5 text-sm font-bold text-zinc-300 transition-all hover:bg-white/10 hover:text-white"
               >
-                Quay lại đăng nhập
+                <span className="material-symbols-outlined text-lg">arrow_back</span>
+                <span>Quay lại đăng nhập</span>
               </Link>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 }
+

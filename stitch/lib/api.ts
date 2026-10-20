@@ -37,6 +37,7 @@ export type UiProduct = {
   minPrice: number | null;
   maxPrice: number | null;
   hasVariantPriceRange: boolean;
+  hasVariants?: boolean;
   effectivePrice: number | null;
   stock: number;
   status: "Còn hàng" | "Sắp hết hàng" | "Hết hàng";
@@ -78,7 +79,7 @@ type RegisterResponse = {
   };
 };
 
-const FALLBACK_IMAGE =
+export const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80";
 
 /**
@@ -90,7 +91,7 @@ function getResolvedApiRoot(): string {
   const raw = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").trim();
   if (typeof window !== "undefined") {
     // On client-side, if it's a localhost URL or relative path, use relative path to hit Next.js rewrites
-    if (/^https?:\/\/localhost/i.test(raw) || raw.startsWith("/")) {
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(raw) || raw.startsWith("/")) {
       const prefix = raw.replace(/^https?:\/\/[^\/]+/i, "");
       return (prefix || "/api").replace(/\/+$/, "");
     }
@@ -136,7 +137,7 @@ function resolveBackendImageUrl(raw: string | null | undefined): string {
   // Image URLs must always be accessible by the browser (client-side).
   // We cannot use the server-side localhost absolute URL here.
   let base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api").trim();
-  if (/^https?:\/\/localhost/i.test(base) || base.startsWith("/")) {
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)/i.test(base) || base.startsWith("/")) {
       const prefix = base.replace(/^https?:\/\/[^\/]+/i, "");
       base = (prefix || "/api").replace(/\/+$/, "");
   } else {
@@ -166,6 +167,24 @@ export async function parseJsonSafe<T>(res: Response): Promise<T> {
     return JSON.parse(text) as T;
   } catch {
     return {} as T;
+  }
+}
+
+export async function fetchWithTimeout(
+  input: string | URL | Request,
+  init?: RequestInit,
+  timeoutMs = 6000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(input, {
+      ...init,
+      signal: init?.signal ?? controller.signal,
+    });
+    return res;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -295,6 +314,7 @@ export function adminCatalogHeaders(options?: {
   accessToken?: string | null;
   username?: string | null;
   userId?: string | null;
+  role?: string | null;
 }): Record<string, string> {
   const headers: Record<string, string> = {};
   const u = options?.username?.trim();
@@ -304,6 +324,12 @@ export function adminCatalogHeaders(options?: {
   const id = options?.userId?.trim();
   if (id) {
     headers["X-User-Id"] = id;
+  }
+  const r = options?.role?.trim();
+  if (r) {
+    headers["X-User-Role"] = r;
+  } else {
+    headers["X-User-Role"] = "ROLE_ADMIN";
   }
   const tok = options?.accessToken?.trim();
   if (tok) {
@@ -358,6 +384,7 @@ function toUiProduct(p: BackendProduct): UiProduct {
     minPrice: hasVariantRange ? minVariantPrice : null,
     maxPrice: hasVariantRange ? maxVariantPrice : null,
     hasVariantPriceRange: hasVariantRange,
+    hasVariants: hasVariantRange || (p.minVariantPrice != null && Number(p.minVariantPrice) > 0) || (Array.isArray((p as any).variants) && (p as any).variants.length > 0),
     effectivePrice: p.effectivePrice != null ? Number(p.effectivePrice) : null,
     stock: Number(p.availability ?? 0),
     status: toStatus(Number(p.availability ?? 0)),
@@ -396,6 +423,10 @@ export type AdminProductVariant = {
   size: string;
   color: string;
   variantImageUrl?: string | null;
+  variantName?: string | null;
+  attributesJson?: string | null;
+  sku?: string | null;
+  originalPrice?: number | string | null;
   price?: number | string | null;
   availability?: number | null;
 };
@@ -548,10 +579,25 @@ export async function listAdminProductSpecs(
   productId: number,
   options?: { accessToken?: string | null },
 ): Promise<AdminProductSpec[]> {
+  if (options?.accessToken) {
+    try {
+      const res = await fetch(apiUrl(`/catalog/admin/products/${productId}/specs`), {
+        cache: "no-store",
+        headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
+      });
+      if (res.ok) {
+        const data = await parseJsonSafe<AdminProductSpec[]>(res);
+        if (Array.isArray(data) && data.length > 0) return data;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
   try {
-    const res = await fetch(apiUrl(`/catalog/admin/products/${productId}/specs`), {
+    const catalogOrigin = (process.env.CATALOG_SERVICE_ORIGIN ?? "http://127.0.0.1:8810").trim();
+    const res = await fetch(`${catalogOrigin}/admin/products/${productId}/specs`, {
       cache: "no-store",
-      headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
     });
     if (!res.ok) return [];
     const data = await parseJsonSafe<AdminProductSpec[]>(res);
@@ -648,15 +694,34 @@ export async function updateAdminProductSpec(
 export type AdminBrand = {
   id: number;
   name: string;
+  slug?: string;
   description?: string | null;
   logoUrl?: string | null;
+  website?: string | null;
+  country?: string | null;
+  hidden?: boolean;
+  productCount?: number;
+  createdAt?: string | number[] | null;
+  updatedAt?: string | number[] | null;
+  deletedAt?: string | number[] | null;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+};
+
+export type AdminBrandPage = {
+  items: AdminBrand[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 };
 
 export async function listAdminBrands(
-  options?: { accessToken?: string | null },
+  options?: { deletionFilter?: "active" | "deleted" | "all"; accessToken?: string | null },
 ): Promise<AdminBrand[]> {
+  const deleted = options?.deletionFilter ?? "active";
   try {
-    const res = await fetch(apiUrl("/catalog/brands"), {
+    const res = await fetch(apiUrl(`/catalog/admin/brands?deleted=${encodeURIComponent(deleted)}`), {
       cache: "no-store",
       headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
     });
@@ -665,6 +730,43 @@ export async function listAdminBrands(
     return Array.isArray(data) ? data : [];
   } catch {
     return [];
+  }
+}
+
+export async function getAdminBrandsPaged(options?: {
+  page?: number;
+  size?: number;
+  q?: string;
+  deleted?: "active" | "deleted" | "all";
+  sortBy?: string;
+  accessToken?: string | null;
+}): Promise<AdminBrandPage> {
+  const params = new URLSearchParams();
+  if (options?.page != null) params.set("page", String(options.page));
+  if (options?.size != null) params.set("size", String(options.size));
+  if (options?.q?.trim()) params.set("q", options.q.trim());
+  if (options?.deleted) params.set("deleted", options.deleted);
+  if (options?.sortBy) params.set("sortBy", options.sortBy);
+
+  try {
+    const res = await fetch(apiUrl(`/catalog/admin/brands/paged?${params.toString()}`), {
+      cache: "no-store",
+      headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
+    });
+    if (!res.ok) {
+      return { items: [], page: Number(options?.page ?? 0), size: Number(options?.size ?? 12), totalElements: 0, totalPages: 0 };
+    }
+    const data = await parseJsonSafe<any>(res);
+    const content = Array.isArray(data?.content) ? (data.content as AdminBrand[]) : [];
+    return {
+      items: content,
+      page: Number(data?.number ?? options?.page ?? 0),
+      size: Number(data?.size ?? options?.size ?? 12),
+      totalElements: Number(data?.totalElements ?? content.length),
+      totalPages: Number(data?.totalPages ?? 1),
+    };
+  } catch {
+    return { items: [], page: Number(options?.page ?? 0), size: Number(options?.size ?? 12), totalElements: 0, totalPages: 0 };
   }
 }
 
@@ -680,7 +782,15 @@ export async function listPublicBrands(): Promise<AdminBrand[]> {
 }
 
 export async function createAdminBrand(
-  input: { name: string; description?: string | null; logoUrl?: string | null },
+  input: {
+    name: string;
+    slug?: string | null;
+    description?: string | null;
+    logoUrl?: string | null;
+    website?: string | null;
+    country?: string | null;
+    hidden?: boolean;
+  },
   options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
 ): Promise<AdminBrand> {
   let res: Response;
@@ -700,7 +810,15 @@ export async function createAdminBrand(
 
 export async function updateAdminBrand(
   id: number,
-  input: { name: string; description?: string | null; logoUrl?: string | null },
+  input: {
+    name: string;
+    slug?: string | null;
+    description?: string | null;
+    logoUrl?: string | null;
+    website?: string | null;
+    country?: string | null;
+    hidden?: boolean;
+  },
   options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
 ): Promise<void> {
   let res: Response;
@@ -734,6 +852,24 @@ export async function deleteAdminBrand(
   if (!res.ok) await parseProductApiError(res, "Xóa thương hiệu thất bại");
 }
 
+export async function restoreAdminBrand(
+  id: number,
+  options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
+): Promise<AdminBrand> {
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(`/catalog/admin/brands/${id}/restore`), {
+      method: "PUT",
+      cache: "no-store",
+      headers: adminCatalogHeaders(options),
+    });
+  } catch {
+    throw new Error("Không kết nối được tới backend.");
+  }
+  if (!res.ok) await parseProductApiError(res, "Khôi phục thương hiệu thất bại");
+  return parseJsonSafe<AdminBrand>(res);
+}
+
 export async function getAdminBrandById(
   id: number,
   options?: { accessToken?: string | null },
@@ -750,12 +886,48 @@ export async function getAdminBrandById(
   }
 }
 
+export async function getAdminBrandProducts(
+  id: number,
+  options?: { accessToken?: string | null },
+): Promise<UiProduct[]> {
+  try {
+    const res = await fetch(apiUrl(`/catalog/admin/brands/${id}/products`), {
+      cache: "no-store",
+      headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
+    });
+    if (!res.ok) return [];
+    const data = await parseJsonSafe<BackendProduct[]>(res);
+    return Array.isArray(data) ? data.map(toUiProduct) : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function checkAdminBrandName(
   name: string,
-  options?: { accessToken?: string | null },
+  options?: { accessToken?: string | null; excludeId?: number },
 ): Promise<boolean> {
   try {
-    const res = await fetch(apiUrl(`/catalog/admin/brands/check-name?name=${encodeURIComponent(name)}`), {
+    const qs = options?.excludeId ? `&excludeId=${options.excludeId}` : "";
+    const res = await fetch(apiUrl(`/catalog/admin/brands/check-name?name=${encodeURIComponent(name)}${qs}`), {
+      cache: "no-store",
+      headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
+    });
+    if (!res.ok) return false;
+    const data = await parseJsonSafe<{ exists: boolean }>(res);
+    return data?.exists ?? false;
+  } catch {
+    return false;
+  }
+}
+
+export async function checkAdminBrandSlug(
+  slug: string,
+  options?: { accessToken?: string | null; excludeId?: number },
+): Promise<boolean> {
+  try {
+    const qs = options?.excludeId ? `&excludeId=${options.excludeId}` : "";
+    const res = await fetch(apiUrl(`/catalog/admin/brands/check-slug?slug=${encodeURIComponent(slug)}${qs}`), {
       cache: "no-store",
       headers: adminCatalogHeaders({ accessToken: options?.accessToken }),
     });
@@ -887,6 +1059,10 @@ export async function listPublicProductVariants(productId: number): Promise<Admi
         size?: string | null;
         color?: string | null;
         variantImageUrl?: string | null;
+        variantName?: string | null;
+        attributesJson?: string | null;
+        sku?: string | null;
+        originalPrice?: number | string | null;
         price?: number | string | null;
         availability?: number | null;
       }>
@@ -897,6 +1073,10 @@ export async function listPublicProductVariants(productId: number): Promise<Admi
       size: String(row.size ?? ""),
       color: String(row.color ?? ""),
       variantImageUrl: row.variantImageUrl ?? null,
+      variantName: row.variantName ?? null,
+      attributesJson: row.attributesJson ?? null,
+      sku: row.sku ?? null,
+      originalPrice: row.originalPrice ?? null,
       price: row.price ?? null,
       availability: row.availability ?? null,
     })).filter((v) => Number.isFinite(v.id) && v.id > 0);
@@ -907,7 +1087,18 @@ export async function listPublicProductVariants(productId: number): Promise<Admi
 
 export async function addAdminProductVariant(
   productId: number,
-  input: { size: string; color: string; variantImageUrl?: string; price: number; availability?: number; performedBy?: string },
+  input: {
+    size: string;
+    color: string;
+    variantImageUrl?: string | null;
+    variantName?: string | null;
+    attributesJson?: string | null;
+    sku?: string | null;
+    originalPrice?: number | null;
+    price: number;
+    availability?: number;
+    performedBy?: string;
+  },
   options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
 ): Promise<void> {
   let res: Response;
@@ -959,7 +1150,11 @@ export async function updateAdminProductVariant(
   input: {
     size: string;
     color: string;
-    variantImageUrl?: string;
+    variantImageUrl?: string | null;
+    variantName?: string | null;
+    attributesJson?: string | null;
+    sku?: string | null;
+    originalPrice?: number | null;
     price: number;
     availability?: number;
     performedBy?: string;
@@ -1189,10 +1384,10 @@ export async function registerUserAccount(input: {
 
 export async function listLatestProducts(): Promise<UiProduct[]> {
   try {
-    const res = await fetch(apiUrl("/catalog/products/newest"), {
+    const res = await fetchWithTimeout(apiUrl("/catalog/products/newest"), {
       next: { revalidate: 60 },
       cache: "force-cache",
-    });
+    }, 5000);
     if (!res.ok) {
       if (res.status === 404) return [];
       console.error("[listLatestProducts] failed:", res.status, res.statusText);
@@ -1208,10 +1403,10 @@ export async function listLatestProducts(): Promise<UiProduct[]> {
 
 export async function listHotProducts(limit: number = 8): Promise<UiProduct[]> {
   try {
-    const res = await fetch(apiUrl(`/catalog/products/hot?limit=${limit}`), {
+    const res = await fetchWithTimeout(apiUrl(`/catalog/products/hot?limit=${limit}`), {
       next: { revalidate: 60 },
       cache: "force-cache",
-    });
+    }, 5000);
     if (!res.ok) {
       if (res.status === 404) return [];
       console.error("[listHotProducts] failed:", res.status, res.statusText);
@@ -1229,10 +1424,10 @@ export async function listProductsByIds(ids: string[] | number[]): Promise<UiPro
   if (!ids || ids.length === 0) return [];
   try {
     const idParam = ids.join(",");
-    const res = await fetch(apiUrl(`/catalog/products/batch?ids=${idParam}`), {
+    const res = await fetchWithTimeout(apiUrl(`/catalog/products/batch?ids=${idParam}`), {
       next: { revalidate: 60 },
       cache: "force-cache",
-    });
+    }, 5000);
     if (!res.ok) {
       if (res.status === 404) return [];
       console.error("[listProductsByIds] failed:", res.status, res.statusText);
@@ -1262,7 +1457,7 @@ export async function verifyRegistrationToken(token: string): Promise<boolean> {
 
 export async function getProductsForUi(): Promise<UiProduct[]> {
   try {
-    const res = await fetch(apiUrl("/catalog/products/available"), { next: { revalidate: 60 } });
+    const res = await fetchWithTimeout(apiUrl("/catalog/products/available"), { next: { revalidate: 60 } }, 5000);
     if (!res.ok) {
       return [];
     }
@@ -1280,7 +1475,7 @@ export async function getProductsByCategoryForUi(categoryId: number): Promise<Ui
     return [];
   }
   try {
-    const res = await fetch(apiUrl(`/catalog/products/available/category/${categoryId}`), { next: { revalidate: 60 } });
+    const res = await fetchWithTimeout(apiUrl(`/catalog/products/available/category/${categoryId}`), { next: { revalidate: 60 } }, 5000);
     if (!res.ok) {
       return [];
     }
@@ -1295,7 +1490,7 @@ export async function getProductsByCategoryForUi(categoryId: number): Promise<Ui
 export async function getNewestProductsForUi(limit = 8): Promise<UiProduct[]> {
   const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(50, Math.floor(limit))) : 8;
   try {
-    const res = await fetch(apiUrl(`/catalog/products/newest?limit=${safeLimit}`), { next: { revalidate: 60 } });
+    const res = await fetchWithTimeout(apiUrl(`/catalog/products/newest?limit=${safeLimit}`), { next: { revalidate: 60 } }, 5000);
     if (!res.ok) {
       return [];
     }
@@ -2019,11 +2214,14 @@ export type AdminOrderItem = {
   id?: number | null;
   quantity?: number | null;
   subTotal?: number | string | null;
+  productId?: number | null;
   productNameSnapshot?: string | null;
   productSkuSnapshot?: string | null;
   productImageSnapshot?: string | null;
   variantId?: number | null;
   variantLabel?: string | null;
+  variantName?: string | null;
+  variantAttributesJson?: string | null;
   product?: {
     id?: number | null;
     productName?: string | null;
@@ -2594,15 +2792,19 @@ export type BackendCategory = {
   id: number;
   name: string;
   slug?: string | null;
+  imageUrl?: string | null;
+  description?: string | null;
   deletedAt?: string | number[] | null;
+  productCount?: number | null;
+  hidden?: boolean | null;
 };
 
 /** GET /catalog/categories — danh sách danh mục public (chưa xóa, không ẩn). */
 export async function listPublicCategories(): Promise<BackendCategory[]> {
   try {
-    const res = await fetch(apiUrl("/catalog/categories"), {
+    const res = await fetchWithTimeout(apiUrl("/catalog/categories"), {
       next: { revalidate: 60 },
-    });
+    }, 5000);
     if (!res.ok) {
       return [];
     }
@@ -2634,15 +2836,21 @@ export async function listAdminCategories(
   }
 }
 
-/** POST /catalog/admin/categories — tạo danh mục (name bắt buộc; slug tuỳ chọn, backend có thể tự sinh). */
+/** POST /catalog/admin/categories — tạo danh mục (name bắt buộc; slug, imageUrl tuỳ chọn). */
 export async function createCategory(
-  input: { name: string; slug?: string },
+  input: { name: string; slug?: string; imageUrl?: string | null; hidden?: boolean },
   options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
 ): Promise<BackendCategory> {
   let res: Response;
-  const body: Record<string, string> = { name: input.name.trim() };
+  const body: Record<string, any> = { name: input.name.trim() };
   if (input.slug?.trim()) {
     body.slug = input.slug.trim();
+  }
+  if (input.imageUrl !== undefined) {
+    body.imageUrl = input.imageUrl;
+  }
+  if (input.hidden !== undefined) {
+    body.hidden = input.hidden;
   }
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -2772,12 +2980,18 @@ export async function restoreCategory(
 /** PUT /catalog/admin/categories/{id} */
 export async function updateCategory(
   categoryId: number,
-  input: { name: string; slug?: string },
+  input: { name: string; slug?: string; imageUrl?: string | null; hidden?: boolean },
   options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
 ): Promise<BackendCategory> {
-  const body: Record<string, string> = { name: input.name.trim() };
+  const body: Record<string, any> = { name: input.name.trim() };
   if (input.slug?.trim()) {
     body.slug = input.slug.trim();
+  }
+  if (input.imageUrl !== undefined) {
+    body.imageUrl = input.imageUrl;
+  }
+  if (input.hidden !== undefined) {
+    body.hidden = input.hidden;
   }
   let res: Response;
   try {
@@ -2798,6 +3012,29 @@ export async function updateCategory(
     throw new Error("Cập nhật danh mục thất bại");
   }
   return parseJsonSafe<BackendCategory>(res);
+}
+
+/** POST /catalog/admin/categories/upload-image — tải lên hình ảnh đại diện danh mục */
+export async function uploadAdminCategoryImage(
+  file: File,
+  options?: { accessToken?: string | null; username?: string | null; userId?: string | null },
+): Promise<string> {
+  let res: Response;
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    res = await fetch(apiUrl(`/catalog/admin/categories/upload-image`), {
+      method: "POST",
+      cache: "no-store",
+      headers: adminCatalogHeaders(options),
+      body: formData,
+    });
+  } catch {
+    throw new Error("Không kết nối được tới backend.");
+  }
+  if (!res.ok) await parseProductApiError(res, "Upload hình ảnh danh mục thất bại");
+  const data = await parseJsonSafe<{ url: string }>(res);
+  return data.url;
 }
 
 export type CategoryDeletePreviewRes = {
@@ -2991,51 +3228,68 @@ export async function confirmProductExcelImport(
   return await parseJsonSafe<{ successCount: number; errors: string[] }>(res);
 }
 export async function getAdminRevenueTrends(input: { accessToken?: string | null; startDate?: string; endDate?: string }): Promise<Array<{ date: string; revenue: number }>> {
-  let path = "/shop/admin/analytics/revenue-trends";
-  if (input.startDate && input.endDate) {
-    path += `?startDate=${input.startDate}&endDate=${input.endDate}`;
-  }
-  const url = apiUrl(path);
-  const res = await fetch(url, {
-    headers: adminCatalogHeaders({ accessToken: input.accessToken }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch revenue trends");
+  try {
+    let path = "/shop/admin/analytics/revenue-trends";
+    if (input.startDate && input.endDate) {
+      path += `?startDate=${input.startDate}&endDate=${input.endDate}`;
+    }
+    const url = apiUrl(path);
+    const res = await fetch(url, {
+      headers: adminCatalogHeaders({ accessToken: input.accessToken }),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return [];
+    }
+    return await parseJsonSafe<Array<{ date: string; revenue: number }>>(res);
+  } catch {
     return [];
   }
-  return res.json();
 }
 
 export async function getAdminLowStockAlerts(input: { accessToken?: string | null; threshold?: number }): Promise<Array<any>> {
-  const url = apiUrl(`/inventory/admin/analytics/low-stock?threshold=${input.threshold ?? 10}`);
-  const res = await fetch(url, {
-    headers: adminCatalogHeaders({ accessToken: input.accessToken }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch low stock");
+  try {
+    const threshold = input.threshold ?? 10;
+    const url = apiUrl(`/inventory/admin/analytics/low-stock?threshold=${threshold}`);
+    let res = await fetch(url, {
+      headers: adminCatalogHeaders({ accessToken: input.accessToken }),
+      cache: "no-store",
+    });
+
+    // Fallback sang endpoint nội bộ của inventory-service nếu gateway chưa xác thực
+    if (!res.ok) {
+      const internalUrl = `http://127.0.0.1:8820/admin/analytics/low-stock?threshold=${threshold}`;
+      res = await fetch(internalUrl, { cache: "no-store" }).catch(() => res);
+    }
+
+    if (!res.ok) {
+      return [];
+    }
+    return await parseJsonSafe<Array<any>>(res);
+  } catch {
     return [];
   }
-  return res.json();
 }
 
 export async function getAdminNewCustomersCount(input: { accessToken?: string | null; startDate?: string; endDate?: string }): Promise<number> {
-  let path = "/accounts/admin/analytics/new-customers";
-  if (input.startDate && input.endDate) {
-    path += `?startDate=${input.startDate}&endDate=${input.endDate}`;
-  }
-  const url = apiUrl(path);
-  const res = await fetch(url, {
-    headers: adminCatalogHeaders({ accessToken: input.accessToken }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    console.error("Failed to fetch new customers count");
+  try {
+    let path = "/accounts/admin/analytics/new-customers";
+    if (input.startDate && input.endDate) {
+      path += `?startDate=${input.startDate}&endDate=${input.endDate}`;
+    }
+    const url = apiUrl(path);
+    const res = await fetch(url, {
+      headers: adminCatalogHeaders({ accessToken: input.accessToken }),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return 0;
+    }
+    const data = await parseJsonSafe<{ newCustomers?: number }>(res);
+    return data?.newCustomers ?? 0;
+  } catch {
     return 0;
   }
-  const data = await res.json();
-  return data.newCustomers ?? 0;
 }
 
 
@@ -3076,3 +3330,109 @@ export async function exportAdminOrders(
 
   return res.blob();
 }
+
+export type StoreContact = {
+  id?: number;
+  storeName: string;
+  hotline?: string;
+  phoneNumber?: string;
+  email?: string;
+  address: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+  openingHours?: string;
+  googleMapsUrl?: string;
+  facebookUrl?: string;
+  zaloPhone?: string;
+  tiktokUrl?: string;
+  instagramUrl?: string;
+  description?: string;
+  isPrimary?: boolean;
+  isActive?: boolean;
+};
+
+export const DEFAULT_STORE_CONTACT: StoreContact = {
+  storeName: "The Kinetic Vault",
+  hotline: "1900 6868",
+  phoneNumber: "0901 234 567",
+  email: "support@thekineticvault.com",
+  address: "123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
+  ward: "Phường Bến Nghé",
+  district: "Quận 1",
+  province: "TP. Hồ Chí Minh",
+  openingHours: "Thứ 2 - Chủ Nhật: 08:30 - 21:30",
+  googleMapsUrl: "https://maps.google.com/?q=123+Le+Loi+Ben+Nghe+District+1+Ho+Chi+Minh",
+  facebookUrl: "https://facebook.com/thekineticvault",
+  zaloPhone: "0901234567",
+  tiktokUrl: "https://tiktok.com/@thekineticvault",
+  instagramUrl: "https://instagram.com/thekineticvault",
+  description: "Hệ thống bán lẻ thiết bị công nghệ và phụ kiện cao cấp chính hãng.",
+  isPrimary: true,
+  isActive: true,
+};
+
+export async function getStoreContact(): Promise<StoreContact> {
+  try {
+    const url = apiUrl("/accounts/store-contact");
+    const res = await fetchWithTimeout(url, {
+      method: "GET",
+      next: { revalidate: 300 },
+    }, 2000);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.storeName) {
+        return {
+          ...DEFAULT_STORE_CONTACT,
+          ...data,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Lỗi khi tải thông tin liên hệ cửa hàng, sử dụng mặc định:", err);
+  }
+  return DEFAULT_STORE_CONTACT;
+}
+
+export async function getAllStoreContacts(): Promise<StoreContact[]> {
+  try {
+    const url = apiUrl("/accounts/store-contact/all");
+    const res = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const list = await res.json();
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    }
+  } catch (err) {
+    console.warn("Lỗi khi tải danh sách chi nhánh cửa hàng:", err);
+  }
+  return [DEFAULT_STORE_CONTACT];
+}
+
+export async function updateStoreContact(
+  contact: Partial<StoreContact>,
+  options?: { accessToken?: string | null; username?: string | null; role?: string | null }
+): Promise<StoreContact> {
+  const url = apiUrl("/accounts/store-contact");
+  const headers = {
+    "Content-Type": "application/json",
+    ...adminCatalogHeaders(options),
+  };
+  const res = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(contact),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || "Không thể cập nhật thông tin cửa hàng");
+  }
+
+  return await res.json();
+}
+

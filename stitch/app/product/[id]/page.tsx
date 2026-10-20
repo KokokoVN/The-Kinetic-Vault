@@ -5,6 +5,7 @@ import {
   listAdminProductImages,
   listAdminProductSpecs,
   listPublicProductVariants,
+  resolveCatalogImageUrl,
   type AdminProductSpec,
 } from "@/lib/api";
 import { getUsernameFromAccessToken, isAccessTokenExpired } from "@/lib/auth";
@@ -13,23 +14,9 @@ import { StorefrontLayout } from "@/components/storefront-layout";
 import { ProductReviewsSection } from "@/components/product-reviews-section";
 import { ProductViewTracker } from "@/components/product-view-tracker";
 import { SimilarProductsSection } from "@/components/similar-products-section";
+import { ProductSpecsSection } from "@/components/product-specs-section";
 import { getProductReviews } from "@/lib/review-api";
 import Link from "next/link";
-
-function specValue(spec: AdminProductSpec): string {
-  const unit = spec.unit?.trim();
-  return unit ? `${spec.specValue} ${unit}` : spec.specValue;
-}
-
-function resolveProductImage(raw: string | null | undefined): string {
-  const v = String(raw ?? "").trim();
-  if (!v) return "";
-  if (/^https?:\/\//i.test(v) || v.startsWith("data:")) return v;
-  const origin = (process.env.API_SERVER_ORIGIN ?? "http://localhost:8900").replace(/\/+$/, "");
-  if (v.startsWith("/")) return `${origin}${v}`;
-  return `${origin}/api/catalog/admin/products/images/file/${v}`;
-}
-
 import { listActivePrograms } from "@/lib/sale-api";
 
 export default async function ProductDetailPage({
@@ -108,7 +95,7 @@ export default async function ProductDetailPage({
       ...productImages
         .slice()
         .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))
-        .map((img) => resolveProductImage(img.imageUrl || img.storagePath))
+        .map((img) => resolveCatalogImageUrl(img.imageUrl || img.storagePath))
         .filter((img) => img.length > 0),
     ]),
   );
@@ -116,100 +103,116 @@ export default async function ProductDetailPage({
   return (
     <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="products">
       <ProductViewTracker productId={id} />
-      <main className="bg-gradient-to-b from-[#f5f7ff] to-white dark:from-slate-950 dark:to-slate-900/40 min-h-screen">
-        <div className="mx-auto max-w-screen-2xl px-6 py-10">
+      <div className="relative min-h-screen overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-500">
+        {/* Ambient background glows */}
+        <div className="pointer-events-none absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px]" />
+        <div className="pointer-events-none absolute top-1/3 -right-40 h-[600px] w-[600px] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-[140px]" />
+        
+        <div className="relative z-10 mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-          {/* ── Breadcrumb ── */}
-          <nav className="mb-8 flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
-            <Link
-              href="/"
-              className="flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[14px]">home</span>
-              Trang chủ
-            </Link>
-            <span className="material-symbols-outlined text-[14px] text-slate-300 dark:text-slate-700">chevron_right</span>
-            <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-              {product.category}
-            </Link>
-            <span className="material-symbols-outlined text-[14px] text-slate-300 dark:text-slate-700">chevron_right</span>
-            <span className="max-w-[200px] truncate text-indigo-650 dark:text-indigo-400 font-bold">{product.name}</span>
-          </nav>
+          {/* ── Breadcrumb Pill Navigation & Quick Anchors ── */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <nav className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <Link
+                href="/"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 px-3.5 py-1.5 backdrop-blur-md transition-colors hover:text-indigo-600 dark:hover:text-cyan-400 hover:border-indigo-300"
+              >
+                <span className="material-symbols-outlined text-[15px]">home</span>
+                <span>Trang chủ</span>
+              </Link>
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <Link
+                href={product.categoryId ? `/products?category=${product.categoryId}` : "/products"}
+                className="rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 px-3.5 py-1.5 backdrop-blur-md transition-colors hover:text-indigo-600 dark:hover:text-cyan-400 hover:border-indigo-300"
+              >
+                {product.category}
+              </Link>
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+              <span className="max-w-[280px] truncate rounded-full border border-indigo-500/20 bg-indigo-50/70 dark:bg-indigo-950/40 px-3.5 py-1.5 font-bold text-indigo-600 dark:text-cyan-400">
+                {product.name}
+              </span>
+            </nav>
 
-          {/* ── Main Showcase ── */}
-          <ProductDetailShowcase
-            productId={product.id}
-            productName={product.name}
-            category={product.category}
-            description={product.description}
-            heroImage={product.heroImage}
-            thumbnails={allProductThumbnails}
-            basePrice={product.rawPrice}
-            effectivePrice={product.effectivePrice}
-            saleType={saleType}
-            saleValue={saleValue}
-            activeSalePrograms={productSalePrograms}
-            baseStock={product.stock}
-            variants={variants}
-            isLoggedIn={isLoggedIn}
-            salesCount={product.salesCount}
-            reviewCount={reviewCount}
-            averageRating={averageRating}
-          />
+            {/* Quick section anchor pills */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+              <a
+                href="#section-overview"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-xl transition hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-cyan-400"
+              >
+                <span className="material-symbols-outlined text-[15px]">visibility</span>
+                <span>Tổng quan</span>
+              </a>
+              {specs.length > 0 && (
+                <a
+                  href="#section-specs"
+                  className="flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-xl transition hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-cyan-400"
+                >
+                  <span className="material-symbols-outlined text-[15px]">tune</span>
+                  <span>Thông số</span>
+                </a>
+              )}
+              <a
+                href="#section-reviews"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-xl transition hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-cyan-400"
+              >
+                <span className="material-symbols-outlined text-[15px]">reviews</span>
+                <span>Đánh giá ({reviewCount})</span>
+              </a>
+              <a
+                href="#section-similar"
+                className="flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-xl transition hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-cyan-400"
+              >
+                <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+                <span>Gợi ý</span>
+              </a>
+            </div>
+          </div>
 
-          {/* ── Specs Section ── */}
-          {specs.length > 0 && (
-            <section className="mt-16">
-              <div className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 backdrop-blur-md shadow-lg shadow-indigo-500/5">
-                {/* Header */}
-                <div className="flex items-center gap-3 px-5 py-4 md:px-7 md:py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                  <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-650 shadow-md shadow-indigo-500/20">
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: "18px" }}>tune</span>
-                  </div>
-                  <h2 className="text-base md:text-lg font-black text-slate-800 dark:text-white">Thông số kỹ thuật</h2>
-                </div>
+          {/* ── Main Showcase (Gallery + N-Tier Selector) ── */}
+          <div id="section-overview" className="scroll-mt-24">
+            <ProductDetailShowcase
+              productId={product.id}
+              productName={product.name}
+              category={product.category}
+              description={product.description}
+              heroImage={product.heroImage}
+              thumbnails={allProductThumbnails}
+              basePrice={product.rawPrice}
+              effectivePrice={product.effectivePrice}
+              saleType={saleType}
+              saleValue={saleValue}
+              activeSalePrograms={productSalePrograms}
+              baseStock={product.stock}
+              variants={variants}
+              isLoggedIn={isLoggedIn}
+              salesCount={product.salesCount}
+              reviewCount={reviewCount}
+              averageRating={averageRating}
+            />
+          </div>
 
-                {/* Specs by Group */}
-                <div className="flex flex-col">
-                  {Object.entries(
-                    specs.reduce((acc, spec) => {
-                      const group = spec.specGroup?.trim() || "Thông tin chung";
-                      if (!acc[group]) acc[group] = [];
-                      acc[group].push(spec);
-                      return acc;
-                    }, {} as Record<string, typeof specs>)
-                  ).map(([groupName, groupSpecs], gIdx, arr) => (
-                    <div key={groupName} className={gIdx < arr.length - 1 ? "border-b border-slate-200 dark:border-slate-800" : ""}>
-                      <div className="bg-slate-100/50 dark:bg-slate-800/50 px-5 py-2.5 md:px-7 md:py-3 border-b border-slate-200 dark:border-slate-800">
-                        <h3 className="text-xs md:text-sm font-black tracking-widest text-slate-600 dark:text-slate-300 uppercase">{groupName}</h3>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-slate-100 dark:bg-slate-800">
-                        {groupSpecs.map((spec) => (
-                          <div
-                            key={spec.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 px-5 py-3 md:px-7 md:py-4 bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-900/80 transition-colors"
-                          >
-                            <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">{spec.specKey}</dt>
-                            <dd className="text-sm font-semibold text-slate-900 dark:text-slate-200 sm:text-right break-words max-w-full">
-                              {specValue(spec)}
-                            </dd>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
+          {/* ── Optimized Tech Specs Section ── */}
+          <div id="section-specs" className="scroll-mt-24">
+            <ProductSpecsSection
+              productId={numericId}
+              productTitle={product.name}
+              productImage={product.heroImage}
+              productPrice={product.effectivePrice ?? product.rawPrice}
+              specs={specs}
+            />
+          </div>
 
-          {/* ── Product Reviews ── */}
-          <ProductReviewsSection productId={numericId} />
+          {/* ── Product Reviews Section ── */}
+          <div id="section-reviews" className="mt-16 sm:mt-20 scroll-mt-24">
+            <ProductReviewsSection productId={numericId} />
+          </div>
 
-          {/* ── Similar Products (client-side lazy load) ── */}
-          <SimilarProductsSection productId={numericId} limit={8} activePrograms={activeSalePrograms} />
+          {/* ── Similar Products Carousel / Grid ── */}
+          <div id="section-similar" className="mt-16 sm:mt-20 mb-12 scroll-mt-24">
+            <SimilarProductsSection productId={numericId} limit={8} activePrograms={activeSalePrograms} />
+          </div>
         </div>
-      </main>
+      </div>
     </StorefrontLayout>
   );
 }

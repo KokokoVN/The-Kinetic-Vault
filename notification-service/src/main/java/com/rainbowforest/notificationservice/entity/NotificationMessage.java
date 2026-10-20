@@ -4,7 +4,11 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "notification_messages")
+@Table(name = "notification_messages", indexes = {
+    @Index(name = "idx_notif_recipient_status", columnList = "recipient, status"),
+    @Index(name = "idx_notif_recipient_created", columnList = "recipient, created_at"),
+    @Index(name = "idx_notif_status", columnList = "status")
+})
 public class NotificationMessage extends AuditableEntity {
 
     @Id

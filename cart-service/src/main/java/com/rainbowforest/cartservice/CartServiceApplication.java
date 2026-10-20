@@ -8,12 +8,15 @@ import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 import java.util.TimeZone;
 
 @SpringBootApplication(scanBasePackages = {"com.rainbowforest.cartservice", "com.rainbowforest.activitylog"})
 @EnableEurekaClient
-@EnableFeignClients(basePackageClasses = {ProductClient.class, ActivityLogFeignClient.class})
+@EnableFeignClients(basePackages = {"com.rainbowforest.cartservice.feignclient", "com.rainbowforest.activitylog.client"})
 @EnableWebSecurity
+@EnableScheduling
 public class CartServiceApplication {
     public static void main(String[] args) {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));

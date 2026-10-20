@@ -8,6 +8,7 @@ public class Item {
     private Long productId;
     private Long variantId;
     private String variantLabel;
+    private String variantName;
     /** Optional per-variant image (catalog variantImageUrl), for cart display. */
     private String variantImageUrl;
     private BigDecimal originalPrice;
@@ -61,6 +62,14 @@ public class Item {
 
     public void setVariantLabel(String variantLabel) {
         this.variantLabel = variantLabel;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
     }
 
     public String getVariantImageUrl() {

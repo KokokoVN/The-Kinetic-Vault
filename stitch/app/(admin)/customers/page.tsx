@@ -200,55 +200,78 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="space-y-8 pb-12">
-      <section className="relative overflow-hidden rounded-3xl border border-white/40 bg-gradient-to-br from-indigo-900 via-blue-900 to-sky-900 p-8 shadow-2xl shadow-blue-900/20 text-white">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl"></div>
-        
-        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      {/* ==================== HEADER CARD ==================== */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        {/* Ambient Glowing Orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
+        </div>
+
+        <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md">
-              <span className="material-symbols-outlined text-sm">group</span>
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 dark:border-cyan-500/30 bg-blue-50/80 dark:bg-cyan-500/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-cyan-400 backdrop-blur-md">
+              <span className="material-symbols-outlined text-[14px]">group</span>
               Users Database
             </p>
-            <h1 className="mt-4 font-headline text-4xl font-black tracking-tight text-white drop-shadow-sm">Quản lý khách hàng</h1>
-            <p className="mt-2 max-w-2xl text-blue-100/80">
+            <h1 className="mt-3 font-headline text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-xs">
+              Quản Lý Khách Hàng
+            </h1>
+            <p className="mt-2 max-w-2xl text-xs sm:text-sm text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
               Quản lý toàn bộ thông tin tài khoản, phân quyền, cấp bậc thành viên và trạng thái truy cập của người dùng trên hệ thống.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur-md">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-200">Tổng tài khoản</p>
-              <p className="font-headline text-3xl font-black">{users.length.toLocaleString("vi-VN")}</p>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <span className="material-symbols-outlined text-[20px]">group</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Tổng tài khoản</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{users.length.toLocaleString("vi-VN")}</p>
+              </div>
             </div>
-            <div className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur-md">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-200">Quản trị viên</p>
-              <p className="font-headline text-3xl font-black">{adminsCount.toLocaleString("vi-VN")}</p>
+
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Quản trị viên</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{adminsCount.toLocaleString("vi-VN")}</p>
+              </div>
             </div>
-             <div className="flex flex-col gap-1 rounded-2xl border border-rose-500/30 bg-rose-500/20 px-5 py-3 backdrop-blur-md">
-              <p className="text-xs font-bold uppercase tracking-wider text-rose-200">Bị khóa</p>
-              <p className="font-headline text-3xl font-black text-rose-100">{lockedCount.toLocaleString("vi-VN")}</p>
+
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <span className="material-symbols-outlined text-[20px]">lock</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Bị khóa</p>
+                <p className="font-headline text-xl font-black text-rose-600 dark:text-rose-400">{lockedCount.toLocaleString("vi-VN")}</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-outline-variant/20 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <section className="rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
         {success === "role" && (
-          <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+          <p className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">check_circle</span>
             Đã cập nhật quyền người dùng thành công.
           </p>
         )}
         {success === "unlock" && (
-          <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-600">lock_open</span>
+          <p className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 text-sm font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">lock_open</span>
             Đã mở khóa tài khoản thành công.
           </p>
         )}
         {error && (
-          <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 flex items-center gap-2">
-            <span className="material-symbols-outlined text-rose-600">error</span>
+          <p className="mb-4 rounded-xl border border-rose-200 dark:border-rose-800/40 bg-rose-50 dark:bg-rose-950/40 px-4 py-3 text-sm font-medium text-rose-800 dark:text-rose-300 flex items-center gap-2">
+            <span className="material-symbols-outlined text-rose-600 dark:text-rose-400">error</span>
             {error === "self_role" ? "Bạn không thể tự thay đổi quyền của chính mình." : `Thao tác thất bại. Vui lòng thử lại. Lỗi: ${error}`}
           </p>
         )}
@@ -289,23 +312,23 @@ export default async function AdminCustomersPage({
               defaultValue={filterStatus}
               className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
             >
-              <option value="ALL">Tất cả</option>
+              <option value="ALL">Tất cả trạng thái</option>
               <option value="ACTIVE">Đang hoạt động</option>
+              <option value="LOCKED">Đang bị khóa</option>
               <option value="INACTIVE">Chưa kích hoạt</option>
-              <option value="LOCKED">Bị khóa</option>
             </select>
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Số lượng</label>
+            <label className="block text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-2">Hiển thị</label>
             <select
               name="pageSize"
               defaultValue={String(pageSize)}
               className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10"
             >
-              {[10, 20, 50, 100].map((n) => (
-                <option key={n} value={String(n)}>
-                  {n} dòng
+              {[10, 20, 50, 100].map((sz) => (
+                <option key={sz} value={sz}>
+                  {sz} / trang
                 </option>
               ))}
             </select>
@@ -320,11 +343,12 @@ export default async function AdminCustomersPage({
         </SoftNavigateForm>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-white dark:bg-slate-900 shadow-sm">
+      {/* ==================== DATA TABLE ==================== */}
+      <section className="overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60">
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Khách hàng</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Liên hệ</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Thành viên</th>
@@ -333,14 +357,14 @@ export default async function AdminCustomersPage({
                 <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {pageRows.map((u: AdminUserBrief, idx) => {
                 const roleName = String(u.role?.roleName ?? "ROLE_USER").toUpperCase();
                 const locked = isLocked(u);
                 const memberLevel = u.membershipLevel ?? "NEW";
                 
                 return (
-                  <tr key={String(u.id ?? `row-${idx}`)} className="group hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
+                  <tr key={String(u.id ?? `row-${idx}`)} className="group hover:bg-slate-50/60 dark:hover:bg-slate-900/60 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 shadow-sm border border-blue-200/50">

@@ -5,6 +5,8 @@ public class ReviewOrderItemDto {
     private Long id;
     private Long productId;
     private Long variantId;
+    private String variantName;
+    private String variantAttributesJson;
     private Integer quantity;
 
     public Long getId() {
@@ -29,6 +31,22 @@ public class ReviewOrderItemDto {
 
     public void setVariantId(Long variantId) {
         this.variantId = variantId;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getVariantAttributesJson() {
+        return variantAttributesJson;
+    }
+
+    public void setVariantAttributesJson(String variantAttributesJson) {
+        this.variantAttributesJson = variantAttributesJson;
     }
 
     public Integer getQuantity() {

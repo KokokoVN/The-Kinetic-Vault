@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { trackOrder, type TrackingOrder } from "@/lib/tracking-api";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 /* ─── STATUS CONFIG ─── */
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: string }> = {
@@ -96,14 +97,41 @@ const STYLES = `
 .tr-d4 { animation-delay: 0.4s; }
 `;
 
-export function ShipmentTracker() {
-  const [mvd, setMvd] = useState("");
-  const [phone, setPhone] = useState("");
+export function ShipmentTracker({
+  initialMvd = "",
+  initialPhone = "",
+  autoFetch = false,
+}: {
+  initialMvd?: string;
+  initialPhone?: string;
+  autoFetch?: boolean;
+} = {}) {
+  const [mvd, setMvd] = useState(initialMvd);
+  const [phone, setPhone] = useState(initialPhone);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<TrackingOrder | null>(null);
   const [showResult, setShowResult] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (initialMvd) setMvd(initialMvd);
+    if (initialPhone) setPhone(initialPhone);
+    if (autoFetch && initialMvd && initialPhone) {
+      setLoading(true);
+      trackOrder(initialMvd, initialPhone)
+        .then((r) => {
+          if (r.ok) {
+            setOrder(r.order);
+            setTimeout(() => setShowResult(true), 100);
+          } else {
+            setError(r.error);
+          }
+        })
+        .catch(() => setError("Đã xảy ra lỗi kết nối."))
+        .finally(() => setLoading(false));
+    }
+  }, [initialMvd, initialPhone, autoFetch]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -504,7 +532,38 @@ export function ShipmentTracker() {
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</p>
-                          {it.variantLabel && <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0", fontWeight: 500 }}>{it.variantLabel}</p>}
+                          {(() => {
+                            const tiers = parseLabelToTiers(it.variantLabel);
+                            if (tiers.length > 0) {
+                              return (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 3 }}>
+                                  {tiers.map((t, idx) => (
+                                    <span
+                                      key={idx}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 2,
+                                        fontSize: 10,
+                                        background: "#f1f5f9",
+                                        color: "#475569",
+                                        padding: "1px 6px",
+                                        borderRadius: 4,
+                                        border: "1px solid #e2e8f0",
+                                      }}
+                                    >
+                                      <span style={{ color: "#94a3b8" }}>{t.name}:</span>
+                                      <span style={{ fontWeight: 600, color: "#0f172a" }}>{t.value}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            if (it.variantLabel) {
+                              return <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0", fontWeight: 500 }}>{it.variantLabel}</p>;
+                            }
+                            return null;
+                          })()}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
                             <span style={{ fontSize: 14, fontWeight: 800, color: "#6366f1" }}>{fmtVnd(it.subTotal)}</span>
                             <span style={{

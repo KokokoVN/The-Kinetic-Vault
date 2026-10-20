@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "order-service", url = "http://localhost:8813/")
+@FeignClient(name = "order-service", url = "${order.service.url:http://localhost:8813/}")
 public interface OrderClient {
     /**
      * POST (not PATCH): OpenFeign on Java 8 / HttpURLConnection often cannot send PATCH reliably.

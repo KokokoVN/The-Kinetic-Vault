@@ -1,5 +1,7 @@
 package com.rainbowforest.inventoryservice.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
@@ -36,20 +39,29 @@ public class GlobalExceptionHandler {
             ApiError body = ApiError.of("NOT_FOUND", "Không tìm thấy dữ liệu", 404, safePath(req), null);
             return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
         }
-        ApiError body = ApiError.of("BAD_REQUEST", msg, 400, safePath(req), null);
+        // Không leak raw message - chỉ trả generic message cho client.
+        // Log chi tiết phía server để debug.
+        log.debug("IllegalArgumentException: {}", msg);
+        ApiError body = ApiError.of("BAD_REQUEST", "Yêu cầu không hợp lệ", 400, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, HttpServletRequest req) {
+        // Chỉ trả message đã biết trước, tránh leak thông tin nội bộ.
         String msg = ex.getMessage() != null ? ex.getMessage() : "Conflict";
+        // Whitelist các message an toàn được phép trả về.
+        if (!isWhitelistedMessage(msg)) {
+            log.debug("IllegalStateException: {}", msg);
+            msg = "Trạng thái không hợp lệ";
+        }
         ApiError body = ApiError.of("CONFLICT", msg, 409, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest req) {
-        ex.printStackTrace();
+        log.error("Lỗi hệ thống không mong muốn trong inventory-service: ", ex);
         ApiError body = ApiError.of("INTERNAL_ERROR", "Có lỗi hệ thống", 500, safePath(req), null);
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -60,6 +72,20 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Whitelist các exception message được phép trả về cho client.
+     * Các message không nằm trong whitelist sẽ bị thay bằng generic message.
+     */
+    private static boolean isWhitelistedMessage(String msg) {
+        if (msg == null) return false;
+        return msg.startsWith("Không đủ tồn kho")
+                || msg.startsWith("Không thể xuất kho")
+                || msg.startsWith("Số lượng không hợp lệ")
+                || msg.startsWith("Product not found")
+                || msg.startsWith("Variant not found")
+                || msg.startsWith("Không tìm thấy");
     }
 }
 

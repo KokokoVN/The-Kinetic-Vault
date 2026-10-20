@@ -28,6 +28,21 @@ public class Brand extends AuditableEntity {
     @Column(name = "logo_url", length = 1024)
     private String logoUrl;
 
+    @Size(max = 160)
+    @Column(name = "slug", length = 160, unique = true)
+    private String slug;
+
+    @Size(max = 512)
+    @Column(name = "website", length = 512)
+    private String website;
+
+    @Size(max = 64)
+    @Column(name = "country", length = 64)
+    private String country;
+
+    @Column(name = "is_hidden", nullable = false)
+    private Boolean hidden = Boolean.FALSE;
+
     public Brand() {
     }
 
@@ -61,5 +76,37 @@ public class Brand extends AuditableEntity {
 
     public void setLogoUrl(String logoUrl) {
         this.logoUrl = logoUrl;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public Boolean getHidden() {
+        return hidden != null ? hidden : Boolean.FALSE;
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
     }
 }

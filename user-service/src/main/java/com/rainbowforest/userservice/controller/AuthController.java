@@ -34,12 +34,38 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final TwoFactorAuthService twoFactorAuthService;
     private final UserRepository userRepository;
+    private final com.rainbowforest.activitylog.ActivityLogPublisher activityLogPublisher;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, TwoFactorAuthService twoFactorAuthService, UserRepository userRepository) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, TwoFactorAuthService twoFactorAuthService, UserRepository userRepository, @org.springframework.beans.factory.annotation.Autowired(required = false) com.rainbowforest.activitylog.ActivityLogPublisher activityLogPublisher) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.twoFactorAuthService = twoFactorAuthService;
         this.userRepository = userRepository;
+        this.activityLogPublisher = activityLogPublisher;
+    }
+
+    private void sendAuthActivityLog(String action, User user, String path, String detailMsg) {
+        if (activityLogPublisher == null) return;
+        try {
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("resourceType", "UserAuth");
+            detail.put("message", detailMsg);
+            if (user != null) {
+                detail.put("userId", user.getId());
+                detail.put("userName", user.getUserName());
+                detail.put("email", user.getEmail());
+            }
+            activityLogPublisher.publish(
+                    "user-service",
+                    action,
+                    "UserAuth",
+                    user != null ? String.valueOf(user.getId()) : "0",
+                    "POST",
+                    path,
+                    detail,
+                    user != null ? user.getUserName() : "user",
+                    user != null ? String.valueOf(user.getId()) : null);
+        } catch (Exception ignored) {}
     }
 
     @PostMapping("/login")
@@ -49,9 +75,11 @@ public class AuthController {
         if (identity.isEmpty() || rawPassword.trim().isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+        // Normalize email về lowercase để chống user enumeration qua case-sensitive.
+        String normalizedIdentity = identity.toLowerCase(java.util.Locale.ROOT);
         Optional<User> userOpt;
         try {
-            userOpt = userService.authenticate(identity, rawPassword);
+            userOpt = userService.authenticate(normalizedIdentity, rawPassword);
         } catch (IllegalArgumentException e) {
             if (e.getMessage() != null && e.getMessage().startsWith("ACCOUNT_LOCKED|")) {
                 Map<String, String> payload = new HashMap<>();
@@ -63,7 +91,11 @@ public class AuthController {
         }
 
         if (!userOpt.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            // Trả thông báo chung chung - không phân biệt "user not found" vs "wrong password" (chống user enumeration)
+            return new ResponseEntity<>(Map.of(
+                "error", "INVALID_CREDENTIALS",
+                "message", "Tên đăng nhập hoặc mật khẩu không đúng"
+            ), HttpStatus.UNAUTHORIZED);
         }
 
         User user = userOpt.get();
@@ -87,6 +119,7 @@ public class AuthController {
                     trimToNull(request.getLocation()),
                     trimToNull(request.getTimeZone()),
                     trimToNull(request.getLocale()));
+            sendAuthActivityLog("USER_LOGIN_2FA_REQUIRED", user, "/auth/login", "MFA 2FA Required");
             return new ResponseEntity<>(payload2fa, HttpStatus.PRECONDITION_REQUIRED);
         }
 
@@ -99,10 +132,18 @@ public class AuthController {
                 trimToNull(request.getTimeZone()),
                 trimToNull(request.getLocale()));
 
+        sendAuthActivityLog("USER_LOGIN_OTP_SENT", user, "/auth/login", "Sent Login OTP");
         Map<String, String> payload = new HashMap<>();
         payload.put("error", "LOGIN_OTP_REQUIRED");
         payload.put("message", "OTP đăng nhập đã được gửi về email của bạn.");
         return new ResponseEntity<>(payload, HttpStatus.PRECONDITION_REQUIRED);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody(required = false) Map<String, String> payload) {
+        String username = payload != null ? payload.get("username") : "user";
+        sendAuthActivityLog("USER_LOGOUT", null, "/auth/logout", "User logged out successfully");
+        return ResponseEntity.ok(Map.of("message", "Đã đăng xuất thành công"));
     }
 
     @PostMapping("/passwordless/request")
@@ -154,6 +195,7 @@ public class AuthController {
     public ResponseEntity<?> verifyLoginDevice(@RequestParam("token") String token) {
         User user = userService.approveLoginDevice(token);
         if (user != null) {
+            sendAuthActivityLog("USER_LOGIN_SUCCESS", user, "/auth/device-approval/verify", "Device Approved Login");
             return ResponseEntity.ok(buildAuthResponse(user));
         }
         return new ResponseEntity<>("INVALID_OR_EXPIRED_TOKEN", HttpStatus.BAD_REQUEST);
@@ -177,6 +219,7 @@ public class AuthController {
             bad.put("message", "OTP đăng nhập không hợp lệ hoặc đã hết hạn.");
             return new ResponseEntity<>(bad, HttpStatus.BAD_REQUEST);
         }
+        sendAuthActivityLog("USER_LOGIN_SUCCESS", user, "/auth/login-otp/verify", "OTP Verified Login");
         return ResponseEntity.ok(buildAuthResponse(user));
     }
 
@@ -208,6 +251,7 @@ public class AuthController {
             bad.put("message", "Mã xác thực không hợp lệ.");
             return new ResponseEntity<>(bad, HttpStatus.BAD_REQUEST);
         }
+        sendAuthActivityLog("USER_LOGIN_SUCCESS", user, "/auth/login-2fa/verify", "2FA Verified Login");
         return ResponseEntity.ok(buildAuthResponse(user));
     }
 

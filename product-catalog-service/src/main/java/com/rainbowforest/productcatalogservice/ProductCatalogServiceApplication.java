@@ -5,12 +5,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.cache.annotation.EnableCaching;
 import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableEurekaClient
 @EnableJpaRepositories
 @EnableFeignClients(basePackages = "com.rainbowforest.productcatalogservice.client")
+@EnableCaching
 public class ProductCatalogServiceApplication {
     public static void main(String[] args) {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));

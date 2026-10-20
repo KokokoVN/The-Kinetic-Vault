@@ -359,20 +359,37 @@ export default async function AdminCustomerDetailPage({
   );
 
   return (
-    <div className="space-y-8 pb-12">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Chi tiết khách hàng</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Quản lý thông tin, đơn hàng, bảo mật của khách hàng.</p>
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Flagship Header */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-blue-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-cyan-500/10 dark:bg-cyan-600/20 blur-[100px]" />
         </div>
-        <Link 
-          href="/admin/customers" 
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-white dark:bg-slate-900 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 transition-all"
-        >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
-          Quay lại danh sách
-        </Link>
-      </div>
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/10 px-3.5 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-700 dark:text-blue-300 shadow-sm">
+              <span className="material-symbols-outlined text-[15px]">badge</span>
+              Hồ sơ người dùng #{id}
+            </div>
+            <h1 className="mt-4 font-headline text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+              Chi tiết khách hàng
+            </h1>
+            <p className="mt-2.5 max-w-2xl text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+              Quản lý thông tin cá nhân, lịch sử đơn hàng, thiết bị đăng nhập và cấp độ phân quyền.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link 
+              href="/admin/customers" 
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-5 py-3 text-sm font-bold text-slate-700 dark:text-white shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">arrow_back</span>
+              Quay lại danh sách
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <CustomerDetailTabs 
         overviewContent={overviewContent}

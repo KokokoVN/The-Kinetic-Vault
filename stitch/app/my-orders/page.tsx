@@ -14,6 +14,7 @@ import {
 } from "@/lib/order-status";
 import { StorefrontLayout } from "@/components/storefront-layout";
 import { SoftNavigateForm } from "@/components/soft-navigate-form";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -130,7 +131,7 @@ export default async function UserOrdersPage({
           paymentMethod: order.paymentMethod ?? null,
           items: items
             .map((it) => ({
-              productId: Number(it.product?.id ?? 0),
+              productId: Number(it.productId ?? it.product?.id ?? 0),
               quantity: Math.max(1, Number(it.quantity ?? 1)),
               variantId: it.variantId ?? null,
               variantLabel: it.variantLabel ?? null,
@@ -199,28 +200,75 @@ export default async function UserOrdersPage({
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
       ` }} />
-      <div className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <div className="relative min-h-[calc(100vh-80px)] overflow-hidden">
         {/* Animated Background Orbs */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="anim-blob absolute -left-[10%] -top-[10%] h-[50vw] w-[50vw] rounded-full bg-indigo-300/30 mix-blend-multiply blur-3xl filter dark:bg-indigo-900/30 dark:mix-blend-lighten" />
-          <div className="anim-blob-2 absolute -right-[10%] top-[20%] h-[40vw] w-[40vw] rounded-full bg-purple-300/30 mix-blend-multiply blur-3xl filter dark:bg-purple-900/30 dark:mix-blend-lighten" />
-          <div className="anim-blob-3 absolute -bottom-[10%] left-[20%] h-[45vw] w-[45vw] rounded-full bg-pink-300/30 mix-blend-multiply blur-3xl filter dark:bg-pink-900/30 dark:mix-blend-lighten" />
+          <div className="anim-blob absolute -left-[10%] -top-[10%] h-[50vw] w-[50vw] rounded-full bg-indigo-300/20 mix-blend-multiply blur-3xl filter dark:bg-indigo-900/20 dark:mix-blend-lighten" />
+          <div className="anim-blob-2 absolute -right-[10%] top-[20%] h-[40vw] w-[40vw] rounded-full bg-purple-300/20 mix-blend-multiply blur-3xl filter dark:bg-purple-900/20 dark:mix-blend-lighten" />
+          <div className="anim-blob-3 absolute -bottom-[10%] left-[20%] h-[45vw] w-[45vw] rounded-full bg-pink-300/20 mix-blend-multiply blur-3xl filter dark:bg-pink-900/20 dark:mix-blend-lighten" />
         </div>
 
-        <main className="relative z-10 mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-8">
-          {/* Header Section */}
-          <div className="anim-fade-up text-center mb-12" style={{ animationDelay: '0.1s' }}>
-            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-indigo-600 shadow-sm backdrop-blur-md dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-400 mb-4">
-              <span className="material-symbols-outlined text-[16px]">verified</span>
-              Quản lý tài khoản
+        <div className="relative z-10 mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          {/* ==================== FLAGSHIP HERO HEADER CARD ==================== */}
+          <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors mb-10">
+            {/* Ambient Glowing Orbs */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px]" />
+              <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white" style={{ textShadow: "0 10px 30px rgba(99,102,241,0.2)" }}>
-              Lịch sử Đơn hàng
-            </h1>
-            <p className="mt-4 text-lg font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Theo dõi và quản lý các đơn hàng của bạn một cách dễ dàng và trực quan.
-            </p>
-          </div>
+
+            <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 dark:border-cyan-500/30 bg-indigo-50/80 dark:bg-cyan-500/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-cyan-400 backdrop-blur-md">
+                  <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+                  Order History &amp; Tracking
+                </p>
+                <h1 className="mt-3 font-headline text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-xs">
+                  Lịch Sử Đơn Hàng
+                </h1>
+                <p className="mt-2 max-w-2xl text-xs sm:text-sm text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
+                  Theo dõi trạng thái xử lý thời gian thực, đối chiếu mã vận đơn và xem lại toàn bộ chi tiết các đơn hàng của bạn.
+                </p>
+              </div>
+
+              {/* Quick Order Stats Pills */}
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Tổng số đơn</p>
+                    <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{all.length}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Đang vận chuyển</p>
+                    <p className="font-headline text-xl font-black text-cyan-600 dark:text-cyan-400">
+                      {all.filter((o) => ["SHIPPED", "OUT_FOR_DELIVERY", "PROCESSING", "READY_TO_SHIP", "PACKING"].includes(String(o.status ?? "").toUpperCase())).length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Giao thành công</p>
+                    <p className="font-headline text-xl font-black text-emerald-600 dark:text-emerald-400">
+                      {all.filter((o) => String(o.status ?? "").toUpperCase() === "DELIVERED").length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Notifications */}
           <div className="anim-fade-up mb-8 space-y-3 max-w-3xl mx-auto" style={{ animationDelay: '0.2s' }}>
@@ -238,36 +286,69 @@ export default async function UserOrdersPage({
             )}
           </div>
 
+          {/* Quick Status Tabs */}
+          <div className="anim-fade-up mb-6 flex items-center justify-start md:justify-center gap-2 overflow-x-auto py-2 no-scrollbar">
+            {[
+              { code: "", label: "Tất cả" },
+              { code: "PAYMENT_EXPECTED", label: "Chờ thanh toán" },
+              { code: "PROCESSING", label: "Đang xử lý" },
+              { code: "SHIPPED", label: "Đang giao" },
+              { code: "DELIVERED", label: "Đã giao" },
+              { code: "CANCELLED", label: "Đã hủy" },
+            ].map((tab) => {
+              const isSelected = status === tab.code;
+              const params = new URLSearchParams();
+              if (q) params.set("q", q);
+              if (tab.code) params.set("status", tab.code);
+              const href = `/my-orders${params.toString() ? `?${params.toString()}` : ""}`;
+
+              return (
+                <Link
+                  key={tab.code}
+                  href={href}
+                  className={[
+                    "whitespace-nowrap rounded-full px-5 py-2.5 text-xs font-bold transition-all shrink-0",
+                    isSelected
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105"
+                      : "glass-panel text-slate-600 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
+
           {/* Floating Command Center Filter */}
           <section className="anim-fade-up mb-12 max-w-4xl mx-auto" style={{ animationDelay: '0.3s' }}>
-            <SoftNavigateForm actionPath="/my-orders" className="glass-panel rounded-full p-2 shadow-[0_8px_32px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_32px_rgba(99,102,241,0.15)] flex flex-col md:flex-row gap-2">
+            <SoftNavigateForm actionPath="/my-orders" className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-2 sm:p-2.5 shadow-sm dark:shadow-xl backdrop-blur-2xl flex flex-col md:flex-row gap-2">
               <div className="relative flex-1">
-                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
                 <input
                   name="q"
                   defaultValue={q}
-                  placeholder="Tìm mã đơn, tên sản phẩm..."
-                  className="w-full bg-transparent py-4 pl-14 pr-4 text-sm font-medium text-slate-700 dark:text-white outline-none placeholder:text-slate-400 focus:ring-0"
+                  placeholder="Tìm mã đơn hàng, tên sản phẩm..."
+                  className="w-full bg-transparent py-3.5 pl-14 pr-4 text-xs sm:text-sm font-semibold text-slate-800 dark:text-white outline-none placeholder:text-slate-400 focus:ring-0"
                 />
               </div>
-              <div className="hidden md:block w-[1px] bg-slate-200 dark:bg-slate-700 my-2"></div>
-              <div className="relative flex-1 md:max-w-[200px]">
-                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">tune</span>
+              <div className="hidden md:block w-[1px] bg-slate-200 dark:bg-white/10 my-2"></div>
+              <div className="relative flex-1 md:max-w-[220px]">
+                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">tune</span>
                 <select
                   name="status"
                   defaultValue={status}
-                  className="w-full h-full bg-transparent py-4 pl-14 pr-10 text-sm font-medium text-slate-700 dark:text-white outline-none appearance-none cursor-pointer"
+                  className="w-full h-full bg-transparent py-3.5 pl-14 pr-10 text-xs sm:text-sm font-semibold text-slate-800 dark:text-white outline-none appearance-none cursor-pointer"
                 >
-                  <option value="" className="text-slate-900">Tất cả</option>
+                  <option value="" className="text-slate-900 dark:bg-slate-900 dark:text-white">Tất cả trạng thái</option>
                   {STOREFRONT_ORDER_FILTER_STATUS_VALUES.map((code) => (
-                    <option key={code} value={code} className="text-slate-900">
+                    <option key={code} value={code} className="text-slate-900 dark:bg-slate-900 dark:text-white">
                       {viOrderStatusLabel(code)}
                     </option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
+                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[20px]">expand_more</span>
               </div>
-              <button type="submit" className="flex items-center justify-center gap-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3.5 text-sm font-bold shadow-lg transition-transform hover:scale-105">
+              <button type="submit" className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 text-white px-8 py-3.5 text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-500/25 transition-all hover:scale-105 active:scale-95">
                 Tìm kiếm
               </button>
             </SoftNavigateForm>
@@ -342,6 +423,50 @@ export default async function UserOrdersPage({
                       </div>
                     </div>
 
+                    {/* Preview of Ordered Items with Multi-Tier Variants */}
+                    {itemsList.length > 0 && (
+                      <div className="mb-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-2 border border-slate-100 dark:border-slate-800">
+                        {itemsList.slice(0, 2).map((it, itIdx) => {
+                          const tiers = parseLabelToTiers(it.variantLabel);
+                          const name = it.productNameSnapshot || it.product?.productName || `Sản phẩm #${it.productId ?? ""}`;
+                          return (
+                            <div key={itIdx} className="flex items-start justify-between gap-3 text-xs">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-semibold text-slate-800 dark:text-slate-200">
+                                  {name}
+                                </p>
+                                {tiers.length > 0 ? (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {tiers.map((t, tidx) => (
+                                      <span
+                                        key={tidx}
+                                        className="inline-flex items-center gap-1 rounded bg-white dark:bg-slate-700/60 px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-600/40"
+                                      >
+                                        <span className="text-slate-400 dark:text-slate-500 font-normal">{t.name}:</span>
+                                        <span className="font-semibold">{t.value}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : it.variantLabel ? (
+                                  <span className="mt-0.5 inline-block text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                    {it.variantLabel}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <span className="shrink-0 font-bold text-slate-500 dark:text-slate-400 text-xs">
+                                ×{it.quantity}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {itemsList.length > 2 && (
+                          <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold pt-1 border-t border-slate-200/40 dark:border-slate-700/40">
+                            + {itemsList.length - 2} sản phẩm khác...
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Progress Bar */}
                     <div className="mt-auto pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
                       <div className="flex items-center justify-between text-xs font-bold mb-2">
@@ -369,6 +494,17 @@ export default async function UserOrdersPage({
                         Chi tiết đơn
                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                       </Link>
+
+                      {o.mvd && (
+                        <Link
+                          href={`/tracking?mvd=${encodeURIComponent(o.mvd)}&phone=${encodeURIComponent(o.phoneLast4 ?? "")}`}
+                          className="flex h-full items-center justify-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-3.5 py-3 text-xs font-bold border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:scale-105"
+                          title={`Tra cứu vận đơn: ${o.mvd}`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">local_shipping</span>
+                          <span className="hidden sm:inline">Vận đơn</span>
+                        </Link>
+                      )}
                       
                       {allowedNextOrderStatuses(o.status).includes("CANCELLED") && (
                         <form action={cancelOrderAction} className="flex-none">
@@ -421,7 +557,7 @@ export default async function UserOrdersPage({
               </Link>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </StorefrontLayout>
   );

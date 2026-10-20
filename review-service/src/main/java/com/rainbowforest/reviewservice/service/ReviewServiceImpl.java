@@ -2,6 +2,7 @@ package com.rainbowforest.reviewservice.service;
 
 import com.rainbowforest.reviewservice.dto.OrderDto;
 import com.rainbowforest.reviewservice.dto.OrderItemDto;
+import com.rainbowforest.reviewservice.dto.ReviewReplyDto;
 import com.rainbowforest.reviewservice.dto.ReviewRequest;
 import com.rainbowforest.reviewservice.dto.ReviewResponseDto;
 import com.rainbowforest.reviewservice.entity.Review;
@@ -39,17 +40,26 @@ public class ReviewServiceImpl implements ReviewService {
         if (order == null || !order.getUserId().equals(userId)) {
             throw new IllegalArgumentException("Order not found or does not belong to user");
         }
-        if (!"DELIVERED".equals(order.getOrderStatus())) {
+        if (!"DELIVERED".equalsIgnoreCase(order.getOrderStatus())) {
             throw new IllegalArgumentException("Order is not delivered yet");
         }
 
-        // Validate Variant in Order
+        // Validate Variant in Order safely
         boolean variantFound = false;
+        String resolvedVariantLabel = null;
         if (order.getOrderItems() != null) {
             for (OrderItemDto item : order.getOrderItems()) {
-                if (item.getVariantId().equals(request.getVariantId()) && item.getProductId().equals(request.getProductId())) {
-                    variantFound = true;
-                    break;
+                if (item.getProductId() != null && item.getProductId().equals(request.getProductId())) {
+                    Long itemVarId = item.getVariantId();
+                    Long reqVarId = request.getVariantId();
+                    boolean varMatches = (itemVarId == null || itemVarId == 0L)
+                            ? (reqVarId == null || reqVarId == 0L)
+                            : itemVarId.equals(reqVarId);
+                    if (varMatches) {
+                        variantFound = true;
+                        resolvedVariantLabel = item.getVariantName();
+                        break;
+                    }
                 }
             }
         }
@@ -57,20 +67,34 @@ public class ReviewServiceImpl implements ReviewService {
             throw new IllegalArgumentException("Product variant not found in order");
         }
 
-        // Check if already reviewed (Upsert logic)
-        List<Review> existingReviews = reviewRepository.findByOrderIdAndVariantId(request.getOrderId(), request.getVariantId());
-        if (!existingReviews.isEmpty()) {
-            Review existing = existingReviews.get(0);
+        // Check if already reviewed for this order + product + variant (Upsert logic)
+        List<Review> existingReviews = reviewRepository.findByOrderIdAndProductId(request.getOrderId(), request.getProductId());
+        Review existing = null;
+        for (Review r : existingReviews) {
+            Long rVar = r.getVariantId();
+            Long reqVar = request.getVariantId();
+            boolean match = (rVar == null || rVar == 0L)
+                    ? (reqVar == null || reqVar == 0L)
+                    : rVar.equals(reqVar);
+            if (match) {
+                existing = r;
+                break;
+            }
+        }
+        if (existing != null) {
             return editReview(userId, existing.getId(), request);
         }
 
         Review review = new Review();
         review.setUserId(userId);
+        review.setUserName(order.getUserName());
         review.setOrderId(request.getOrderId());
         review.setProductId(request.getProductId());
         review.setVariantId(request.getVariantId());
+        review.setVariantLabel(resolvedVariantLabel);
         review.setRating(request.getRating());
         review.setContent(request.getContent());
+        review.setStatus("ACTIVE");
         review.setCreatedAt(new Date());
         review.setUpdatedAt(new Date());
 
@@ -80,8 +104,7 @@ public class ReviewServiceImpl implements ReviewService {
             for (String url : request.getMediaUrls()) {
                 ReviewMedia media = new ReviewMedia();
                 media.setReview(review);
-                // determine type based on extension (simplified)
-                media.setMediaType(url.matches(".*\\\\.(mp4|mov|avi)$") ? "VIDEO" : "IMAGE");
+                media.setMediaType(url.matches("(?i).*\\.(mp4|mov|avi|webm)$") ? "VIDEO" : "IMAGE");
                 media.setMediaUrl(url);
                 media.setCreatedAt(new Date());
                 reviewMediaRepository.save(media);
@@ -152,9 +175,11 @@ public class ReviewServiceImpl implements ReviewService {
         ReviewResponseDto dto = new ReviewResponseDto();
         dto.setId(review.getId());
         dto.setUserId(review.getUserId());
+        dto.setUserName(review.getUserName());
         dto.setOrderId(review.getOrderId());
         dto.setProductId(review.getProductId());
         dto.setVariantId(review.getVariantId());
+        dto.setVariantLabel(review.getVariantLabel());
         dto.setRating(review.getRating());
         dto.setContent(review.getContent());
         dto.setCreatedAt(review.getCreatedAt());
@@ -166,9 +191,18 @@ public class ReviewServiceImpl implements ReviewService {
                     .collect(Collectors.toList()));
         }
 
-        // We skip mapping replies completely to avoid circular mapping issues if we don't have the ReplyDto correctly set.
-        // I will let it be simple for now or map it.
-        // ... (can be mapped later)
+        if (review.getResponses() != null && !review.getResponses().isEmpty()) {
+            dto.setReplies(review.getResponses().stream().map(r -> {
+                ReviewReplyDto replyDto = new ReviewReplyDto();
+                replyDto.setId(r.getId());
+                try {
+                    replyDto.setUserId(Long.parseLong(r.getRespondedBy()));
+                } catch (Exception ignored) {}
+                replyDto.setContent(r.getContent());
+                replyDto.setCreatedAt(r.getCreatedAt());
+                return replyDto;
+            }).collect(Collectors.toList()));
+        }
 
         return dto;
     }

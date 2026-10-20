@@ -18,6 +18,20 @@ function normalize(v: string): string {
   return v.trim().toLowerCase();
 }
 
+const SPEC_PRESETS = [
+  "CPU",
+  "RAM",
+  "Ổ cứng",
+  "Màn hình",
+  "Card đồ họa",
+  "Pin",
+  "Trọng lượng",
+  "Hệ điều hành",
+  "Cổng kết nối",
+  "Bảo hành",
+  "Kích thước",
+];
+
 export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingGroups = [] }: SpecFormLiveCheckProps) {
   const [specKey, setSpecKey] = useState("");
   const [specGroup, setSpecGroup] = useState(existingGroups.length > 0 ? existingGroups[0] : "");
@@ -63,13 +77,44 @@ export function SpecFormLiveCheck({ action, fieldClass, existingSpecs, existingG
             required
             maxLength={120}
             className={`w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-5 py-3 text-sm font-medium outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 ${duplicate ? "border-rose-400 bg-rose-50/50 dark:bg-rose-950/30 focus:border-rose-500 focus:ring-rose-200" : ""}`}
-            placeholder="Ví dụ: Kích thước"
+            placeholder="Ví dụ: Kích thước, CPU..."
             value={specKey}
             onChange={(e) => setSpecKey(e.target.value)}
             aria-invalid={duplicate}
             aria-describedby={duplicate ? "specKey-error" : undefined}
           />
-          <p id="specKey-error" className={`mt-1.5 text-[11px] font-semibold ${duplicate ? "text-rose-600" : "text-slate-400"}`}>
+
+          {/* Quick Preset Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Gợi ý nhanh:
+            </span>
+            {SPEC_PRESETS.map((preset) => {
+              const isAdded = existingSpecs.some((s) => normalize(s.specKey) === normalize(preset));
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={isAdded}
+                  onClick={() => {
+                    setSpecKey(preset);
+                    if (!specGroup || isNewGroup) {
+                      setSpecGroup(preset);
+                    }
+                  }}
+                  className={`rounded-lg px-2 py-0.5 text-[10px] font-bold transition-all ${
+                    isAdded
+                      ? "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600 line-through cursor-not-allowed opacity-50"
+                      : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400 border border-slate-200/60 dark:border-zinc-700"
+                  }`}
+                >
+                  {preset} {isAdded ? "✓" : "+"}
+                </button>
+              );
+            })}
+          </div>
+
+          <p id="specKey-error" className={`mt-1 text-[11px] font-semibold ${duplicate ? "text-rose-600" : "text-slate-400"}`}>
             {duplicate ? "Khóa này đã tồn tại." : "Tên không phân biệt chữ hoa/thường."}
           </p>
         </div>

@@ -8,7 +8,12 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", indexes = {
+    @Index(name = "idx_reviews_product_created", columnList = "productId, created_at"),
+    @Index(name = "idx_reviews_user", columnList = "userId"),
+    @Index(name = "idx_reviews_order", columnList = "orderId"),
+    @Index(name = "idx_reviews_status_created", columnList = "status, created_at")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

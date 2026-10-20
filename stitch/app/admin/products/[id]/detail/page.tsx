@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { getUserIdFromAccessToken } from "@/lib/auth";
 import { getAdminSession } from "@/lib/auth-server";
 import { notifyAdminWebBestEffort } from "@/lib/admin-web-notify";
+import { FloatingNotice } from "@/components/floating-notice";
 import { ProductInboundModal } from "@/components/product-inbound-modal";
 import { ProductReviewsSection } from "@/components/product-reviews-section";
 import { SimilarProductsPanel } from "@/components/similar-products-panel";
-import { StatusToast } from "@/components/status-toast";
 import {
   getAdminBackendProductById,
   getBackendProductById,
@@ -34,9 +34,10 @@ type PageSearchParams = {
   success?: string;
 };
 
-function moneyVnd(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+function moneyVnd(n: number | string | null | undefined): string {
+  const x = typeof n === "string" ? Number(n) : n;
+  if (x == null || !Number.isFinite(x)) return "—";
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(x);
 }
 
 function imageSrc(img: AdminProductImage): string {
@@ -69,12 +70,6 @@ function variantStockScope(variants: AdminProductVariant[], variantId: number | 
   if (variantId == null || !Number.isFinite(Number(variantId))) return "Tổng SP";
   const v = variants.find((x) => x.id === variantId);
   return v ? `${v.size} · ${v.color}` : `#${variantId}`;
-}
-
-function moneyInline(n: number | string | null | undefined): string {
-  const x = typeof n === "string" ? Number(n) : n;
-  if (n == null || !Number.isFinite(x as number)) return "—";
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(x as number);
 }
 
 export default async function AdminProductDetailPage({
@@ -118,6 +113,7 @@ export default async function AdminProductDetailPage({
   const effectiveRaw = product.effectivePrice != null ? Number(product.effectivePrice) : priceNum;
   const effectiveNum = Number.isFinite(effectiveRaw) ? effectiveRaw : priceNum;
   const stock = balances.reduce((sum, row) => sum + Number(row.quantityOnHand ?? 0), 0);
+
   const minV = product.minVariantPrice != null ? Number(product.minVariantPrice) : null;
   const maxV = product.maxVariantPrice != null ? Number(product.maxVariantPrice) : null;
   const variantRange =
@@ -218,20 +214,18 @@ export default async function AdminProductDetailPage({
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${encodeURIComponent(pid)}/detail`);
     revalidatePath(`/admin/products/${encodeURIComponent(pid)}/edit`);
+    redirect(`/admin/products/${encodeURIComponent(pid)}/detail?success=inbound`);
   }
-
-  const err = sp?.error;
-  const ok = sp?.success;
 
   const inboundVariantOptions = variants.map((v) => ({
     id: v.id,
     size: v.size,
     color: v.color,
     availability: Number(v.availability ?? 0),
+    variantName: v.variantName,
+    sku: v.sku,
+    attributesJson: v.attributesJson,
   }));
-
-  const statCardClass =
-    "rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/60 px-4 py-4 shadow-sm ring-1 ring-slate-100/80 dark:ring-slate-800/50 backdrop-blur-sm sm:px-5";
 
   const heroSrc = resolveCatalogImageUrl(product.primaryImageUrl);
 
@@ -239,335 +233,683 @@ export default async function AdminProductDetailPage({
     product.category?.trim() ||
     (product.categoryId != null ? `Danh mục #${product.categoryId}` : "Chưa phân loại");
 
+  const notice =
+    sp?.success === "create"
+      ? { variant: "success" as const, title: "Thành Công", message: "Đã tạo sản phẩm mới thành công." }
+      : sp?.success === "update"
+        ? { variant: "success" as const, title: "Thành Công", message: "Đã cập nhật sản phẩm thành công." }
+        : sp?.success === "hide"
+          ? { variant: "success" as const, title: "Thành Công", message: "Đã tạm ẩn sản phẩm khỏi storefront." }
+          : sp?.success === "unhide"
+            ? { variant: "success" as const, title: "Thành Công", message: "Đã hiển thị sản phẩm trên storefront." }
+            : sp?.success === "inbound"
+              ? { variant: "success" as const, title: "Nhập Kho Thành Công", message: "Đã cập nhật số lượng tồn kho thành công." }
+              : sp?.error === "readonly"
+                ? { variant: "error" as const, title: "Không đủ quyền", message: "Bạn chỉ có quyền xem, không thể thay đổi dữ liệu." }
+                : sp?.error === "hide"
+                  ? { variant: "error" as const, title: "Lỗi Thao Tác", message: "Không ẩn được sản phẩm. Vui lòng thử lại." }
+                  : sp?.error === "unhide"
+                    ? { variant: "error" as const, title: "Lỗi Thao Tác", message: "Không hiện lại được sản phẩm. Vui lòng thử lại." }
+                    : null;
+
   return (
-    <div className="w-full max-w-none space-y-8 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sản phẩm #{pid}</p>
-          <h1 className="font-headline text-3xl font-black text-blue-900 dark:text-white">Chi tiết &amp; xem trước dữ liệu</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-550 dark:text-slate-450">
-            Tổng hợp thông tin sản phẩm: ảnh, thông số kỹ thuật, biến thể và kho — để kiểm tra trước khi hiển thị trên cửa hàng.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canWrite ? (
-            <>
-              <Link
-                prefetch
-                href={`/admin/products/${encodeURIComponent(pid)}/edit`}
-                className="rounded-xl bg-kinetic px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/15 transition hover:opacity-95"
-              >
-                Chỉnh sửa
-              </Link>
-              <ProductInboundModal
-                triggerClassName="rounded-xl border-2 border-emerald-600/35 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100"
-                productName={product.productName}
-                variants={inboundVariantOptions}
-                inboundAction={stockInboundAction}
-              />
-            </>
-          ) : null}
-          <Link
-            prefetch
-            href="/admin/products"
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-350 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:bg-slate-700 hover:scale-[1.02]"
-          >
-            ← Danh sách
-          </Link>
-        </div>
-      </div>
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300 pb-20 text-slate-800 dark:text-zinc-100">
+      {notice && <FloatingNotice variant={notice.variant} title={notice.title} message={notice.message} />}
 
-      <nav
-        aria-label="Mục trên trang"
-        className="grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-2 sm:grid-cols-3 lg:grid-cols-7 backdrop-blur-md"
-      >
-        <a
-          href="#section-overview"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Tổng quan
-        </a>
-        <a
-          href="#section-images"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Phương tiện ({images.length})
-        </a>
-        <a
-          href="#section-specs"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Thông số ({specs.length})
-        </a>
-        <a
-          href="#section-variants"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Biến thể ({variants.length})
-        </a>
-        <a
-          href="#section-stock"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Kho ({movements.length})
-        </a>
-        <a
-          href="#section-reviews"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Đánh giá
-        </a>
-        <a
-          href="#section-changelogs"
-          className="flex min-h-[2.75rem] items-center justify-center rounded-xl px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-white dark:bg-slate-900 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-white hover:shadow-sm sm:text-sm"
-        >
-          Lịch sử ({changeLogs.length})
-        </a>
-      </nav>
+      {/* ==================== HERO HEADER BANNER ==================== */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        {/* Ambient Glowing Orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
+        </div>
 
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giá niêm yết</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{moneyVnd(priceNum)}</p>
-        </div>
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tồn kho</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{stock}</p>
-        </div>
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Lượt xem</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{product.viewCount ?? 0}</p>
-        </div>
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Đã bán</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{product.salesCount ?? 0}</p>
-        </div>
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Phương tiện / Thông số</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">
-            {images.length} · {specs.length}
-          </p>
-        </div>
-        <div className={statCardClass}>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Biến thể</p>
-          <p className="mt-1 font-headline text-lg font-black text-blue-900 dark:text-white">{variants.length}</p>
-        </div>
-      </div>
+        <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+          <div className="flex items-start gap-5">
+            {/* Product Hero Image */}
+            <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 p-2 shadow-md">
+              {heroSrc ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={heroSrc}
+                  alt={product.productName}
+                  className="h-full w-full object-cover rounded-2xl transition-transform duration-300 hover:scale-110"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-2xl">
+                  {product.productName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
 
-      {err === "readonly" && (
-        <StatusToast tone="error" title="Không đủ quyền" message="Không đủ quyền chỉnh sửa sản phẩm." />
-      )}
-      {err === "hide" && (
-        <StatusToast tone="error" title="Lỗi ẩn sản phẩm" message="Không ẩn được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi." />
-      )}
-      {err === "unhide" && (
-        <StatusToast tone="error" title="Lỗi hiện sản phẩm" message="Không hiện lại được sản phẩm. Kiểm tra gateway hoặc trạng thái bản ghi." />
-      )}
-      {ok === "hide" && (
-        <StatusToast tone="success" title="Thành công" message="Đã ẩn sản phẩm khỏi cửa hàng." />
-      )}
-      {ok === "unhide" && (
-        <StatusToast tone="success" title="Thành công" message="Đã hiện sản phẩm trên cửa hàng." />
-      )}
-      {ok === "inbound" && null}
-      {err === "inbound_validation" && (
-        <StatusToast tone="error" title="Lỗi nhập kho" message="Nhập số lượng nguyên dương (tối thiểu 1)." />
-      )}
-      {ok === "create" && (
-        <StatusToast tone="success" title="Thành công" message="Tạo sản phẩm mới thành công!" />
-      )}
+            <div className="space-y-1.5 min-w-0">
+              <nav className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-zinc-500">
+                <Link className="hover:text-blue-600 dark:hover:text-cyan-400 transition-colors" href="/admin/products">
+                  Sản phẩm
+                </Link>
+                <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                <span className="font-bold text-blue-600 dark:text-cyan-400 truncate max-w-[200px] sm:max-w-xs">
+                  #{pid} {product.productName}
+                </span>
+              </nav>
 
-      <section
-        id="section-overview"
-        className="scroll-mt-24 relative overflow-hidden rounded-[2.5rem] border border-indigo-100/50 bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 shadow-xl shadow-blue-900/5 ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10"
-      >
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="relative z-10 grid gap-8 p-8 lg:grid-cols-12 lg:gap-12 lg:p-10">
-          <div className="flex flex-col lg:col-span-4 xl:col-span-3">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">Ảnh chính</p>
-            <div className="mx-auto w-full max-w-[280px] lg:mx-0">
-              <div className="aspect-square w-full overflow-hidden rounded-2xl border border-outline-variant/15 bg-slate-100 dark:bg-slate-800 shadow-md ring-1 ring-slate-200/60">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={heroSrc} alt="" className="h-full w-full object-cover" />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="font-headline text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                  {product.productName}
+                </h1>
+                {isHidden && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                    <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+                    Tạm ẩn storefront
+                  </span>
+                )}
+                {isDeleted && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 px-3 py-1 text-xs font-bold text-rose-600 dark:text-rose-400">
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                    Đã xóa mềm
+                  </span>
+                )}
+                {!isHidden && !isDeleted && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                    Đang kinh doanh
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                <span className="rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 px-2 py-0.5 font-mono font-bold text-slate-700 dark:text-cyan-300">
+                  ID: #{pid}
+                </span>
+                {product.sku && (
+                  <>
+                    <span>·</span>
+                    <span className="font-mono text-slate-500 dark:text-zinc-400">SKU: {product.sku}</span>
+                  </>
+                )}
+                <span>·</span>
+                <span>
+                  Danh mục: <strong className="text-slate-700 dark:text-zinc-200">{categoryName}</strong>
+                </span>
+                {product.brandName && (
+                  <>
+                    <span>·</span>
+                    <span>
+                      Thương hiệu: <strong className="text-blue-600 dark:text-cyan-400">{product.brandName}</strong>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="min-w-0 space-y-5 lg:col-span-8 xl:col-span-9">
-            <div>
-              <h2 className="font-headline text-2xl font-black text-blue-900 dark:text-white sm:text-3xl">{product.productName}</h2>
-              <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="font-bold text-slate-800 dark:text-slate-100">Danh mục</span>
-                <span className="font-headline text-base font-bold text-blue-900 dark:text-white/95">{categoryName}</span>
-                {product.categoryId != null ? (
-                  <span className="text-xs font-medium text-on-surface-variant">(id {product.categoryId})</span>
-                ) : null}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">SKU {product.sku ?? `—`}</span>
-              {isDeleted ? (
-                <span className="rounded-full bg-rose-100 px-3 py-1.5 text-xs font-bold text-rose-800">Đã xóa mềm</span>
-              ) : (
-                <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">Chưa xóa mềm</span>
-              )}
-              {isHidden ? (
-                <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800">Đang ẩn khỏi cửa hàng</span>
-              ) : (
-                <span className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-800">Hiện trên cửa hàng</span>
-              )}
-            </div>
+          {/* Action buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 relative z-10">
+            <Link
+              prefetch
+              href="/admin/products"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 px-4 py-3 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-200 dark:hover:bg-white/10 shadow-xs active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>Danh sách</span>
+            </Link>
 
-            {variants.length > 0 ? (
-              <p className="text-xs text-on-surface-variant">
-                Ảnh từng biến thể xem mục{" "}
-                <a href="#section-variants" className="font-bold text-primary underline">
-                  Biến thể
-                </a>
-                .
-              </p>
-            ) : null}
-
-            {canWrite && !isDeleted ? (
-              <div className="flex flex-wrap gap-2">
+            {canWrite && !isDeleted && (
+              <>
                 {isHidden ? (
                   <form action={unhideCatalogAction}>
                     <button
                       type="submit"
-                      className="rounded-xl border-2 border-emerald-500/50 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100"
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/40 shadow-xs active:scale-95"
                     >
-                      Hiện trên cửa hàng
+                      <span className="material-symbols-outlined text-[16px]">public</span>
+                      <span>Hiện storefront</span>
                     </button>
                   </form>
                 ) : (
                   <form action={hideCatalogAction}>
                     <button
                       type="submit"
-                      className="rounded-xl border-2 border-amber-500/50 bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100"
+                      className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/80 dark:bg-amber-950/20 px-4 py-3 text-xs font-bold text-amber-600 dark:text-amber-400 transition-all hover:bg-amber-100 dark:hover:bg-amber-900/30 shadow-xs active:scale-95"
                     >
-                      Ẩn khỏi cửa hàng
+                      <span className="material-symbols-outlined text-[16px]">visibility_off</span>
+                      <span>Ẩn storefront</span>
                     </button>
                   </form>
                 )}
-              </div>
-            ) : null}
+
+                <ProductInboundModal
+                  triggerClassName="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/40 shadow-xs active:scale-95"
+                  productName={product.productName}
+                  variants={inboundVariantOptions}
+                  inboundAction={stockInboundAction}
+                />
+
+                <Link
+                  prefetch
+                  href={`/admin/products/${encodeURIComponent(pid)}/edit`}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 dark:from-cyan-500 dark:via-blue-600 dark:to-indigo-600 px-5 py-3 font-headline text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-500/25 dark:shadow-cyan-500/25 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/35 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  <span>Chỉnh sửa</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="border-t border-outline-variant/10 bg-surface-container-low dark:bg-slate-800/50 px-6 py-4 lg:px-8">
-          <h3 className="font-headline text-sm font-black uppercase tracking-widest text-indigo-900/80 flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">info</span> Thông tin sản phẩm</h3>
-          <p className="mt-2 text-sm font-medium text-slate-500">Giá, danh mục, tồn và trạng thái hiển thị (không hiện mã cột nội bộ).</p>
-        </div>
-        <div className="relative z-10 overflow-x-auto border-t border-indigo-100/30 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
-          <dl className="grid min-w-[720px] gap-6 p-8 sm:min-w-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 lg:p-10">
-            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
-              <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Danh mục</dt>
-              <dd className="mt-2 text-base font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-700">{categoryName}</dd>
+        {/* 6 Statistics Cards in Header */}
+        <div className="relative z-10 mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 border-t border-slate-100 dark:border-white/10 pt-6">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-blue-600 dark:text-cyan-400">payments</span>
+              <span>Giá niêm yết</span>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
-              <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Thương hiệu</dt>
-              <dd className="mt-2 text-base font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-700">
-                {product.brandName?.trim() ? product.brandName : "—"}
-                {product.brandId != null ? <span className="ml-1 text-xs font-normal text-slate-500">(id {product.brandId})</span> : null}
-              </dd>
+            <p className="mt-1.5 font-headline text-lg font-black text-slate-900 dark:text-white truncate">
+              {moneyVnd(priceNum)}
+            </p>
+            <p className="text-[10px] text-slate-400 truncate">
+              {effectiveNum !== priceNum ? `Ưu đãi: ${moneyVnd(effectiveNum)}` : "Giá cơ sở"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-emerald-600 dark:text-emerald-400">warehouse</span>
+              <span>Tổng tồn kho</span>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
-              <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Giá niêm yết</dt>
-              <dd className="mt-2 text-xl font-black text-slate-900 transition-colors group-hover:text-indigo-700">{moneyVnd(priceNum)}</dd>
+            <p className="mt-1.5 font-headline text-lg font-black text-emerald-600 dark:text-emerald-400">
+              {stock} <span className="text-xs font-normal text-slate-400">sp</span>
+            </p>
+            <p className="text-[10px] text-slate-400">Khả dụng toàn sàn</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-purple-600 dark:text-purple-400">layers</span>
+              <span>Biến thể đa tầng</span>
             </div>
-            <div className="group rounded-[1.5rem] border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-200">
-              <dt className="text-[11px] font-black uppercase tracking-widest text-slate-400">Giá hiệu lực</dt>
-              <dd className="mt-2 text-xl font-black text-indigo-600">{moneyVnd(effectiveNum)}</dd>
+            <p className="mt-1.5 font-headline text-lg font-black text-purple-600 dark:text-purple-400">
+              {variants.length} <span className="text-xs font-normal text-slate-400">SKU</span>
+            </p>
+            <p className="text-[10px] text-slate-400">Phân loại độc lập</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-indigo-600 dark:text-indigo-400">visibility</span>
+              <span>Lượt xem</span>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
-              <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Tồn kho</dt>
-              <dd className="mt-1 text-lg font-black text-blue-900 dark:text-white">{stock}</dd>
-              <dd className="mt-2 text-xs leading-relaxed text-on-surface-variant">
-                Điều chỉnh chính qua nhập kho / inventory; PUT sản phẩm không đổi tồn.
-              </dd>
+            <p className="mt-1.5 font-headline text-lg font-black text-slate-900 dark:text-white">
+              {product.viewCount ?? 0}
+            </p>
+            <p className="text-[10px] text-slate-400">Lượt truy cập</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-amber-600 dark:text-amber-400">shopping_bag</span>
+              <span>Đã bán</span>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
-              <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Ẩn khỏi cửa hàng</dt>
-              <dd className="mt-1 text-sm font-bold text-blue-900 dark:text-white">{isHidden ? "Có" : "Không"}</dd>
+            <p className="mt-1.5 font-headline text-lg font-black text-slate-900 dark:text-white">
+              {product.salesCount ?? 0} <span className="text-xs font-normal text-slate-400">đơn</span>
+            </p>
+            <p className="text-[10px] text-slate-400">Doanh số sàn</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[16px] text-rose-600 dark:text-rose-400">photo_library</span>
+              <span>Tư liệu</span>
             </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4">
-              <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Xóa mềm</dt>
-              <dd className="mt-1 break-all text-sm font-bold text-blue-900 dark:text-white">
-                {isDeleted ? String(product.deletedAt) : "— (đang hoạt động)"}
-              </dd>
-            </div>
-            {variantRange ? (
-              <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4 sm:col-span-2 lg:col-span-3">
-                <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Khoảng giá biến thể</dt>
-                <dd className="mt-1 text-sm font-bold text-blue-900 dark:text-white">{variantRange}</dd>
-              </div>
-            ) : null}
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900/80 p-4 sm:col-span-2 lg:col-span-3">
-              <dt className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Mô tả</dt>
-              <dd className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-                {product.discription?.trim() ? product.discription : "—"}
-              </dd>
-            </div>
-          </dl>
+            <p className="mt-1.5 font-headline text-lg font-black text-slate-900 dark:text-white">
+              {images.length} <span className="text-xs font-normal text-slate-400">ảnh</span> · {specs.length} <span className="text-xs font-normal text-slate-400">số</span>
+            </p>
+            <p className="text-[10px] text-slate-400">Media &amp; thông số</p>
+          </div>
         </div>
       </section>
 
-      <section id="section-images" className="scroll-mt-24 rounded-3xl border border-outline-variant/10 bg-gradient-to-br from-surface-container-lowest to-blue-50/30 dark:from-slate-900 dark:to-slate-900/30 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="relative z-10 flex items-center justify-between mb-8">
+      {/* ==================== QUICK SECTION NAVIGATION ==================== */}
+      <nav
+        aria-label="Mục trên trang"
+        className="sticky top-4 z-20 flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/80 p-1.5 backdrop-blur-xl shadow-sm"
+      >
+        <a
+          href="#section-overview"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">info</span>
+          <span>Tổng quan</span>
+        </a>
+        <a
+          href="#section-variants"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">layers</span>
+          <span>Biến thể ({variants.length})</span>
+        </a>
+        <a
+          href="#section-images"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">perm_media</span>
+          <span>Phương tiện ({images.length})</span>
+        </a>
+        <a
+          href="#section-specs"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">list_alt</span>
+          <span>Thông số ({specs.length})</span>
+        </a>
+        <a
+          href="#section-stock"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">warehouse</span>
+          <span>Kho &amp; Lịch sử ({movements.length})</span>
+        </a>
+        <a
+          href="#section-reviews"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">grade</span>
+          <span>Đánh giá</span>
+        </a>
+        <a
+          href="#section-changelogs"
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-cyan-400 shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">manage_history</span>
+          <span>Lịch sử ({changeLogs.length})</span>
+        </a>
+      </nav>
+
+      {/* ==================== SECTION 1: OVERVIEW CARD ==================== */}
+      <section
+        id="section-overview"
+        className="scroll-mt-24 relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 shadow-sm dark:shadow-2xl backdrop-blur-2xl"
+      >
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 dark:from-cyan-500 dark:via-blue-600 dark:to-indigo-600" />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px] rounded-full" />
+        </div>
+
+        <div className="relative z-10 grid gap-8 p-6 sm:p-10 lg:grid-cols-12 lg:gap-12">
+          {/* Left Column: Showcase Image & Badges */}
+          <div className="flex flex-col items-center lg:items-start lg:col-span-4 xl:col-span-3">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">
+              Hình ảnh đại diện
+            </p>
+            <div className="w-full max-w-[280px]">
+              <div className="aspect-square w-full overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 p-2 shadow-sm">
+                {heroSrc ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={heroSrc} alt={product.productName} className="h-full w-full object-contain rounded-2xl" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-zinc-700">
+                    <span className="material-symbols-outlined text-5xl">inventory_2</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 w-full space-y-2 max-w-[280px]">
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-zinc-900/60 p-2.5 border border-slate-200/60 dark:border-white/5 text-xs">
+                <span className="font-semibold text-slate-500 dark:text-zinc-400">Trạng thái:</span>
+                {isHidden ? (
+                  <span className="font-bold text-amber-600 dark:text-amber-400">Tạm ẩn</span>
+                ) : isDeleted ? (
+                  <span className="font-bold text-rose-600 dark:text-rose-400">Đã xóa mềm</span>
+                ) : (
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Hiển thị</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-zinc-900/60 p-2.5 border border-slate-200/60 dark:border-white/5 text-xs">
+                <span className="font-semibold text-slate-500 dark:text-zinc-400">Mã SKU:</span>
+                <span className="font-mono font-bold text-slate-700 dark:text-zinc-300">{product.sku || "—"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Key Details */}
+          <div className="min-w-0 space-y-6 lg:col-span-8 xl:col-span-9">
+            <div>
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 dark:border-cyan-500/30 bg-blue-50/80 dark:bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-cyan-400">
+                <span className="material-symbols-outlined text-[13px]">category</span>
+                {categoryName}
+              </p>
+              <h2 className="mt-3 font-headline text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                {product.productName}
+              </h2>
+              {product.brandName && (
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400 font-medium">
+                  Thương hiệu: <strong className="text-blue-600 dark:text-cyan-400">{product.brandName}</strong>
+                </p>
+              )}
+            </div>
+
+            {/* Spec grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Giá niêm yết</p>
+                <p className="mt-1 text-xl font-black text-slate-900 dark:text-white">{moneyVnd(priceNum)}</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Giá hiệu lực (Storefront)</p>
+                <p className="mt-1 text-xl font-black text-blue-600 dark:text-cyan-400">{moneyVnd(effectiveNum)}</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Tồn kho khả dụng</p>
+                <p className="mt-1 text-xl font-black text-emerald-600 dark:text-emerald-400">
+                  {stock} <span className="text-xs font-normal text-slate-400">sản phẩm</span>
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Thương hiệu</p>
+                <p className="mt-1 text-base font-bold text-slate-900 dark:text-white">
+                  {product.brandName || "—"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Khoảng giá biến thể</p>
+                <p className="mt-1 text-base font-bold text-purple-600 dark:text-purple-400">
+                  {variantRange || "1 mức giá"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-zinc-900/60 p-4 shadow-xs">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Số lượng biến thể</p>
+                <p className="mt-1 text-base font-bold text-slate-900 dark:text-white">
+                  {variants.length} SKU độc lập
+                </p>
+              </div>
+            </div>
+
+            {/* Description Box */}
+            <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-900/40 p-5 shadow-xs">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">notes</span>
+                Mô tả sản phẩm
+              </h4>
+              <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-zinc-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {product.discription?.trim() ? product.discription : "Chưa có mô tả cho sản phẩm này."}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== SECTION 2: MULTI-TIER VARIANTS MATRIX ==================== */}
+      <section
+        id="section-variants"
+        className="scroll-mt-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-              <span className="material-symbols-outlined text-indigo-500 text-3xl">perm_media</span>
+            <div className="flex items-center gap-2">
+              <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <span className="material-symbols-outlined text-blue-600 dark:text-cyan-400 text-3xl">layers</span>
+                Biến thể đa tầng ({variants.length})
+              </h3>
+              <span className="rounded-full bg-blue-50 dark:bg-cyan-950/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-cyan-400 border border-blue-200/60 dark:border-cyan-800/60">
+                Multi-Tier
+              </span>
+            </div>
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
+              Ma trận phân loại 2 tầng (Màu sắc × Kích cỡ/Dung lượng) với hình ảnh, giá bán, giá gốc và tồn kho độc lập.
+            </p>
+          </div>
+
+          {canWrite && !isDeleted && (
+            <Link
+              prefetch
+              href={`/admin/products/${encodeURIComponent(pid)}/edit#section-variants`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-50 dark:bg-cyan-950/40 px-4 py-2.5 text-xs font-bold text-blue-600 dark:text-cyan-400 border border-blue-200/60 dark:border-cyan-800/60 hover:bg-blue-100 dark:hover:bg-cyan-900/50 transition-all active:scale-95 shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit_note</span>
+              Quản lý ma trận biến thể
+            </Link>
+          )}
+        </div>
+
+        {variants.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-600 mb-2">layers_clear</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Chưa có biến thể nào được thiết lập</p>
+            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Sản phẩm hiện đang bán theo 1 mức giá cố định duy nhất.</p>
+          </div>
+        ) : (
+          <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/90 shadow-sm backdrop-blur-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                    <th className="py-4 pl-6 pr-3">#</th>
+                    <th className="py-4 px-3">Ảnh &amp; Phân loại đa tầng</th>
+                    <th className="py-4 px-3">Tên SKU</th>
+                    <th className="py-4 px-3">Giá bán</th>
+                    <th className="py-4 px-3">Tồn kho</th>
+                    <th className="py-4 pr-6 pl-3">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05] text-slate-700 dark:text-zinc-300">
+                  {variants.map((v, idx) => {
+                    const variantStock = v.availability ?? 0;
+                    const hasOriginal = v.originalPrice != null && Number(v.originalPrice) > Number(v.price ?? 0);
+
+                    // Parse dynamic attributesJson if present
+                    let dynamicAttrs: Array<{ name: string; value: string }> = [];
+                    if (v.attributesJson) {
+                      try {
+                        const parsed = JSON.parse(v.attributesJson);
+                        if (Array.isArray(parsed)) {
+                          dynamicAttrs = parsed
+                            .map((item: any) => ({
+                              name: String(item.tierName || item.name || "").trim(),
+                              value: String(item.value || "").trim(),
+                            }))
+                            .filter((x) => x.value);
+                        }
+                      } catch {}
+                    }
+
+                    return (
+                      <tr key={v.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 pl-6 pr-3 font-mono font-bold text-slate-400">
+                          #{idx + 1}
+                        </td>
+                        <td className="py-4 px-3">
+                          <div className="flex items-center gap-3">
+                            {v.variantImageUrl ? (
+                              <a
+                                href={resolveCatalogImageUrl(v.variantImageUrl)}
+                                className="inline-block shrink-0"
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Xem ảnh đầy đủ"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={resolveCatalogImageUrl(v.variantImageUrl)}
+                                  alt=""
+                                  className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200/90 dark:ring-white/10 shadow-xs transition-transform duration-300 hover:scale-105"
+                                />
+                              </a>
+                            ) : (
+                              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400">
+                                Trống
+                              </span>
+                            )}
+
+                            <div className="space-y-1.5">
+                              <span className="text-[10px] font-mono text-slate-400 block">ID #{v.id}</span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {dynamicAttrs.length > 0 ? (
+                                  dynamicAttrs.map((attr, aIdx) => (
+                                    <span
+                                      key={aIdx}
+                                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold ${
+                                        aIdx === 0
+                                          ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-cyan-300 border border-blue-200/60 dark:border-blue-800/60"
+                                          : aIdx === 1
+                                            ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60"
+                                            : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
+                                      }`}
+                                    >
+                                      {attr.name && <span className="opacity-60 text-[10px] uppercase font-normal">{attr.name}:</span>}
+                                      <span>{attr.value}</span>
+                                    </span>
+                                  ))
+                                ) : (
+                                  <>
+                                    <span className="rounded-lg bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-cyan-400 border border-blue-200/60 dark:border-blue-800/60">
+                                      {v.color || "—"}
+                                    </span>
+                                    {v.size && v.size !== "—" && (
+                                      <span className="rounded-lg bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+                                        {v.size}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-4 px-3">
+                          <p className="font-bold text-slate-800 dark:text-zinc-200 text-xs">
+                            {v.variantName || `${v.color} - ${v.size}`}
+                          </p>
+                          {v.sku && (
+                            <span className="mt-1 inline-block rounded bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400">
+                              SKU: {v.sku}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-4 px-3 whitespace-nowrap">
+                          <p className="text-sm font-black text-blue-600 dark:text-cyan-400">
+                            {v.price != null ? moneyVnd(Number(v.price)) : "—"}
+                          </p>
+                          {hasOriginal && (
+                            <p className="text-[11px] text-slate-400 line-through">
+                              {moneyVnd(Number(v.originalPrice))}
+                            </p>
+                          )}
+                        </td>
+
+                        <td className="py-4 px-3">
+                          <span className="font-mono text-xs font-black text-slate-800 dark:text-zinc-200">
+                            {variantStock} sp
+                          </span>
+                        </td>
+
+                        <td className="py-4 pr-6 pl-3">
+                          {variantStock > 5 ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              Sẵn hàng
+                            </span>
+                          ) : variantStock > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              Sắp hết
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 dark:bg-rose-950/50 px-2.5 py-1 text-[11px] font-bold text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/60">
+                              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                              Hết hàng
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ==================== SECTION 3: MEDIA GALLERY ==================== */}
+      <section
+        id="section-images"
+        className="scroll-mt-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <span className="material-symbols-outlined text-blue-600 dark:text-cyan-400 text-3xl">perm_media</span>
               Phương tiện ({images.length})
             </h3>
-            <p className="mt-2 text-sm text-on-surface-variant font-medium">Quản lý kho ảnh đại diện, ảnh chụp chi tiết và video minh họa.</p>
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
+              Quản lý kho ảnh đại diện, ảnh chụp chi tiết và video giới thiệu sản phẩm.
+            </p>
           </div>
         </div>
 
         {images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-indigo-100 rounded-3xl bg-white/50 dark:bg-slate-900/50">
-            <span className="material-symbols-outlined text-5xl text-indigo-200 mb-3">hide_image</span>
-            <p className="text-sm font-bold text-indigo-900/50">Sản phẩm chưa có phương tiện nào</p>
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-600 mb-2">hide_image</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Chưa có phương tiện đính kèm nào</p>
           </div>
         ) : (
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 relative z-10">
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {images.map((img: any) => {
               const isVideo = img.mediaType === "VIDEO";
               return (
-                <li key={img.id} className="group relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 shadow-md ring-1 ring-slate-900/5 transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 hover:ring-indigo-500/30">
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900 flex items-center justify-center">
+                <li
+                  key={img.id}
+                  className="group relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/10 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-400/40 dark:hover:border-cyan-500/40"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950 flex items-center justify-center">
                     {isVideo ? (
-                      <video src={imageSrc(img)} controls className="h-full w-full object-contain bg-black/90 transition-transform duration-700 group-hover:scale-105" />
+                      <video
+                        src={imageSrc(img)}
+                        controls
+                        className="h-full w-full object-contain bg-black/90"
+                      />
                     ) : (
-                      <img src={imageSrc(img)} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={imageSrc(img)}
+                        alt=""
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     )}
-                    
-                    {/* Badge */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+
+                    {/* Floating Badges */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
                       {img.primaryImage && (
-                        <div className="backdrop-blur-md bg-white/90 dark:bg-slate-900/90 shadow-lg px-3 py-1.5 rounded-full flex items-center gap-1.5 text-indigo-600 ring-1 ring-indigo-500/20 animate-in fade-in slide-in-from-top-2">
+                        <div className="backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 shadow-md px-2.5 py-1 rounded-full flex items-center gap-1 text-blue-600 dark:text-cyan-400 ring-1 ring-blue-500/20">
                           <span className="material-symbols-outlined text-[14px] fill-current">star</span>
                           <span className="text-[10px] font-black uppercase tracking-wider">Ảnh chính</span>
                         </div>
                       )}
-                      <div className="backdrop-blur-md bg-black/40 text-white shadow-lg px-3 py-1.5 rounded-full flex items-center gap-1.5 ring-1 ring-white/10">
-                        <span className="material-symbols-outlined text-[14px]">{isVideo ? 'movie' : 'image'}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider">{isVideo ? 'Video' : 'Hình ảnh'}</span>
+                      <div className="backdrop-blur-md bg-black/50 text-white shadow-md px-2.5 py-1 rounded-full flex items-center gap-1 ring-1 ring-white/10">
+                        <span className="material-symbols-outlined text-[14px]">{isVideo ? "movie" : "image"}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">{isVideo ? "Video" : "Ảnh"}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-5 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border-t border-slate-100 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                      <p className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
-                        {img.primaryImage ? "Phương tiện đại diện" : (isVideo ? "Video đính kèm" : "Ảnh đính kèm")}
-                      </p>
-                      {img.sortOrder != null && (
-                        <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-lg bg-indigo-50 text-[11px] font-black text-indigo-600 ring-1 ring-indigo-500/20">
-                          #{img.sortOrder}
-                        </span>
-                      )}
-                    </div>
+                  <div className="p-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                    <p className="font-bold text-slate-800 dark:text-zinc-100 text-xs">
+                      {img.primaryImage ? "Ảnh đại diện chính" : isVideo ? "Video đính kèm" : "Ảnh chụp góc cạnh"}
+                    </p>
+                    {img.sortOrder != null && (
+                      <span className="font-mono text-[10px] font-bold text-slate-400">
+                        #{img.sortOrder}
+                      </span>
+                    )}
                   </div>
                 </li>
               );
@@ -576,99 +918,42 @@ export default async function AdminProductDetailPage({
         )}
       </section>
 
-      <section id="section-specs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-500 text-3xl">list_alt</span>
+      {/* ==================== SECTION 4: SPECIFICATIONS ==================== */}
+      <section
+        id="section-specs"
+        className="scroll-mt-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <span className="material-symbols-outlined text-blue-600 dark:text-cyan-400 text-3xl">list_alt</span>
           Thông số kỹ thuật ({specs.length})
         </h3>
-        <p className="mt-2 text-sm font-medium text-slate-500">Tên thông số, giá trị và đơn vị tính của sản phẩm.</p>
-        {specs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 mt-6 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_list_bulleted</span>
-            <p className="text-sm font-bold text-slate-400">Chưa có thông số kỹ thuật</p>
-          </div>
-        ) : (
-          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
-            <table className="w-full min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  <th className="py-5 pl-6 pr-4">Thứ tự</th>
-                  <th className="py-3 pr-4">Thông số</th>
-                  <th className="py-3 pr-4">Giá trị</th>
-                  <th className="py-3 pr-4">Đơn vị</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {specs.map((s, idx) => (
-                  <tr key={s.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
-                    <td className="py-4 pl-6 pr-4 font-mono text-xs font-bold text-slate-400">{s.sortOrder ?? "—"}</td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-600">{s.specKey}</td>
-                    <td className="py-4 pr-4 font-medium text-slate-600 dark:text-slate-300">{s.specValue}</td>
-                    <td className="py-4 pr-4 text-xs font-bold text-slate-400">{s.unit ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section id="section-variants" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-          <span className="material-symbols-outlined text-indigo-500 text-3xl">style</span>
-          Biến thể ({variants.length})
-        </h3>
-        <p className="mt-2 text-sm font-medium text-slate-500">
-          Danh sách các tuỳ chọn cỡ và màu, kèm ảnh riêng, giá và tồn kho cho từng biến thể.
+        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
+          Chi tiết tên thông số, giá trị và đơn vị tính của sản phẩm.
         </p>
-        {variants.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 mt-6 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">format_size</span>
-            <p className="text-sm font-bold text-slate-400">Chưa có biến thể nào</p>
+
+        {specs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-white/10 mt-6 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-600 mb-2">format_list_bulleted</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Chưa có thông số kỹ thuật</p>
           </div>
         ) : (
-          <div className="mt-8 w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
-            <table className="w-full min-w-[600px] text-left text-sm lg:min-w-full">
+          <div className="mt-6 w-full overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/90 shadow-sm">
+            <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  <th className="py-5 pl-6 pr-4">ID</th>
-                  <th className="py-5 pr-4">Ảnh</th>
-                  <th className="py-3 pr-4">Size</th>
-                  <th className="py-3 pr-4">Màu</th>
-                  <th className="py-3 pr-4">Giá</th>
-                  <th className="py-3 pr-4">Tồn</th>
+                <tr className="border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                  <th className="py-4 pl-6 pr-4">Thứ tự</th>
+                  <th className="py-4 pr-4">Thông số</th>
+                  <th className="py-4 pr-4">Giá trị</th>
+                  <th className="py-4 pr-6">Đơn vị</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {variants.map((v, idx) => (
-                  <tr key={v.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
-                    <td className="py-4 pl-6 pr-4 font-mono text-xs font-bold text-slate-400">#{v.id}</td>
-                    <td className="py-4 pr-4">
-                      {v.variantImageUrl ? (
-                        <a
-                          href={resolveCatalogImageUrl(v.variantImageUrl)}
-                          className="inline-block"
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Xem ảnh đầy đủ"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={resolveCatalogImageUrl(v.variantImageUrl)}
-                            alt=""
-                            className="h-16 w-16 rounded-[1rem] object-cover ring-1 ring-slate-200/90 shadow-sm transition-transform duration-300 hover:scale-110 hover:ring-indigo-400/50 hover:shadow-lg"
-                          />
-                        </a>
-                      ) : (
-                        <span className="inline-flex h-16 w-16 items-center justify-center rounded-[1rem] bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-300">
-                          Trống
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 text-base">{v.size}</td>
-                    <td className="py-4 pr-4 font-bold text-slate-800 dark:text-slate-100 text-base">{v.color}</td>
-                    <td className="py-4 pr-4 whitespace-nowrap font-medium text-indigo-600">{v.price != null ? moneyVnd(Number(v.price)) : "—"}</td>
-                    <td className="py-4 pr-4 font-mono font-bold text-slate-600 dark:text-slate-300">{v.availability ?? "—"}</td>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05] text-slate-700 dark:text-zinc-300">
+                {specs.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3.5 pl-6 pr-4 font-mono font-bold text-slate-400">{s.sortOrder ?? "—"}</td>
+                    <td className="py-3.5 pr-4 font-bold text-slate-900 dark:text-white">{s.specKey}</td>
+                    <td className="py-3.5 pr-4 font-medium text-slate-600 dark:text-zinc-300">{s.specValue}</td>
+                    <td className="py-3.5 pr-6 font-mono text-slate-400">{s.unit ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -677,111 +962,173 @@ export default async function AdminProductDetailPage({
         )}
       </section>
 
-      <section id="section-stock" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
+      {/* ==================== SECTION 5: INVENTORY & STOCK MOVEMENTS ==================== */}
+      <section
+        id="section-stock"
+        className="scroll-mt-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-              <span className="material-symbols-outlined text-indigo-500 text-3xl">warehouse</span>
-              Kho — lịch sử nhập / xuất
+            <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-3xl">warehouse</span>
+              Kho hàng &amp; Lịch sử nhập/xuất ({movements.length})
             </h3>
-            <p className="mt-2 text-sm font-medium text-slate-500">Lịch sử di chuyển hàng hóa; thời điểm ghi nhận do hệ thống tự động.</p>
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
+              Nhật ký biến động tồn kho chi tiết theo từng phiên bản SKU và thời điểm.
+            </p>
           </div>
-          {canWrite ? (
+
+          {canWrite && !isDeleted && (
             <ProductInboundModal
-              triggerClassName="rounded-2xl border-2 border-emerald-500/20 bg-emerald-50 px-6 py-3.5 text-sm font-bold text-emerald-800 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md active:scale-95 flex items-center gap-2"
+              triggerClassName="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 shadow-xs transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/50 active:scale-95"
               productName={product.productName}
               variants={inboundVariantOptions.map((v, index) => ({ ...v, selected: index === 0 }))}
               inboundAction={stockInboundAction}
             />
-          ) : null}
+          )}
         </div>
+
         {movements.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">history</span>
-            <p className="text-sm font-bold text-slate-400">Chưa có phiếu kho nào được ghi nhận</p>
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-600 mb-2">history</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Chưa có phiếu kho nào được ghi nhận</p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
-            <table className="w-full min-w-[900px] text-left text-sm lg:min-w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  <th className="py-5 pl-6 pr-4">Loại</th>
-                  <th className="py-3 pr-4">SL</th>
-                  <th className="py-3 pr-4">Phạm vi</th>
-                  <th className="py-3 pr-4">Tồn sau</th>
-                  <th className="py-3 pr-4">Đơn giá</th>
-                  <th className="py-3 pr-4">Thời điểm</th>
-                  <th className="py-3 pr-4">Người tạo</th>
-                  <th className="py-3 pr-4">Ghi chú</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/10">
-                {movements.map((m: AdminStockMovement, idx: number) => (
-                  <tr key={m.id} className={idx % 2 === 1 ? "bg-slate-50/50 dark:bg-slate-800/50" : undefined}>
-                    <td className="py-3 pl-4 pr-4 font-medium text-blue-900 dark:text-white">{movementTypeVi(m.movementType)}</td>
-                    <td className="py-3 pr-4 font-mono">{m.quantity ?? "—"}</td>
-                    <td className="py-3 pr-4 text-slate-700 dark:text-slate-200">{variantStockScope(variants, m.variantId)}</td>
-                    <td className="py-3 pr-4 font-mono">{m.balanceAfter ?? "—"}</td>
-                    <td className="py-3 pr-4">{moneyInline(m.unitCost)}</td>
-                    <td className="py-3 pr-4 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">{formatStockDateTime(m.movementAt ?? undefined)}</td>
-                    <td className="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">{m.createdBy ?? "—"}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-xs text-slate-600 dark:text-slate-300" title={m.note ?? ""}>
-                      {m.note?.trim() ? m.note : "—"}
-                    </td>
+          <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/90 shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                    <th className="py-4 pl-6 pr-4">Loại phiếu</th>
+                    <th className="py-4 pr-4">Số lượng</th>
+                    <th className="py-4 pr-4">Phạm vi biến thể</th>
+                    <th className="py-4 pr-4">Tồn sau</th>
+                    <th className="py-4 pr-4">Đơn giá</th>
+                    <th className="py-4 pr-4">Thời điểm</th>
+                    <th className="py-4 pr-4">Người tạo</th>
+                    <th className="py-4 pr-6">Ghi chú</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05] text-slate-700 dark:text-zinc-300">
+                  {movements.map((m: AdminStockMovement) => {
+                    const isInbound = String(m.movementType ?? "").toUpperCase().includes("INBOUND");
+                    return (
+                      <tr key={m.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3.5 pl-6 pr-4">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                              isInbound
+                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60"
+                                : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {isInbound ? "add_circle" : "remove_circle"}
+                            </span>
+                            <span>{movementTypeVi(m.movementType)}</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 pr-4 font-mono font-bold text-slate-900 dark:text-white">
+                          {isInbound ? `+${m.quantity}` : `-${m.quantity}`}
+                        </td>
+                        <td className="py-3.5 pr-4 text-slate-600 dark:text-zinc-300 font-medium">
+                          {variantStockScope(variants, m.variantId)}
+                        </td>
+                        <td className="py-3.5 pr-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {m.balanceAfter ?? "—"}
+                        </td>
+                        <td className="py-3.5 pr-4 text-slate-600 dark:text-zinc-300">
+                          {moneyVnd(m.unitCost)}
+                        </td>
+                        <td className="py-3.5 pr-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
+                          {formatStockDateTime(m.movementAt ?? undefined)}
+                        </td>
+                        <td className="py-3.5 pr-4 text-slate-500 dark:text-zinc-400 font-medium">
+                          {m.createdBy ?? "—"}
+                        </td>
+                        <td className="py-3.5 pr-6 max-w-[200px] truncate text-slate-500 dark:text-zinc-400" title={m.note ?? ""}>
+                          {m.note?.trim() ? m.note : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
 
+      {/* ==================== SECTION 6: REVIEWS ==================== */}
       <ProductReviewsSection productId={numId} />
 
-      <section id="section-changelogs" className="scroll-mt-24 rounded-[2rem] border border-outline-variant/10 bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-xl shadow-blue-900/5 sm:p-10 relative overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
+      {/* ==================== SECTION 7: CHANGELOGS ==================== */}
+      <section
+        id="section-changelogs"
+        className="scroll-mt-24 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-6 mb-6">
           <div>
-            <h3 className="font-headline text-2xl font-black text-blue-900 dark:text-white flex items-center gap-3">
-              <span className="material-symbols-outlined text-indigo-500 text-3xl">manage_history</span>
-              Lịch sử thay đổi
+            <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-3xl">manage_history</span>
+              Lịch sử thay đổi ({changeLogs.length})
             </h3>
-            <p className="mt-2 text-sm font-medium text-slate-500">Ghi nhận chi tiết các lần thay đổi thông tin sản phẩm trên hệ thống.</p>
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
+              Ghi nhận chi tiết các lần cập nhật thông tin sản phẩm trên hệ thống.
+            </p>
           </div>
         </div>
+
         {changeLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">history_toggle_off</span>
-            <p className="text-sm font-bold text-slate-400">Chưa có lịch sử thay đổi</p>
+          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+            <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-600 mb-2">history_toggle_off</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Chưa có lịch sử thay đổi</p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-900/5">
-            <table className="w-full min-w-[800px] text-left text-sm lg:min-w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  <th className="py-5 pl-6 pr-4">Trường dữ liệu</th>
-                  <th className="py-3 pr-4">Giá trị cũ</th>
-                  <th className="py-3 pr-4">Giá trị mới</th>
-                  <th className="py-3 pr-4">Thời điểm</th>
-                  <th className="py-3 pr-4">Người thực hiện</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {changeLogs.map((log, idx: number) => (
-                  <tr key={log.id} className="group transition-colors hover:bg-slate-50/80 dark:bg-slate-800/80">
-                    <td className="py-4 pl-6 pr-4 font-bold text-slate-800 dark:text-slate-100 transition-colors group-hover:text-indigo-600">{log.changedField}</td>
-                    <td className="max-w-[200px] truncate py-4 pr-4 text-xs font-medium text-slate-400 line-through" title={log.oldValue ?? ""}>{log.oldValue ?? "—"}</td>
-                    <td className="max-w-[200px] truncate py-4 pr-4 text-xs font-bold text-emerald-600" title={log.newValue ?? ""}>{log.newValue ?? "—"}</td>
-                    <td className="py-4 pr-4 whitespace-nowrap text-xs font-medium text-slate-500">{formatStockDateTime(log.changedAt)}</td>
-                    <td className="py-4 pr-4 text-xs font-bold text-indigo-700 bg-indigo-50/50 px-2 rounded-lg inline-block mt-2 mb-2 ml-1">{log.changedBy ?? "—"}</td>
+          <div className="w-full overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/90 shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                    <th className="py-4 pl-6 pr-4">Trường thay đổi</th>
+                    <th className="py-4 pr-4">Giá trị cũ</th>
+                    <th className="py-4 pr-4">Giá trị mới</th>
+                    <th className="py-4 pr-4">Thời điểm</th>
+                    <th className="py-4 pr-6">Người thực hiện</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05] text-slate-700 dark:text-zinc-300">
+                  {changeLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3.5 pl-6 pr-4 font-bold text-slate-900 dark:text-white">
+                        {log.changedField}
+                      </td>
+                      <td className="py-3.5 pr-4 max-w-[200px] truncate text-slate-400 line-through" title={log.oldValue ?? ""}>
+                        {log.oldValue ?? "—"}
+                      </td>
+                      <td className="py-3.5 pr-4 max-w-[200px] truncate font-bold text-emerald-600 dark:text-emerald-400" title={log.newValue ?? ""}>
+                        {log.newValue ?? "—"}
+                      </td>
+                      <td className="py-3.5 pr-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
+                        {formatStockDateTime(log.changedAt)}
+                      </td>
+                      <td className="py-3.5 pr-6">
+                        <span className="inline-block rounded-lg bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 text-xs font-bold text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+                          {log.changedBy ?? "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
 
+      {/* ==================== SECTION 8: SIMILAR PRODUCTS ==================== */}
       <SimilarProductsPanel items={similarProducts} />
     </div>
   );
 }
+

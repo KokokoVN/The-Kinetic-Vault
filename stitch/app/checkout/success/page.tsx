@@ -90,7 +90,7 @@ export default async function CheckoutSuccessPage({
   return (
     <StorefrontLayout isLoggedIn={isLoggedIn} username={username} activeMenu="orders">
       {orderId > 0 ? <PostSuccessRefresh orderId={orderId} /> : null}
-      <main className="mx-auto max-w-3xl px-6 py-12 md:py-16">
+      <div className="mx-auto max-w-3xl px-6 py-12 md:py-16">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900 p-8 shadow-2xl shadow-emerald-900/5 sm:p-12">
           {/* Decorative background element */}
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
@@ -154,7 +154,7 @@ export default async function CheckoutSuccessPage({
             </div>
           </section>
         </div>
-      </main>
+      </div>
     </StorefrontLayout>
   );
 }

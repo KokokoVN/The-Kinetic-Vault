@@ -11,6 +11,7 @@ public interface ProductService {
     public List<Product> getNewestAvailableProductsForUser(int limit);
     public List<Product> getHotAvailableProductsForUser(int limit);
     public List<Product> getAvailableProductsByIds(List<Long> ids);
+    public List<Product> getProductsByIds(List<Long> ids);
     public List<Product> getAllProductByCategory(String category);
     public Product getProductById(Long id);
 

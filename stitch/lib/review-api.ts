@@ -1,17 +1,27 @@
 import { apiUrl } from "./api";
 
+export interface ReviewReplyDto {
+    id: number;
+    userId: number;
+    userName?: string;
+    content: string;
+    createdAt: string;
+}
+
 export interface ReviewResponseDto {
     id: number;
     userId: number;
+    userName?: string;
     orderId: number;
     productId: number;
-    variantId: number;
+    variantId?: number;
+    variantLabel?: string;
     rating: number;
     content: string;
     createdAt: string;
     updatedAt: string;
     mediaUrls?: string[];
-    replies?: any[];
+    replies?: ReviewReplyDto[];
 }
 
 export interface ReviewRequest {

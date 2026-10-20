@@ -1,5 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { TwoFactorPendingAutoLogin } from "@/components/auth/two-factor-pending-auto-login";
+
+export const metadata: Metadata = {
+  title: "Xác Thực 2FA (2-Factor Authentication)",
+};
 
 export default async function TwoFactorPendingPage({
   searchParams,
@@ -10,44 +15,116 @@ export default async function TwoFactorPendingPage({
   const fromAdmin = String(sp?.from ?? "").trim().toLowerCase() === "admin";
 
   return (
-    <div className="flex min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-100 via-surface to-surface-container-low dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden relative">
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute -top-[20%] -left-[10%] h-[800px] w-[800px] rounded-full bg-kinetic/5 blur-[120px] animate-pulse" style={{ animationDuration: "8s" }} />
-        <div className="absolute top-[20%] -right-[10%] h-[600px] w-[600px] rounded-full bg-secondary/5 blur-[100px] animate-pulse" style={{ animationDuration: "12s", animationDelay: "2s" }} />
-        <div className="absolute -bottom-[20%] left-[20%] h-[700px] w-[700px] rounded-full bg-blue-400/5 blur-[120px] animate-pulse" style={{ animationDuration: "10s", animationDelay: "1s" }} />
+    <div className="relative min-h-screen w-full bg-[#07090e] text-zinc-100 flex items-center justify-center p-4 sm:p-6 lg:p-10 overflow-x-hidden">
+      {/* Background ambient glowing gradient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-gradient-to-tr from-cyan-500/20 via-indigo-600/10 to-amber-500/15 blur-[140px]" />
+        <div className="absolute top-1/3 -right-40 h-[650px] w-[650px] rounded-full bg-gradient-to-bl from-indigo-500/20 via-purple-600/10 to-emerald-500/15 blur-[150px]" />
+        <div className="absolute -bottom-40 left-1/3 h-[500px] w-[500px] rounded-full bg-cyan-600/10 blur-[130px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       </div>
 
-      <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 py-12 relative z-10">
-        <div className="mx-auto w-full max-w-[560px]">
-          <div className="mb-12 flex flex-col items-center justify-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000">
-            <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-2xl shadow-indigo-500/30">
-              <span className="material-symbols-outlined font-bold text-[48px]">verified_user</span>
+      {/* Unified Luxury Container */}
+      <div className="relative z-10 w-full max-w-[1100px] rounded-3xl border border-white/10 bg-zinc-950/80 p-6 sm:p-10 backdrop-blur-2xl shadow-2xl shadow-cyan-950/40">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          
+          {/* Left Panel: Cyber Security Brand Showcase */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-8 border-b lg:border-b-0 lg:border-r border-white/10 pb-8 lg:pb-0 lg:pr-8">
+            <div className="space-y-6">
+              {/* Brand Logo & Tag */}
+              <div className="flex items-center space-x-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 shadow-lg shadow-cyan-500/25">
+                  <span className="material-symbols-outlined text-2xl text-white font-bold">verified_user</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-black tracking-tight text-white font-headline">The Kinetic Vault</h1>
+                  <span className="inline-block text-[11px] font-extrabold uppercase tracking-widest text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 rounded-full px-2.5 py-0.5 mt-0.5">
+                    HỆ THỐNG BẢO MẬT 2FA
+                  </span>
+                </div>
+              </div>
+
+              {/* Main Heading */}
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight text-white font-headline">
+                  Xác thực danh tính 2 lớp
+                </h2>
+                <p className="mt-3 text-sm text-zinc-400 leading-relaxed font-normal">
+                  Vui lòng nhập mã xác thực OTP từ ứng dụng bảo mật Authenticator hoặc mã gửi tới Email cá nhân của bạn để tiếp tục truy cập.
+                </p>
+              </div>
+
+              {/* Security Badges */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                    <span className="material-symbols-outlined text-xl">shield_lock</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Mã hóa chuẩn End-to-End</h4>
+                    <p className="text-[11px] text-zinc-400">Đảm bảo an toàn tuyệt đối cho tài khoản</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+                    <span className="material-symbols-outlined text-xl">timer</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Mã dùng 1 lần (TOTP)</h4>
+                    <p className="text-[11px] text-zinc-400">Tự động làm mới và hết hạn sau vài phút</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <span className="material-symbols-outlined text-xl">devices</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-200">Xác thực thiết bị tin cậy</h4>
+                    <p className="text-[11px] text-zinc-400">Bảo vệ phiên đăng nhập khỏi rủi ro giả mạo</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <span className="font-headline text-5xl font-black text-slate-900 dark:text-white tracking-tight block drop-shadow-sm">The Kinetic Vault</span>
-              <span className="text-base font-extrabold uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400 mt-2 block">Xác thực 2 bước (2FA)</span>
+
+            {/* Footer Notice */}
+            <div className="pt-4 text-[12px] text-zinc-400">
+              Cần sự trợ giúp? <a href="#" className="text-cyan-400 underline hover:text-cyan-300 font-semibold">Liên hệ bộ phận hỗ trợ</a>
             </div>
           </div>
 
-          <div className="relative rounded-[3rem] bg-white/70 dark:bg-slate-900/50 backdrop-blur-3xl border border-white dark:border-slate-800 p-10 sm:p-12 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-700">
-            <div className="mb-10 text-center">
-              <h1 className="mb-3 font-headline text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Bảo mật tài khoản</h1>
-              <p className="text-base text-slate-600 dark:text-slate-400 font-medium">Vui lòng nhập mã từ ứng dụng xác thực hoặc chọn gửi OTP qua Email.</p>
+          {/* Right Panel: Interactive 2FA Verification Form */}
+          <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
+            <div className="mb-2">
+              <div className="inline-flex items-center space-x-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3 py-1 text-xs font-bold text-cyan-300 mb-2">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span>BƯỚC BẢO MẬT CUỐI CÙNG</span>
+              </div>
+              <h3 className="text-2xl font-black text-white font-headline tracking-tight">
+                Nhập mã xác thực
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Chọn phương thức xác thực và điền các chữ số OTP bên dưới:
+              </p>
             </div>
 
             <TwoFactorPendingAutoLogin fromAdmin={fromAdmin} />
 
-            <div className="mt-8 flex flex-col gap-4">
+            <div className="pt-4 border-t border-white/10">
               <Link
                 href={fromAdmin ? "/admin/login" : "/login"}
-                className="rounded-[1.25rem] border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-4 text-center text-base font-extrabold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                className="group flex w-full items-center justify-center space-x-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm font-bold text-zinc-300 transition-all hover:bg-white/10 hover:text-white hover:border-white/20 shadow-md"
               >
-                Quay lại đăng nhập
+                <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>
+                <span>Quay lại trang đăng nhập</span>
               </Link>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 }
+

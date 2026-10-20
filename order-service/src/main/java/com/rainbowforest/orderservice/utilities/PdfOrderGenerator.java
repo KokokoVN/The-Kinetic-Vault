@@ -97,10 +97,7 @@ public class PdfOrderGenerator {
 
         if (order.getItems() != null) {
             for (Item item : order.getItems()) {
-                String productName = item.getProduct() != null ? item.getProduct().getProductName() : "SP " + item.getProductId();
-                if (item.getVariantLabel() != null && !item.getVariantLabel().isEmpty()) {
-                    productName += " (" + item.getVariantLabel() + ")";
-                }
+                String productName = formatItemName(item);
                 table.addCell(new Phrase(productName, normalFont));
                 table.addCell(new Phrase(String.valueOf(item.getQuantity()), normalFont));
                 table.addCell(new Phrase(item.getSubTotal() != null ? String.valueOf(item.getSubTotal()) : "0", normalFont));
@@ -115,5 +112,53 @@ public class PdfOrderGenerator {
 
         document.close();
         return out.toByteArray();
+    }
+
+    private static String formatItemName(Item item) {
+        if (item == null) return "SP";
+        String productName;
+        if (item.getProductNameSnapshot() != null && !item.getProductNameSnapshot().trim().isEmpty()) {
+            productName = item.getProductNameSnapshot().trim();
+        } else if (item.getProduct() != null && item.getProduct().getProductName() != null && !item.getProduct().getProductName().trim().isEmpty()) {
+            productName = item.getProduct().getProductName().trim();
+        } else {
+            productName = "SP #" + (item.getProductId() != null ? item.getProductId() : "");
+        }
+        
+        String label = item.getVariantLabel();
+        if (label != null && !label.trim().isEmpty()) {
+            String clean = formatCleanVariantLabel(label.trim());
+            if (!clean.isEmpty()) {
+                productName += " (" + clean + ")";
+            }
+        }
+        return productName;
+    }
+
+    public static String formatCleanVariantLabel(String raw) {
+        if (raw == null || raw.isEmpty()) return "";
+        if (raw.startsWith("[") && raw.endsWith("]")) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode root = om.readTree(raw);
+                if (root.isArray()) {
+                    java.util.List<String> parts = new java.util.ArrayList<>();
+                    for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                        String name = node.has("name") ? node.get("name").asText() : "";
+                        String val = node.has("value") ? node.get("value").asText() : "";
+                        if (!name.isEmpty() && !val.isEmpty()) {
+                            parts.add(name + ": " + val);
+                        } else if (!val.isEmpty()) {
+                            parts.add(val);
+                        }
+                    }
+                    if (!parts.isEmpty()) {
+                        return String.join(" - ", parts);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return raw;
     }
 }

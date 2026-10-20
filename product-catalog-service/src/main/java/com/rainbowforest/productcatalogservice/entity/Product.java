@@ -14,7 +14,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+    @Index(name = "idx_products_brand", columnList = "brand_id"),
+    @Index(name = "idx_products_category_entity", columnList = "category_id"),
+    @Index(name = "idx_products_availability_hidden", columnList = "availability, is_hidden"),
+    @Index(name = "idx_products_sales_count", columnList = "availability, is_hidden, sales_count"),
+    @Index(name = "idx_products_created_at", columnList = "availability, is_hidden, created_at"),
+    @Index(name = "idx_products_view_count", columnList = "availability, is_hidden, view_count")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Product extends AuditableEntity {
 

@@ -15,6 +15,9 @@ public interface OrderClient {
     @GetMapping("/orders/page")
     JsonNode getOrders(@RequestParam("page") int page, @RequestParam("size") int size);
 
+    @GetMapping("/orders/{id}")
+    JsonNode getOrderById(@PathVariable("id") Long id);
+
     @PostMapping("/orders/{id}/status")
     JsonNode updateOrderStatus(@PathVariable("id") Long id, @RequestBody Map<String, Object> req);
 }

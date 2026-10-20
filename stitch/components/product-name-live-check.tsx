@@ -7,6 +7,8 @@ type ProductNameLiveCheckProps = {
   defaultValue: string;
   existingNames: string[];
   currentId?: string;
+  hideLabel?: boolean;
+  onChange?: (value: string) => void;
 };
 
 const PRODUCT_NAME_RE = /^[\p{L}0-9][\p{L}0-9\s-]*[\p{L}0-9]$/u;
@@ -15,7 +17,14 @@ function normalize(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-export function ProductNameLiveCheck({ fieldClass, defaultValue, existingNames, currentId }: ProductNameLiveCheckProps) {
+export function ProductNameLiveCheck({
+  fieldClass,
+  defaultValue,
+  existingNames,
+  currentId,
+  hideLabel = false,
+  onChange,
+}: ProductNameLiveCheckProps) {
   const [name, setName] = useState(defaultValue);
 
   const error = useMemo(() => {
@@ -31,18 +40,25 @@ export function ProductNameLiveCheck({ fieldClass, defaultValue, existingNames, 
 
   const invalid = Boolean(error);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    onChange?.(e.target.value);
+  };
+
   return (
     <div>
-      <label className="mb-1 block text-sm font-bold text-blue-900" htmlFor="productName">
-        Tên sản phẩm <span className="text-rose-600">*</span>
-      </label>
+      {!hideLabel && (
+        <label className="mb-1 block text-sm font-bold text-blue-900" htmlFor="productName">
+          Tên sản phẩm <span className="text-rose-600">*</span>
+        </label>
+      )}
       <input
         id="productName"
         name="productName"
         required
         autoComplete="off"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={handleChange}
         className={`${fieldClass} ${invalid ? "border-rose-400 focus:border-rose-500 focus:ring-rose-200" : ""}`}
         aria-invalid={invalid}
         aria-describedby="productName-help"

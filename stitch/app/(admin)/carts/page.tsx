@@ -3,6 +3,7 @@ import { getAdminSession } from "@/lib/auth-server";
 import { getAdminUserBrief, listAdminCarts, type AdminCart, type AdminUserBrief } from "@/lib/api";
 import { CartListAutoFilterForm } from "@/components/cart-list-auto-filter-form";
 import { ClearAllCartsButton } from "@/components/clear-all-carts-button";
+import { parseLabelToTiers } from "@/lib/variant-tier-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -131,70 +132,84 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
 
   return (
     <div className="space-y-8">
-      <section className="flex flex-col justify-between gap-6 relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 p-8 shadow-2xl shadow-purple-900/40 text-white md:flex-row md:items-end">
-        <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-transparent/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-purple-200">
-            <span className="material-symbols-outlined text-sm">shopping_cart</span>
-            Giỏ hàng
-          </p>
-          <h1 className="mt-3 font-headline text-4xl font-black tracking-tight text-white drop-shadow-md">Giỏ hàng người dùng</h1>
-          <p className="mt-2 max-w-2xl text-purple-200/80">
-            Theo dõi giỏ đang lưu trong Redis. Nhấn một dòng để xem chi tiết từng mặt hàng.
-          </p>
+      {/* ==================== HEADER CARD ==================== */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        {/* Ambient Glowing Orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-transparent/10 px-4 py-3 backdrop-blur-md shadow-sm">
-            <span className="material-symbols-outlined text-xl text-sky-300">category</span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-sky-200">Tổng SP</p>
-              <p className="font-headline text-xl font-black text-white">{totalItems.toLocaleString("vi-VN")}</p>
-            </div>
+
+        <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 dark:border-cyan-500/30 bg-blue-50/80 dark:bg-cyan-500/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-cyan-400 backdrop-blur-md">
+              <span className="material-symbols-outlined text-[14px]">shopping_cart</span>
+              Active Carts
+            </p>
+            <h1 className="mt-3 font-headline text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-xs">
+              Giỏ Hàng Người Dùng
+            </h1>
+            <p className="mt-2 max-w-2xl text-xs sm:text-sm text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
+              Theo dõi giỏ hàng lưu trữ theo thời gian thực trong Redis, phân tích số lượng sản phẩm dự định mua và giá trị đơn ước tính.
+            </p>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-transparent/10 px-4 py-3 backdrop-blur-md shadow-sm">
-            <span className="material-symbols-outlined text-xl text-fuchsia-300">payments</span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">Ước tính</p>
-              <p className="font-headline text-xl font-black text-white">{asMoneyVnd(totalValue)}</p>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                <span className="material-symbols-outlined text-[20px]">category</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Tổng SP</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{totalItems.toLocaleString("vi-VN")}</p>
+              </div>
             </div>
+
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400">
+                <span className="material-symbols-outlined text-[20px]">payments</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Ước tính</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{asMoneyVnd(totalValue)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Tổng giỏ</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{totalCarts}</p>
+              </div>
+            </div>
+
+            {totalCarts > 0 && (
+              <div className="flex items-center">
+                <ClearAllCartsButton />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-transparent/10 px-4 py-3 backdrop-blur-md shadow-sm">
-            <span className="material-symbols-outlined text-xl text-emerald-400">group</span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">User có giỏ</p>
-              <p className="font-headline text-xl font-black text-white">{userCartCount.toLocaleString("vi-VN")}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-transparent/10 px-5 py-3 backdrop-blur-md shadow-sm">
-            <span className="material-symbols-outlined text-2xl text-indigo-300">shopping_cart</span>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-indigo-200">Tổng giỏ</p>
-              <p className="font-headline text-2xl font-black text-white">{totalCarts}</p>
-            </div>
-          </div>
-          {totalCarts > 0 && (
-            <div className="flex items-center ml-2">
-              <ClearAllCartsButton />
-            </div>
-          )}
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-white/10 bg-transparent/5 p-6 shadow-xl backdrop-blur-2xl">
+      <section className="rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 p-6 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
         <CartListAutoFilterForm q={q} pageSize={pageSize} />
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
           {q ? (
             <>
-              Kết quả: <span className="font-bold text-indigo-400">{totalFiltered}</span> / {totalCarts} giỏ phù hợp “{q}”.
+              Kết quả: <span className="font-bold text-indigo-600 dark:text-indigo-400">{totalFiltered}</span> / {totalCarts} giỏ phù hợp “{q}”.
               {totalPages > 1 ? (
                 <>
                   {" "}
-                  · Trang <span className="font-bold text-indigo-400">{page}</span>/{totalPages}
+                  · Trang <span className="font-bold text-indigo-600 dark:text-indigo-400">{page}</span>/{totalPages}
                 </>
               ) : null}
             </>
           ) : (
             <>
-              Đang hiển thị <span className="font-bold text-indigo-400">{paged.length}</span> giỏ trên trang {page}/{totalPages} (tổng {totalFiltered} giỏ).
+              Đang hiển thị <span className="font-bold text-indigo-600 dark:text-indigo-400">{paged.length}</span> giỏ trên trang {page}/{totalPages} (tổng {totalFiltered} giỏ).
             </>
           )}
         </p>
@@ -209,30 +224,30 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
           return (
             <details
               key={`${cart.cartId ?? "cart"}-${start + idx}`}
-              className="group overflow-hidden rounded-2xl border border-white/10 bg-transparent/5 backdrop-blur-xl shadow-sm open:ring-1 open:ring-primary/15"
+              className="group overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 backdrop-blur-xl shadow-xs open:ring-1 open:ring-indigo-500/20"
             >
-              <summary className="flex cursor-pointer list-none items-center gap-3 bg-transparent/5 hover:bg-transparent/10 transition-colors px-4 py-4 marker:hidden sm:gap-5 sm:px-5 [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-3 bg-slate-50/50 dark:bg-zinc-900/40 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 transition-colors px-4 py-4 marker:hidden sm:gap-5 sm:px-5 [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-indigo-400">{displayName}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-400 sm:hidden">Nhấn để xem chi tiết giỏ</p>
+                  <p className="truncate text-sm font-bold text-indigo-600 dark:text-indigo-400">{displayName}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 sm:hidden">Nhấn để xem chi tiết giỏ</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-4 text-right sm:gap-8">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">Sản phẩm</p>
-                    <p className="font-headline text-base font-black text-white sm:text-lg">{Number(cart.itemCount ?? 0).toLocaleString("vi-VN")}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:text-xs">Sản phẩm</p>
+                    <p className="font-headline text-base font-black text-slate-900 dark:text-white sm:text-lg">{Number(cart.itemCount ?? 0).toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">Tổng tiền</p>
-                    <p className="font-headline text-base font-black text-fuchsia-400 sm:text-lg">{asMoneyVnd(cart.total)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:text-xs">Tổng tiền</p>
+                    <p className="font-headline text-base font-black text-indigo-600 dark:text-indigo-400 sm:text-lg">{asMoneyVnd(cart.total)}</p>
                   </div>
                   <span
-                    className="hidden text-xs font-semibold text-fuchsia-400 underline decoration-primary/40 underline-offset-2 sm:inline"
+                    className="hidden text-xs font-bold text-indigo-600 dark:text-indigo-400 underline decoration-indigo-500/40 underline-offset-2 sm:inline"
                     aria-hidden
                   >
                     Chi tiết
                   </span>
                   <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-transparent text-slate-400 transition group-open:-rotate-180 group-open:border-primary/30 group-open:text-fuchsia-400"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 transition group-open:-rotate-180 group-open:border-indigo-500/40 group-open:text-indigo-500"
                     aria-hidden
                   >
                     ▼
@@ -240,28 +255,28 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
                 </div>
               </summary>
 
-              <div className="border-t border-white/10 bg-transparent px-4 py-4 sm:px-5">
-                <div className="space-y-1 border-b border-white/10 pb-3 text-sm">
-                  <p className="text-slate-400">
+              <div className="border-t border-slate-200/80 dark:border-white/10 bg-slate-50/30 dark:bg-zinc-950/40 px-4 py-4 sm:px-5">
+                <div className="space-y-1 border-b border-slate-200/80 dark:border-white/10 pb-3 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400">
                     Email:{" "}
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {uid != null ? user?.email?.trim() || "Chưa có email" : "Không có tài khoản"}
                     </span>
                   </p>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-slate-800/50 px-3 py-1 font-semibold text-slate-300">Cart: {cart.cartId ?? "—"}</span>
-                  {uid != null ? <span className="rounded-full bg-emerald-500/20 px-3 py-1 font-semibold text-emerald-400">UID: {uid}</span> : null}
+                  <span className="rounded-full bg-slate-100 dark:bg-slate-800/80 px-3 py-1 font-semibold text-slate-600 dark:text-slate-300">Cart: {cart.cartId ?? "—"}</span>
+                  {uid != null ? <span className="rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 font-semibold">UID: {uid}</span> : null}
                 </div>
-                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-indigo-400/80">Chi tiết giỏ</p>
+                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Chi tiết giỏ</p>
                 <div className="mt-2 space-y-3">
                   {items.length > 0 ? (
                     items.map((it, itemIdx) => {
                       const variantLabel = String(it.variantLabel ?? "").trim();
                       const imageUrl = resolveCartItemImage(it);
                       return (
-                        <div key={`${it.id ?? "i"}-${itemIdx}`} className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-800/50">
+                        <div key={`${it.id ?? "i"}-${itemIdx}`} className="flex gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/60 p-3">
+                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                             {imageUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={imageUrl} alt={it.productNameSnapshot || it.product?.productName || "Sản phẩm"} className="h-full w-full object-cover" />
@@ -270,11 +285,31 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-slate-200">{it.productNameSnapshot || it.product?.productName || "—"}</p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              Biến thể: <span className="font-medium text-slate-300">{variantLabel || "Mặc định"}</span>
-                            </p>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{it.productNameSnapshot || it.product?.productName || "—"}</p>
+                            {(() => {
+                              const tiers = parseLabelToTiers(variantLabel);
+                              if (tiers.length > 0) {
+                                return (
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                    {tiers.map((t, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/5"
+                                      >
+                                        <span className="text-slate-400 font-medium">{t.name}:</span>
+                                        <span className="font-semibold text-slate-900 dark:text-white">{t.value}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  Biến thể: <span className="font-medium text-slate-700 dark:text-slate-300">{variantLabel || "Mặc định"}</span>
+                                </p>
+                              );
+                            })()}
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                               x{Number(it.quantity ?? 0).toLocaleString("vi-VN")} · {asMoneyVnd(it.subTotal)}
                             </p>
                           </div>
@@ -292,23 +327,23 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
       </section>
 
       {totalCarts === 0 ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Chưa có giỏ hàng nào đang hoạt động.</p>
+        <p className="rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">Chưa có giỏ hàng nào đang hoạt động.</p>
       ) : null}
 
       {totalCarts > 0 && totalFiltered === 0 ? (
-        <p className="rounded-xl border border-dashed border-outline-variant/30 bg-transparent/60 px-4 py-6 text-center text-sm text-slate-400">
+        <p className="rounded-xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-900/50 px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
           Không có giỏ phù hợp từ khóa. Thử bỏ bớt từ hoặc tìm theo email / UID / tên sản phẩm.
         </p>
       ) : null}
 
       {totalFiltered > 0 ? (
-        <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-white/10 bg-transparent/5 backdrop-blur-xl px-5 py-4 shadow-sm sm:flex-row">
-          <p className="text-xs text-slate-400">
-            Trang <span className="font-bold text-indigo-400">{page}</span> / {totalPages} · {pageSize} giỏ/trang
+        <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl px-5 py-4 shadow-sm sm:flex-row">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Trang <span className="font-bold text-indigo-600 dark:text-indigo-400">{page}</span> / {totalPages} · {pageSize} giỏ/trang
             {q ? (
               <>
                 {" "}
-                · lọc: <span className="font-semibold text-indigo-400">{totalFiltered}</span> giỏ
+                · lọc: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{totalFiltered}</span> giỏ
               </>
             ) : null}
           </p>
@@ -316,8 +351,8 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
             <Link
               prefetch
               className={[
-                "rounded-xl px-4 py-2 text-xs font-bold",
-                page <= 1 ? "pointer-events-none bg-slate-800/50 text-slate-400" : "bg-white/5-container-high text-indigo-400 hover:bg-white/5-bright",
+                "rounded-xl px-4 py-2 text-xs font-bold transition",
+                page <= 1 ? "pointer-events-none bg-slate-100 dark:bg-slate-800/50 text-slate-400" : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/40",
               ].join(" ")}
               href={prevHref}
               aria-disabled={page <= 1}
@@ -327,8 +362,8 @@ export default async function AdminCartsPage({ searchParams }: { searchParams?: 
             <Link
               prefetch
               className={[
-                "rounded-xl px-4 py-2 text-xs font-bold",
-                page >= totalPages ? "pointer-events-none bg-slate-800/50 text-slate-400" : "bg-white/5-container-high text-indigo-400 hover:bg-white/5-bright",
+                "rounded-xl px-4 py-2 text-xs font-bold transition",
+                page >= totalPages ? "pointer-events-none bg-slate-100 dark:bg-slate-800/50 text-slate-400" : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/40",
               ].join(" ")}
               href={nextHref}
               aria-disabled={page >= totalPages}

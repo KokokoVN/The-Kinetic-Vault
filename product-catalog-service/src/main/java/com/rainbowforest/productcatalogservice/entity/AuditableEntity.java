@@ -5,10 +5,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @MappedSuperclass
-public abstract class AuditableEntity {
+public abstract class AuditableEntity implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Column(name = "created_by", length = 128)
     private String createdBy;

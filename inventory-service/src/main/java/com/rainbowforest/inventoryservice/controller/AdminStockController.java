@@ -5,6 +5,8 @@ import com.rainbowforest.inventoryservice.dto.StockMovementResponse;
 import com.rainbowforest.inventoryservice.entity.InventoryBalance;
 import com.rainbowforest.inventoryservice.entity.StockMovement;
 import com.rainbowforest.inventoryservice.service.StockService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +19,52 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin/stock")
 public class AdminStockController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminStockController.class);
+
     private final StockService stockService;
     private final com.rainbowforest.inventoryservice.service.ExcelService excelService;
+    private final com.rainbowforest.inventoryservice.client.ActivityLogFeignClient activityLogFeignClient;
 
-    public AdminStockController(StockService stockService, com.rainbowforest.inventoryservice.service.ExcelService excelService) {
+    public AdminStockController(StockService stockService,
+                                com.rainbowforest.inventoryservice.service.ExcelService excelService,
+                                com.rainbowforest.inventoryservice.client.ActivityLogFeignClient activityLogFeignClient) {
         this.stockService = stockService;
         this.excelService = excelService;
+        this.activityLogFeignClient = activityLogFeignClient;
+    }
+
+    @GetMapping(value = {"", "/list"})
+    public ResponseEntity<List<InventoryBalance>> getStock(@RequestParam(value = "skuCode", required = false) String skuCode) {
+        List<InventoryBalance> list = stockService.getAllBalances(org.springframework.data.domain.PageRequest.of(0, 200)).getContent();
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/adjust")
+    public ResponseEntity<?> adjustStock(@RequestBody AdjustStockRequest req, @RequestHeader(value = "X-User-Name", defaultValue = "Admin") String performedBy) {
+        if (req == null || (req.getProductId() == null && req.getVariantId() == null)) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "productId hoặc variantId là bắt buộc"));
+        }
+        int change = req.getChangeQuantity() != null ? req.getChangeQuantity() : 0;
+        Long productId = req.getProductId() != null ? req.getProductId() : 0L;
+        String note = req.getReason() != null ? req.getReason() : "Điều chỉnh tồn kho thủ công";
+        
+        StockMovement m;
+        if (change >= 0) {
+            m = stockService.inbound(productId, req.getVariantId(), Math.max(1, change), "ADJUST", null, note, null, null, performedBy);
+        } else {
+            m = stockService.outbound(productId, req.getVariantId(), Math.abs(change), "ADJUST", null, note, null, null, performedBy);
+        }
+        sendStockActivityLog("STOCK_ADJUST", "POST", "/admin/stock/adjust", m, performedBy);
+        return ResponseEntity.ok(StockMovementResponse.from(m));
+    }
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<InventoryBalance>> getLowStock() {
+        List<InventoryBalance> lowStock = stockService.getAllBalances(org.springframework.data.domain.PageRequest.of(0, 500))
+                .getContent().stream()
+                .filter(b -> b.getQuantityOnHand() < 10)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(lowStock);
     }
 
     @PostMapping("/inbound")
@@ -37,6 +79,7 @@ public class AdminStockController {
                 req.getUnitCost(),
                 req.getMovementAt(),
                 req.getPerformedBy());
+        sendStockActivityLog("STOCK_INBOUND", "POST", "/admin/stock/inbound", m, req.getPerformedBy());
         return new ResponseEntity<>(StockMovementResponse.from(m), HttpStatus.CREATED);
     }
 
@@ -52,7 +95,34 @@ public class AdminStockController {
                 req.getUnitCost(),
                 req.getMovementAt(),
                 req.getPerformedBy());
+        sendStockActivityLog("STOCK_OUTBOUND", "POST", "/admin/stock/outbound", m, req.getPerformedBy());
         return new ResponseEntity<>(StockMovementResponse.from(m), HttpStatus.CREATED);
+    }
+
+    private void sendStockActivityLog(String action, String method, String path, StockMovement m, String performedBy) {
+        try {
+            java.util.Map<String, Object> after = new java.util.LinkedHashMap<>();
+            after.put("movementId", m.getId());
+            after.put("productId", m.getProductId());
+            after.put("variantId", m.getVariantId());
+            after.put("movementType", m.getMovementType());
+            after.put("quantity", m.getQuantity());
+            after.put("balanceAfter", m.getBalanceAfter());
+            after.put("note", m.getNote());
+            java.util.Map<String, Object> detail = new java.util.LinkedHashMap<>();
+            detail.put("resourceType", "StockMovement");
+            detail.put("after", after);
+            
+            java.util.Map<String, Object> logReq = new java.util.LinkedHashMap<>();
+            logReq.put("action", action);
+            logReq.put("resourceType", "StockMovement");
+            logReq.put("resourceId", String.valueOf(m.getId()));
+            logReq.put("httpMethod", method);
+            logReq.put("requestPath", path);
+            logReq.put("performedBy", performedBy != null ? performedBy : "system");
+            logReq.put("detailJson", new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(detail));
+            activityLogFeignClient.log(logReq);
+        } catch (Exception ignored) {}
     }
 
     @GetMapping("/balance/{productId}")
@@ -104,7 +174,8 @@ public class AdminStockController {
             List<com.rainbowforest.inventoryservice.service.ExcelService.ExcelRowDto> rows = excelService.previewExcel(file);
             return ResponseEntity.ok(rows);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("message", "Lỗi đọc file: " + e.getMessage()));
+            log.warn("Excel preview failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", "EXCEL_PREVIEW_FAILED", "message", "Không thể đọc file Excel"));
         }
     }
 
@@ -120,6 +191,28 @@ public class AdminStockController {
             res.addError("Lỗi hệ thống: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
         }
+    }
+
+    public static class AdjustStockRequest {
+        private Long productId;
+        private Long variantId;
+        private Integer changeQuantity;
+        private Integer quantity;
+        private String reason;
+        private String skuCode;
+
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+        public Long getVariantId() { return variantId; }
+        public void setVariantId(Long variantId) { this.variantId = variantId; }
+        public Integer getChangeQuantity() { return changeQuantity != null ? changeQuantity : quantity; }
+        public void setChangeQuantity(Integer changeQuantity) { this.changeQuantity = changeQuantity; }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+        public String getSkuCode() { return skuCode; }
+        public void setSkuCode(String skuCode) { this.skuCode = skuCode; }
     }
 }
 

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.rainbowforest.orderservice.domain.Product;
 import com.rainbowforest.orderservice.domain.ProductVariant;
 
-@FeignClient(name = "product-catalog-service", url = "http://localhost:8810/")
+@FeignClient(name = "product-catalog-service", url = "${product.catalog.service.url:http://localhost:8810/}")
 public interface ProductClient {
 
     @GetMapping(value = "/products/{id}")
@@ -22,4 +22,6 @@ public interface ProductClient {
     @org.springframework.web.bind.annotation.PostMapping(value = "/products/{id}/sales")
     void incrementSalesCount(@PathVariable(value = "id") Long productId, @org.springframework.web.bind.annotation.RequestParam(value = "count", defaultValue = "1") Integer count);
 
+    @GetMapping(value = "/products/batch")
+    java.util.List<Product> getProductsBatch(@org.springframework.web.bind.annotation.RequestParam(value = "ids") java.util.List<Long> ids);
 }

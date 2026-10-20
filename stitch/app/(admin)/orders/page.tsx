@@ -82,49 +82,57 @@ export default async function OrdersPage({
 
   return (
     <div className="space-y-10 pb-20">
-      {/* VIP PRO HERO SECTION */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-900 p-8 shadow-2xl shadow-purple-900/40 sm:p-10">
-        {/* Abstract Background Elements */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
-        <div className="pointer-events-none absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"></div>
-        
-        <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <div className="max-w-xl text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-200 backdrop-blur-md">
-              <span className="material-symbols-outlined text-[14px]">diamond</span>
-              Trung tâm Quản lý
-            </div>
-            <h1 className="mt-4 font-headline text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl" style={{ textShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-              Quản lý Đơn hàng
+      {/* ==================== HEADER CARD ==================== */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-6 sm:p-10 shadow-sm dark:shadow-2xl backdrop-blur-2xl transition-colors">
+        {/* Ambient Glowing Orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-blue-500/10 dark:bg-cyan-600/20 blur-[100px]" />
+          <div className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[100px]" />
+        </div>
+
+        <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 dark:border-cyan-500/30 bg-blue-50/80 dark:bg-cyan-500/10 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-cyan-400 backdrop-blur-md">
+              <span className="material-symbols-outlined text-[14px]">shopping_cart</span>
+              Order Pipeline
+            </p>
+            <h1 className="mt-3 font-headline text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-xs">
+              Quản Lý Đơn Hàng
             </h1>
-            <p className="mt-3 text-lg font-medium text-purple-200/80">
-              Kiểm soát toàn diện vòng đời đơn hàng, từ tiếp nhận đến lúc giao tận tay khách hàng.
+            <p className="mt-2 max-w-2xl text-xs sm:text-sm text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
+              Kiểm soát toàn diện vòng đời đơn hàng, xác thực thanh toán, đối chiếu mã vận đơn và theo dõi tiến độ giao hàng toàn sàn.
             </p>
           </div>
-          
-          <div className="flex flex-wrap gap-4 lg:flex-nowrap">
-            <div className="group relative flex min-w-[140px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition-all hover:border-fuchsia-400/50 hover:bg-white/10 hover:shadow-[0_0_30px_-5px_rgba(217,70,239,0.3)] hover:-translate-y-1">
-              <div className="mb-2 flex items-center gap-2 text-fuchsia-300">
-                <span className="material-symbols-outlined text-lg">pending_actions</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Chờ xử lý</span>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <span className="material-symbols-outlined text-[20px]">pending_actions</span>
               </div>
-              <p className="font-headline text-3xl font-black text-white">{pending}</p>
-            </div>
-            
-            <div className="group relative flex min-w-[140px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition-all hover:border-cyan-400/50 hover:bg-white/10 hover:shadow-[0_0_30px_-5px_rgba(34,211,238,0.3)] hover:-translate-y-1">
-              <div className="mb-2 flex items-center gap-2 text-cyan-300">
-                <span className="material-symbols-outlined text-lg">local_shipping</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Đang giao</span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Chờ xử lý</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{pending}</p>
               </div>
-              <p className="font-headline text-3xl font-black text-white">{shipping}</p>
             </div>
 
-            <div className="group relative flex min-w-[140px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition-all hover:border-emerald-400/50 hover:bg-white/10 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)] hover:-translate-y-1">
-              <div className="mb-2 flex items-center gap-2 text-emerald-300">
-                <span className="material-symbols-outlined text-lg">task_alt</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">Thành công</span>
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                <span className="material-symbols-outlined text-[20px]">local_shipping</span>
               </div>
-              <p className="font-headline text-3xl font-black text-white">{delivered}</p>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Đang giao</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{shipping}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/70 px-4 py-3 shadow-sm backdrop-blur-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="material-symbols-outlined text-[20px]">task_alt</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Thành công</p>
+                <p className="font-headline text-xl font-black text-slate-900 dark:text-white">{delivered}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -139,10 +147,9 @@ export default async function OrdersPage({
         </div>
       )}
 
-      {/* VIP PRO FILTER COMMAND CENTER */}
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-lg shadow-primary/5">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 backdrop-blur-md"></div>
-        <SoftNavigateForm className="relative z-10 grid gap-4 p-5 sm:p-6 md:grid-cols-12" actionPath="/admin/orders">
+      {/* FILTER COMMAND CENTER */}
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-zinc-950/80 p-5 sm:p-7 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
+        <SoftNavigateForm className="relative z-10 grid gap-4 md:grid-cols-12" actionPath="/admin/orders">
           <div className="md:col-span-4">
             <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tra cứu đơn hàng</label>
             <div className="relative mt-2">
@@ -270,12 +277,12 @@ export default async function OrdersPage({
         </SoftNavigateForm>
       </section>
 
-      {/* VIP PRO DATA TABLE */}
-      <section className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-sm dark:shadow-none">
+      {/* ==================== DATA TABLE ==================== */}
+      <section className="overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-zinc-950/80 shadow-sm dark:shadow-2xl backdrop-blur-2xl">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-slate-50/60 dark:bg-slate-800/60">
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60">
                 <th className="whitespace-nowrap px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Thông tin đơn</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Khách hàng</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Trạng thái</th>
@@ -284,18 +291,29 @@ export default async function OrdersPage({
                 <th className="whitespace-nowrap px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Tác vụ</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/10">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {orders.map((o: AdminOrder) => {
                 const isPaid = String(o.paymentStatus).toUpperCase() === "PAID";
                 return (
-                  <tr key={String(o.id)} className="group relative transition-all duration-300 hover:bg-purple-50/40">
+                  <tr key={String(o.id)} className="group relative transition-all duration-200 hover:bg-slate-50/60 dark:hover:bg-slate-900/60">
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1">
-                        <span className="font-mono text-sm font-bold text-indigo-700">{o.orderNumber ?? `#${o.id ?? "—"}`}</span>
+                        <span className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">{o.orderNumber ?? `#${o.id ?? "—"}`}</span>
                         <span className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                           <span className="material-symbols-outlined text-[14px]">calendar_today</span>
                           {asOrderDate(o.orderedDate)}
                         </span>
+                        {Array.isArray(o.items) && o.items.length > 0 && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="material-symbols-outlined text-[14px] text-purple-500">shopping_bag</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {o.items.reduce((s, it) => s + Number(it.quantity ?? 0), 0)} SP
+                            </span>
+                            <span className="truncate max-w-[140px] text-[10px] text-slate-400">
+                              ({o.items[0]?.productNameSnapshot || o.items[0]?.product?.productName || "SP"})
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-5">

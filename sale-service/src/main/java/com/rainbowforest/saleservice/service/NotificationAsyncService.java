@@ -3,6 +3,8 @@ package com.rainbowforest.saleservice.service;
 import com.rainbowforest.saleservice.client.NotificationClient;
 import com.rainbowforest.saleservice.client.UserClient;
 import com.rainbowforest.saleservice.entity.SaleProgram;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 @Service
 public class NotificationAsyncService {
+    private static final Logger log = LoggerFactory.getLogger(NotificationAsyncService.class);
 
     private final UserClient userClient;
     private final NotificationClient notificationClient;
@@ -48,12 +51,12 @@ public class NotificationAsyncService {
                     try {
                         notificationClient.sendNotification(notificationReq);
                     } catch (Exception e) {
-                        System.err.println("Failed to send promo email to " + email + ": " + e.getMessage());
+                        log.error("Failed to send promo email to {}: {}", email, e.getMessage());
                     }
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error fetching users for promo email: " + e.getMessage());
+            log.error("Error fetching users for promo email: {}", e.getMessage());
         }
     }
 }

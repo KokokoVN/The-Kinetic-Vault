@@ -1,5 +1,7 @@
 package com.rainbowforest.saleservice.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,24 +15,32 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
-        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+        // Log chi tiết server-side; trả generic message cho client (tránh leak).
+        log.debug("IllegalArgumentException: {}", ex.getMessage());
+        return error(HttpStatus.BAD_REQUEST, "Yêu cầu không hợp lệ");
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(IllegalStateException ex) {
-        return error(HttpStatus.CONFLICT, ex.getMessage());
+        log.debug("IllegalStateException: {}", ex.getMessage());
+        return error(HttpStatus.CONFLICT, "Trạng thái không hợp lệ");
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(NoSuchElementException ex) {
-        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+        log.debug("NoSuchElementException: {}", ex.getMessage());
+        return error(HttpStatus.NOT_FOUND, "Không tìm thấy dữ liệu");
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống: " + ex.getMessage());
+        // Log full stack trace để debug; KHÔNG leak message cho client.
+        log.error("Unhandled exception in sale-service", ex);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống");
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String message) {

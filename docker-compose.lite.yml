@@ -1,0 +1,270 @@
+# ==============================================================================
+# HỆ THỐNG E-COMMERCE MICROSERVICES - DOCKER COMPOSE BẢN RÚT GỌN (LITE / TIẾT KIỆM RAM)
+# ==============================================================================
+# Chỉ khởi chạy các dịch vụ cốt lõi:
+# - Hạ tầng: MySQL 8.0, Redis 7
+# - Service Discovery: Eureka Server
+# - Gateway: API Gateway (Port 8900)
+# - Dịch vụ lõi: User, Product Catalog, Inventory, Cart, Order
+# - Web Client: Next.js 16 (Port 3000)
+#
+# Lệnh chạy: docker compose -f docker-compose.lite.yml up -d --build
+# ==============================================================================
+
+networks:
+  ecommerce-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ecommerce-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ecommerce-network
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar
+    container_name: eureka-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx200m"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8900:8900"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "api-gateway"
+      JWT_SECRET: "RainbowForestEcommerceJWTSecretKey_ChangeInProduction_Min64Chars_RequiredForHS512!!"
+      INTERNAL_SERVICE_SECRET: "TQjHHfANqChwqKF4nQ0im06mCAhbscepCwvzYUMz/b5CmXiUULFl2NZxOx8HZcfK"
+      APP_SECURITY_CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001,http://frontend:3000"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: user-service/target/user-service-0.0.1-SNAPSHOT.jar
+    container_name: user-service
+    restart: unless-stopped
+    ports:
+      - "8811:8811"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/users?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=utf8&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "user-service"
+      JWT_SECRET: "RainbowForestEcommerceJWTSecretKey_ChangeInProduction_Min64Chars_RequiredForHS512!!"
+      INTERNAL_SERVICE_SECRET: "TQjHHfANqChwqKF4nQ0im06mCAhbscepCwvzYUMz/b5CmXiUULFl2NZxOx8HZcfK"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  product-catalog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: product-catalog-service/target/product-catalog-service-0.0.1-SNAPSHOT.jar
+    container_name: product-catalog-service
+    restart: unless-stopped
+    ports:
+      - "8810:8810"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/product_catalog?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=utf8&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "product-catalog-service"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: inventory-service/target/inventory-service-0.0.1-SNAPSHOT.jar
+    container_name: inventory-service
+    restart: unless-stopped
+    ports:
+      - "8820:8820"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/inventory?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=utf8&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      SPRING_REDIS_HOST: "redis"
+      SPRING_REDIS_PORT: "6379"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "inventory-service"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: cart-service/target/cart-service-0.0.1-SNAPSHOT.jar
+    container_name: cart-service
+    restart: unless-stopped
+    ports:
+      - "8821:8821"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      SPRING_REDIS_HOST: "redis"
+      SPRING_REDIS_PORT: "6379"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "cart-service"
+      PRODUCT_CATALOG_SERVICE_URL: "http://product-catalog-service:8810/"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: order-service/target/order-service-0.0.1-SNAPSHOT.jar
+    container_name: order-service
+    restart: unless-stopped
+    ports:
+      - "8813:8813"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/orders?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=utf8&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: "order-service"
+      USER_SERVICE_URL: "http://user-service:8811/"
+      PRODUCT_CATALOG_SERVICE_URL: "http://product-catalog-service:8810/"
+      INVENTORY_SERVICE_URL: "http://inventory-service:8820/"
+      CART_SERVICE_URL: "http://cart-service:8821/"
+      JWT_SECRET: "RainbowForestEcommerceJWTSecretKey_ChangeInProduction_Min64Chars_RequiredForHS512!!"
+      INTERNAL_SERVICE_SECRET: "TQjHHfANqChwqKF4nQ0im06mCAhbscepCwvzYUMz/b5CmXiUULFl2NZxOx8HZcfK"
+      JAVA_OPTS: "-XX:TieredStopAtLevel=1 -Xms32m -Xmx220m"
+    networks:
+      - ecommerce-network
+
+  frontend:
+    build:
+      context: ./stitch
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    environment:
+      NODE_ENV: "production"
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:8900/api"
+      API_SERVER_ORIGIN: "http://api-gateway:8900"
+    networks:
+      - ecommerce-network

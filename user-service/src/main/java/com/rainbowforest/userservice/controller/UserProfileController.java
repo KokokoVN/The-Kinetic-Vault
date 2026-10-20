@@ -33,6 +33,8 @@ import java.util.UUID;
 @RestController
 public class UserProfileController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserProfileController.class);
+
     private final UserService userService;
     private final TwoFactorAuthService twoFactorAuthService;
     private final UserRepository userRepository;
@@ -233,13 +235,30 @@ public class UserProfileController {
         if (file.getSize() > 5L * 1024 * 1024) {
             return new ResponseEntity<>(HttpStatus.PAYLOAD_TOO_LARGE);
         }
+        // Validate extension whitelist (chống upload file độc hại).
+        String ext = extensionFrom(file.getOriginalFilename());
+        java.util.Set<String> allowedExt = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp");
+        if (!allowedExt.contains(ext)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         try {
             Path root = getRootUploadPath(avatarUploadDir);
-            Path userDir = root.resolve(String.valueOf(id)).normalize();
+            // Đảm bảo id chỉ chứa chữ số để chống path traversal.
+            if (!String.valueOf(id).matches("\\d+")) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            Path userDir = root.resolve(String.valueOf(id)).normalize().toAbsolutePath();
+            if (!userDir.startsWith(root.toAbsolutePath())) {
+                log.warn("Path traversal attempt in uploadAvatar: id={}", id);
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
             Files.createDirectories(userDir);
-            String ext = extensionFrom(file.getOriginalFilename());
             String fileName = UUID.randomUUID().toString().replace("-", "") + ext;
-            Path target = userDir.resolve(fileName).normalize();
+            Path target = userDir.resolve(fileName).normalize().toAbsolutePath();
+            if (!target.startsWith(userDir)) {
+                log.warn("Path traversal attempt: target={}", target);
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
             String publicBase = String.valueOf(avatarPublicBaseUrl).trim();

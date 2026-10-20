@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { apiUrl } from "@/lib/api";
+import { parseVariantTiers } from "@/lib/variant-tier-utils";
 
 export function SelectiveExportModal({ 
   isOpen, 
@@ -147,11 +148,12 @@ export function SelectiveExportModal({
           });
         } else if (selectedVList.length > 0) {
           for (const v of selectedVList) {
+            const parsedV = parseVariantTiers(v);
             rows.push({
               "Mã SP": p.id,
               "Tên SP": p.name || p.productName || p.sku,
               "Mã BT": v.id,
-              "Thuộc tính BT": `Màu: ${v.color || "N/A"} - Size: ${v.size || "N/A"}`,
+              "Thuộc tính BT": parsedV.fullLabel,
               "Giới hạn Số lượng": "",
               "Tên Chương Trình": "",
               "Mô tả": "",
@@ -212,30 +214,30 @@ export function SelectiveExportModal({
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div className="flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 p-6">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-[2.5rem] border border-slate-200/80 bg-white/95 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 dark:border-slate-800 dark:bg-slate-900/95">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-7 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-              <span className="material-symbols-outlined text-2xl">list_alt</span>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20">
+              <span className="material-symbols-outlined text-2xl">file_download</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800">Chọn Sản phẩm xuất Template</h2>
-              <p className="text-sm text-slate-500">Chỉ tải xuống file Excel cho các sản phẩm đã chọn.</p>
+              <h2 className="font-headline text-lg font-black text-slate-900 dark:text-white">Xuất File Mẫu Excel Chọn Lọc</h2>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Tải xuống file mẫu Excel kèm thông tin sản phẩm và biến thể đã chọn</p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-            <span className="material-symbols-outlined">close</span>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-700 dark:hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-lg">close</span>
           </button>
         </div>
 
-        <div className="p-6 bg-slate-50/50 flex-1 overflow-hidden flex flex-col">
+        <div className="p-6 bg-slate-50/60 dark:bg-slate-850/40 flex-1 overflow-hidden flex flex-col">
           <div className="relative mb-4">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
             <input
               type="text"
-              className="w-full rounded-2xl border-2 border-slate-200 bg-white py-3 pl-12 pr-4 text-sm font-medium transition-all focus:border-blue-500 focus:outline-none"
-              placeholder="Tìm kiếm theo tên sản phẩm hoặc SKU..."
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 pl-12 pr-4 text-sm font-semibold text-slate-900 dark:text-slate-100 shadow-xs outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              placeholder="Tìm kiếm theo tên sản phẩm hoặc mã SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -261,14 +263,14 @@ export function SelectiveExportModal({
                 }
 
                 return (
-                  <div key={pId} className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm">
-                    <span className="truncate max-w-[200px]">{text}</span>
+                  <div key={pId} className="flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200/80 px-3 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:border-indigo-800 dark:text-indigo-300 shadow-xs">
+                    <span className="truncate max-w-[220px]">{text}</span>
                     <button 
                       onClick={() => toggleProductSelection({ id: pId })} 
-                      className="ml-1 flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-200 hover:text-blue-900 transition-colors"
+                      className="ml-1 flex h-4 w-4 items-center justify-center rounded-full hover:bg-indigo-200 hover:text-indigo-900 dark:hover:bg-indigo-900 transition-colors"
                       title="Bỏ chọn"
                     >
-                      <span className="material-symbols-outlined text-[12px] font-bold">close</span>
+                      <span className="material-symbols-outlined text-[12px] font-black">close</span>
                     </button>
                   </div>
                 );
@@ -276,7 +278,7 @@ export function SelectiveExportModal({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white min-h-[300px] max-h-[500px]">
+          <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[300px] max-h-[500px]">
             {loading ? (
               <div className="flex h-full items-center justify-center text-slate-500">
                 <span className="material-symbols-outlined animate-spin text-4xl mb-2">sync</span>
@@ -285,21 +287,21 @@ export function SelectiveExportModal({
             ) : filteredProducts.length === 0 ? (
               <div className="p-8 text-center text-slate-400 font-medium">Không tìm thấy sản phẩm nào.</div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredProducts.map((p) => {
                   const isAllSelected = isProductFullySelected(p);
                   const someSelected = isProductPartiallySelected(p);
                   return (
-                    <div key={p.id} className="p-4 hover:bg-slate-50/50 transition-colors">
+                    <div key={p.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
                           checked={isAllSelected}
                           ref={(el) => { if (el) el.indeterminate = someSelected && !isAllSelected; }}
                           onChange={() => toggleProductSelection(p)}
-                          className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
                           {p.primaryImageUrl ? (
                             <img src={p.primaryImageUrl} alt={p.productName || "Product"} className="h-full w-full object-cover" />
                           ) : (
@@ -307,14 +309,14 @@ export function SelectiveExportModal({
                           )}
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-slate-800 line-clamp-1">{p.name || p.productName || "Không có tên"}</h4>
-                          <p className="text-xs text-slate-500 font-medium">SKU: {p.sku || 'N/A'} - ID: {p.id}</p>
+                          <h4 className="font-bold text-slate-800 dark:text-white line-clamp-1">{p.name || p.productName || "Không có tên"}</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">SKU: {p.sku || 'N/A'} - ID: #{p.id}</p>
                         </div>
                         
                         {!productVariantsMap[p.id] && (
                           <button 
                             onClick={() => fetchVariants(p.id)}
-                            className="text-xs text-blue-600 font-semibold hover:underline"
+                            className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
                           >
                             Tải biến thể
                           </button>
@@ -323,21 +325,37 @@ export function SelectiveExportModal({
 
                       {productVariantsMap[p.id]?.length > 0 && (
                         <div className="mt-3 pl-14 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {productVariantsMap[p.id].map((v: any) => (
-                            <label key={v.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 hover:border-blue-300 hover:bg-blue-50/50 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={selectedVariantIds.includes(v.id)}
-                                onChange={() => toggleVariantSelection(p.id, v.id)}
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <div className="flex-1 text-sm">
-                                <span className="font-semibold text-slate-700">Màu: {v.color || "N/A"}</span>
-                                <span className="mx-2 text-slate-300">|</span>
-                                <span className="font-semibold text-slate-700">Size: {v.size || "N/A"}</span>
-                              </div>
-                            </label>
-                          ))}
+                          {productVariantsMap[p.id].map((v: any) => {
+                            const parsedV = parseVariantTiers(v);
+                            return (
+                              <label key={v.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/80 p-2.5 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedVariantIds.includes(v.id)}
+                                  onChange={() => toggleVariantSelection(p.id, v.id)}
+                                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <div className="flex-1 text-xs">
+                                  {parsedV.tiers.length > 0 ? (
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      {parsedV.tiers.map((t, tidx) => (
+                                        <span key={tidx} className="inline-flex items-center gap-0.5 rounded-md bg-white border border-slate-200/80 px-2 py-0.5 font-bold text-slate-700 shadow-xs">
+                                          <span className="text-slate-400 font-semibold">{t.name}:</span>
+                                          <span>{t.value}</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="font-bold text-slate-700">{parsedV.fullLabel}</span>
+                                  )}
+                                  <div className="mt-1 flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                                    <span>ID: #{v.id}</span>
+                                    {v.sku && <span>• SKU: {v.sku}</span>}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -348,20 +366,20 @@ export function SelectiveExportModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 p-6 bg-white">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 p-6 bg-white dark:bg-slate-900">
           <button
             onClick={handleExportBlank}
-            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+            className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
           >
-            Tải File Trống (Chỉ tiêu đề)
+            Tải File Trống
           </button>
           <button
             onClick={handleExportSelected}
             disabled={exporting || selectedProductIds.length === 0}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-500/40 disabled:opacity-50 disabled:pointer-events-none"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 px-7 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] hover:shadow-indigo-500/35 disabled:opacity-50 disabled:pointer-events-none"
           >
             <span className="material-symbols-outlined text-[18px]">{exporting ? "sync" : "cloud_download"}</span>
-            {exporting ? "Đang xuất..." : `Xuất File (${selectedProductIds.length} SP)`}
+            {exporting ? "Đang xuất file..." : `Xuất File (${selectedProductIds.length} SP)`}
           </button>
         </div>
       </div>

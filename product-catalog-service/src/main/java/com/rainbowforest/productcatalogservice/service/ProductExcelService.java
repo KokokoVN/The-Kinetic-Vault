@@ -13,6 +13,8 @@ import com.rainbowforest.productcatalogservice.repository.ProductVariantReposito
 import com.rainbowforest.productcatalogservice.entity.ProductTechnicalSpec;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +26,7 @@ import java.util.*;
 
 @Service
 public class ProductExcelService {
+    private static final Logger log = LoggerFactory.getLogger(ProductExcelService.class);
 
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
@@ -176,11 +179,32 @@ public class ProductExcelService {
                             row.createCell(2).setCellValue(v.getId());
                             
                             String variantDetails = "";
-                            if (v.getColor() != null && !v.getColor().trim().isEmpty()) {
-                                variantDetails += "Màu: " + v.getColor() + " ";
+                            if (v.getAttributesJson() != null && !v.getAttributesJson().trim().isEmpty()) {
+                                try {
+                                    com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(v.getAttributesJson());
+                                    if (root.isArray()) {
+                                        List<String> parts = new ArrayList<>();
+                                        for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                                            String name = node.has("name") ? node.get("name").asText() : "";
+                                            String val = node.has("value") ? node.get("value").asText() : "";
+                                            if (!val.isEmpty()) {
+                                                parts.add(name.isEmpty() ? val : name + ": " + val);
+                                            }
+                                        }
+                                        variantDetails = String.join(" · ", parts);
+                                    }
+                                } catch (Exception ignored) {}
                             }
-                            if (v.getSize() != null && !v.getSize().trim().isEmpty()) {
-                                variantDetails += "- Size: " + v.getSize();
+                            if (variantDetails.isEmpty() && v.getVariantName() != null && !v.getVariantName().trim().isEmpty()) {
+                                variantDetails = v.getVariantName().trim();
+                            }
+                            if (variantDetails.isEmpty()) {
+                                if (v.getColor() != null && !v.getColor().trim().isEmpty()) {
+                                    variantDetails += "Màu: " + v.getColor() + " ";
+                                }
+                                if (v.getSize() != null && !v.getSize().trim().isEmpty()) {
+                                    variantDetails += "- Size: " + v.getSize();
+                                }
                             }
                             row.createCell(3).setCellValue(variantDetails.trim());
                             
@@ -425,7 +449,7 @@ public class ProductExcelService {
 
                 successCount += productRows.size();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Lỗi khi import sản phẩm SKU {}: ", sku, e);
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.toString();
                 errors.add("Lỗi khi lưu SKU " + sku + ": " + errorMsg);
             }

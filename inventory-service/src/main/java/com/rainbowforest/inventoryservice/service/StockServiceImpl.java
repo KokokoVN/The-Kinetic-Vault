@@ -5,6 +5,8 @@ import com.rainbowforest.inventoryservice.entity.InventoryBalance;
 import com.rainbowforest.inventoryservice.entity.StockMovement;
 import com.rainbowforest.inventoryservice.repository.InventoryBalanceRepository;
 import com.rainbowforest.inventoryservice.repository.StockMovementRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +17,14 @@ import java.util.List;
 @Service
 @Transactional
 public class StockServiceImpl implements StockService {
+    private static final Logger log = LoggerFactory.getLogger(StockServiceImpl.class);
 
     private final InventoryBalanceRepository inventoryBalanceRepository;
     private final StockMovementRepository stockMovementRepository;
     private final ProductCatalogInternalClient productCatalogInternalClient;
     private final com.rainbowforest.inventoryservice.client.TelegramInternalClient telegramInternalClient;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.redisson.api.RedissonClient redissonClient;
 
     public StockServiceImpl(InventoryBalanceRepository inventoryBalanceRepository,
                             StockMovementRepository stockMovementRepository,
@@ -79,42 +84,65 @@ public class StockServiceImpl implements StockService {
         if (quantity <= 0) {
             throw new IllegalArgumentException("quantity phải > 0");
         }
-        InventoryBalance bal = getExistingBalance(productId, variantId)
-                .orElseThrow(() -> new IllegalStateException("Chưa có tồn kho cho sản phẩm"));
-        if (bal.getQuantityOnHand() < quantity) {
-            throw new IllegalStateException("Không đủ tồn kho (còn " + bal.getQuantityOnHand() + ")");
-        }
-
-        bal.setQuantityOnHand(bal.getQuantityOnHand() - quantity);
-        if (performedBy != null) {
-            bal.setUpdatedBy(performedBy);
-        }
-        inventoryBalanceRepository.save(bal);
-
-        StockMovement m = new StockMovement();
-        m.setMovementType(StockMovement.OUTBOUND);
-        m.setProductId(productId);
-        m.setVariantId(variantId);
-        m.setQuantity(quantity);
-        m.setReferenceType(referenceType);
-        m.setReferenceId(referenceId);
-        m.setNote(note);
-        m.setUnitCost(unitCost);
-        m.setMovementAt(movementAt != null ? movementAt : LocalDateTime.now());
-        m.setBalanceAfter(bal.getQuantityOnHand());
-        if (performedBy != null) {
-            m.setCreatedBy(performedBy);
-            m.setUpdatedBy(performedBy);
-        }
-        stockMovementRepository.save(m);
-
-        syncProductAvailability(productId, variantId);
         
-        if (bal.getQuantityOnHand() < 10) {
-            notifyLowStock(productId, variantId, bal.getQuantityOnHand());
+        org.redisson.api.RLock lock = null;
+        if (redissonClient != null) {
+            String lockKey = "lock:stock:" + productId + (variantId != null ? ":" + variantId : "");
+            lock = redissonClient.getLock(lockKey);
+            try {
+                // Thử khóa trong tối đa 5 giây, tự giải phóng sau 10 giây nếu crash
+                boolean acquired = lock.tryLock(5, 10, java.util.concurrent.TimeUnit.SECONDS);
+                if (!acquired) {
+                    throw new IllegalStateException("Hệ thống bận, vui lòng thử lại sau!");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Lỗi khóa giao dịch kho");
+            }
         }
-        
-        return m;
+
+        try {
+            InventoryBalance bal = getExistingBalance(productId, variantId)
+                    .orElseThrow(() -> new IllegalStateException("Chưa có tồn kho cho sản phẩm"));
+            if (bal.getQuantityOnHand() < quantity) {
+                throw new IllegalStateException("Không đủ tồn kho (còn " + bal.getQuantityOnHand() + ")");
+            }
+
+            bal.setQuantityOnHand(bal.getQuantityOnHand() - quantity);
+            if (performedBy != null) {
+                bal.setUpdatedBy(performedBy);
+            }
+            inventoryBalanceRepository.save(bal);
+
+            StockMovement m = new StockMovement();
+            m.setMovementType(StockMovement.OUTBOUND);
+            m.setProductId(productId);
+            m.setVariantId(variantId);
+            m.setQuantity(quantity);
+            m.setReferenceType(referenceType);
+            m.setReferenceId(referenceId);
+            m.setNote(note);
+            m.setUnitCost(unitCost);
+            m.setMovementAt(movementAt != null ? movementAt : LocalDateTime.now());
+            m.setBalanceAfter(bal.getQuantityOnHand());
+            if (performedBy != null) {
+                m.setCreatedBy(performedBy);
+                m.setUpdatedBy(performedBy);
+            }
+            stockMovementRepository.save(m);
+
+            syncProductAvailability(productId, variantId);
+            
+            if (bal.getQuantityOnHand() < 10) {
+                notifyLowStock(productId, variantId, bal.getQuantityOnHand());
+            }
+            
+            return m;
+        } finally {
+            if (lock != null && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
     @Override
@@ -195,7 +223,7 @@ public class StockServiceImpl implements StockService {
                 telegramInternalClient.notifyLowStock(req);
             } catch (Exception e) {
                 // Do not block outbound if telegram fails
-                System.err.println("Failed to send low stock notification: " + e.getMessage());
+                log.error("Failed to send low stock notification: {}", e.getMessage());
             }
         });
     }

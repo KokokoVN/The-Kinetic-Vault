@@ -149,7 +149,7 @@ export default async function DeleteBrandPage({
 
             <div className="grid grid-cols-2 gap-4">
               <Link
-                className="flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-3.5 text-sm font-bold text-slate-650 dark:text-slate-350 transition-colors"
+                className="flex items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-zinc-200 transition-all shadow-xs"
                 href={cancelHref}
               >
                 Hủy bỏ

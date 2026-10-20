@@ -30,10 +30,11 @@ public class ProductController {
     private ProductRepository productRepository;
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        java.io.StringWriter sw = new java.io.StringWriter();
-        e.printStackTrace(new java.io.PrintWriter(sw));
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(sw.toString());
+    public ResponseEntity<Map<String, String>> handleException(Exception e) {
+        // Log chi tiết phía server; trả về client thông báo generic (tránh leak stack trace).
+        log.error("Unhandled exception in ProductController", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "INTERNAL_ERROR", "message", "Lỗi hệ thống"));
     }
 
     @GetMapping(value = "/products")
@@ -111,16 +112,23 @@ public class ProductController {
     @GetMapping(value = "/products/batch")
     public ResponseEntity<List<Product>> getProductsBatch(
             @RequestParam(value = "ids") List<Long> ids) {
-        List<Product> products = productService.getAvailableProductsByIds(ids);
-        if (!products.isEmpty()) {
+        if (ids == null || ids.isEmpty()) {
             return new ResponseEntity<List<Product>>(
-                    products,
+                    java.util.Collections.emptyList(),
                     headerGenerator.getHeadersForSuccessGetMethod(),
                     HttpStatus.OK);
         }
+        List<Product> products = productService.getProductsByIds(ids);
         return new ResponseEntity<List<Product>>(
-                headerGenerator.getHeadersForError(),
-                HttpStatus.NOT_FOUND);
+                products,
+                headerGenerator.getHeadersForSuccessGetMethod(),
+                HttpStatus.OK);
+    }
+
+    private static String removeAccents(String s) {
+        if (s == null) return "";
+        String normalized = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "").toLowerCase(Locale.ROOT).replace("đ", "d");
     }
 
     @GetMapping(value = "/products/search")
@@ -129,19 +137,38 @@ public class ProductController {
             @RequestParam(value = "status", required = false, defaultValue = "all") String status,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
-        List<Product> all = productService.getAllProduct();
+        List<Product> all = productService.getAllAvailableProductForUser();
         String keyword = q != null ? q.trim().toLowerCase(Locale.ROOT) : "";
+        String normKeyword = removeAccents(keyword);
         String st = status != null ? status.trim().toLowerCase(Locale.ROOT) : "all";
 
         List<Product> filtered = all.stream()
                 .filter(p -> {
+                    if (p.getDeletedAt() != null || Boolean.TRUE.equals(p.getHidden())) {
+                        return false;
+                    }
                     if (keyword.isEmpty()) {
                         return true;
                     }
-                    String name = p.getProductName() != null ? p.getProductName().toLowerCase(Locale.ROOT) : "";
-                    String sku = p.getSku() != null ? p.getSku().toLowerCase(Locale.ROOT) : "";
-                    String cat = p.getCategoryId() != null ? String.valueOf(p.getCategoryId()).toLowerCase(Locale.ROOT) : "";
-                    return name.contains(keyword) || sku.contains(keyword) || cat.contains(keyword);
+                    String nameNorm = removeAccents(p.getProductName());
+                    String skuNorm = removeAccents(p.getSku());
+                    String brandNorm = removeAccents(p.getBrandName());
+                    String descNorm = removeAccents(p.getDiscription());
+                    
+                    boolean match = nameNorm.contains(normKeyword) 
+                            || skuNorm.contains(normKeyword) 
+                            || brandNorm.contains(normKeyword) 
+                            || descNorm.contains(normKeyword);
+
+                    if (!match && p.getCategoryNames() != null) {
+                        for (String cName : p.getCategoryNames()) {
+                            if (removeAccents(cName).contains(normKeyword)) {
+                                match = true;
+                                break;
+                            }
+                        }
+                    }
+                    return match;
                 })
                 .filter(p -> {
                     int avail = p.getAvailability() != null ? p.getAvailability() : 0;

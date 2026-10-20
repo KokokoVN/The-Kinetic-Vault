@@ -35,6 +35,12 @@ public class Item extends AuditableEntity {
     @Column(name = "variant_label", length = 128)
     private String variantLabel;
 
+    @Column(name = "variant_name", length = 255)
+    private String variantName;
+
+    @Column(name = "variant_attributes_json", columnDefinition = "TEXT")
+    private String variantAttributesJson;
+
     @Column(name = "product_name_snapshot", length = 255)
     private String productNameSnapshot;
 
@@ -107,6 +113,22 @@ public class Item extends AuditableEntity {
 
     public void setVariantLabel(String variantLabel) {
         this.variantLabel = variantLabel;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getVariantAttributesJson() {
+        return variantAttributesJson;
+    }
+
+    public void setVariantAttributesJson(String variantAttributesJson) {
+        this.variantAttributesJson = variantAttributesJson;
     }
 
     public Product getProduct() {

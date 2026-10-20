@@ -50,6 +50,10 @@ public class ProductVariantController {
         out.setSize(v.getSize());
         out.setColor(v.getColor());
         out.setVariantImageUrl(v.getVariantImageUrl());
+        out.setVariantName(v.getVariantName());
+        out.setAttributesJson(v.getAttributesJson());
+        out.setSku(v.getSku());
+        out.setOriginalPrice(v.getOriginalPrice());
         out.setPrice(v.getPrice());
         out.setAvailability(v.getAvailability());
         return out;

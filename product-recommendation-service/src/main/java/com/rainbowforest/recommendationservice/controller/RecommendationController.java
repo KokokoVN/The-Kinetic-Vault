@@ -22,9 +22,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 public class RecommendationController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecommendationController.class);
 
     @Autowired
     private RecommendationService recommendationService;
@@ -99,7 +103,7 @@ public class RecommendationController {
 						headerGenerator.getHeadersForSuccessPostMethod(request, recommendation.getId()),
 						HttpStatus.CREATED);
 			}catch (Exception e) {
-				e.printStackTrace();
+				log.error("Lỗi khi lưu recommendation: ", e);
 				return new ResponseEntity<Recommendation>(
 						headerGenerator.getHeadersForError(),
 						HttpStatus.INTERNAL_SERVER_ERROR);
@@ -138,7 +142,7 @@ public class RecommendationController {
     					headerGenerator.getHeadersForSuccessGetMethod(),
     					HttpStatus.OK);
     		}catch (Exception e) {
-    			e.printStackTrace();
+    			log.error("Lỗi khi xóa recommendation: ", e);
     			return new ResponseEntity<Void>(
     					headerGenerator.getHeadersForError(),
     					HttpStatus.INTERNAL_SERVER_ERROR);	

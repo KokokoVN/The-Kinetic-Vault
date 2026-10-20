@@ -1,43 +1,25 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { FloatingNotice } from "@/components/floating-notice";
 
 type Props = {
   action: (state: any, formData: FormData) => Promise<any>;
 };
 
-type CheckRes = {
-  usernameExists: boolean;
-  emailExists: boolean;
-  phoneExists?: boolean;
-};
-
-function normalizeUsername(value: string): string {
-  return value.replace(/[^A-Za-z0-9]/g, "");
-}
-
-function isValidUsername(value: string): boolean {
-  return /^[A-Za-z0-9]+$/.test(value.trim()) && value.trim().length >= 3;
-}
-
-function normalizeContact(value: string): string {
-  return value.trim();
-}
-
-function isGmail(value: string): boolean {
-  return /^[A-Za-z0-9._%+-]+@gmail\.com$/i.test(value.trim());
-}
-
-function scorePassword(pwd: string): { score: number; label: string } {
+function scorePassword(pwd: string): { score: number; label: string; color: string; width: string } {
   let score = 0;
   if (pwd.length >= 8) score++;
   if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
   if (/\d/.test(pwd)) score++;
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
   if (pwd.length >= 12) score++;
-  if (score <= 1) return { score, label: "Yếu" };
-  if (score <= 3) return { score, label: "Trung bình" };
-  return { score, label: "Mạnh" };
+
+  if (score <= 1) return { score, label: "Yếu (ít nhất 8 ký tự)", color: "bg-amber-500", width: "w-1/4" };
+  if (score <= 3) return { score, label: "Trung bình", color: "bg-blue-500", width: "w-2/4" };
+  if (score <= 4) return { score, label: "Mạnh", color: "bg-indigo-500", width: "w-3/4" };
+  return { score, label: "Rất mạnh", color: "bg-emerald-400", width: "w-full" };
 }
 
 export function RegisterLiveForm({ action }: Props) {
@@ -46,195 +28,302 @@ export function RegisterLiveForm({ action }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [check, setCheck] = useState<CheckRes>({ usernameExists: false, emailExists: false, phoneExists: false });
-  const [checking, setChecking] = useState(false);
-  const [hasChecked, setHasChecked] = useState(false);
-  const usernameNormalized = normalizeUsername(username);
-  const emailValue = normalizeContact(email);
-  const emailIsGmail = isGmail(emailValue);
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(true);
 
+  // Username check states
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [hasCheckedUsername, setHasCheckedUsername] = useState(false);
+
+  // Email check states
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [hasCheckedEmail, setHasCheckedEmail] = useState(false);
+
+  // Username validation regex
+  const isValidUsernameFormat = useMemo(() => {
+    if (!username) return null;
+    return /^[a-zA-Z0-9_.-]{3,30}$/.test(username);
+  }, [username]);
+
+  // Email validation regex
+  const isValidEmailFormat = useMemo(() => {
+    if (!email) return null;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }, [email]);
+
+  const pwdScore = useMemo(() => scorePassword(password), [password]);
+  const passwordsMatch = useMemo(() => {
+    if (!confirmPassword) return null;
+    return password === confirmPassword;
+  }, [password, confirmPassword]);
+
+  // Debounced check for Username
   useEffect(() => {
-    const u = usernameNormalized.trim();
-    const c = emailValue.trim();
-    if (!u && !c) {
-      setCheck({ usernameExists: false, emailExists: false, phoneExists: false });
-      setHasChecked(false);
+    const u = username.trim();
+    if (!u || !/^[a-zA-Z0-9_.-]{3,30}$/.test(u)) {
+      setUsernameExists(null);
+      setHasCheckedUsername(false);
       return;
     }
     const t = setTimeout(async () => {
       try {
-        setChecking(true);
-        const qp = new URLSearchParams();
-        if (u) qp.set("username", u);
-        if (c) qp.set("email", c);
-        qp.set("identity", c);
+        setCheckingUsername(true);
+        const qp = new URLSearchParams({ username: u });
         const res = await fetch(`/api/auth/check-identity?${qp.toString()}`, { cache: "no-store" });
-        const data = (await res.json()) as CheckRes;
-        setCheck({
-          usernameExists: Boolean(data.usernameExists),
-          emailExists: Boolean(data.emailExists),
-          phoneExists: Boolean(data.phoneExists),
-        });
-        setHasChecked(true);
+        const data = (await res.json()) as { usernameExists?: boolean };
+        setUsernameExists(Boolean(data.usernameExists));
+        setHasCheckedUsername(true);
       } catch {
-        setCheck({ usernameExists: false, emailExists: false, phoneExists: false });
-        setHasChecked(false);
+        setUsernameExists(null);
+        setHasCheckedUsername(false);
       } finally {
-        setChecking(false);
+        setCheckingUsername(false);
       }
-    }, 400);
+    }, 350);
     return () => clearTimeout(t);
-  }, [usernameNormalized, emailValue]);
+  }, [username]);
 
-  const pwd = useMemo(() => scorePassword(password), [password]);
-  const confirmMismatch = confirmPassword.length > 0 && confirmPassword !== password;
-  const usernameIsValid = isValidUsername(username);
-  const canSubmit =
-    usernameIsValid &&
-    emailValue.length > 0 &&
-    emailIsGmail &&
-    password.length >= 8 &&
-    !check.usernameExists &&
-    !check.emailExists &&
-    !confirmMismatch;
+  // Debounced check for Email
+  useEffect(() => {
+    const e = email.trim();
+    if (!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      setEmailExists(null);
+      setHasCheckedEmail(false);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        setCheckingEmail(true);
+        const qp = new URLSearchParams({ email: e });
+        const res = await fetch(`/api/auth/check-identity?${qp.toString()}`, { cache: "no-store" });
+        const data = (await res.json()) as { emailExists?: boolean };
+        setEmailExists(Boolean(data.emailExists));
+        setHasCheckedEmail(true);
+      } catch {
+        setEmailExists(null);
+        setHasCheckedEmail(false);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [email]);
 
   return (
-    <form action={formAction} className="space-y-6">
-      {state?.error && (
-        <div className="rounded-2xl bg-red-50 p-4 border border-red-200">
-          <p className="text-sm font-bold text-red-600">{state.error}</p>
+    <form action={formAction} className="space-y-4">
+      {/* Floating error notice at top-right corner */}
+      {state?.error && <FloatingNotice key={state.error} message={state.error} variant="error" />}
+
+      {/* Username Field */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between ml-1">
+          <label htmlFor="username" className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+            Tên Đăng Nhập (Username)
+          </label>
+          {isValidUsernameFormat === false && (
+            <span className="text-[11px] font-bold text-amber-400">
+              ✕ Từ 3-30 ký tự (không chứa ký tự đặc biệt)
+            </span>
+          )}
+          {isValidUsernameFormat === true && (
+            checkingUsername ? (
+              <span className="text-[11px] font-semibold text-cyan-400 animate-pulse flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" /> Kiểm tra...
+              </span>
+            ) : hasCheckedUsername ? (
+              usernameExists ? (
+                <span className="text-[11px] font-bold text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">cancel</span> Đã được sử dụng
+                </span>
+              ) : (
+                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Username hợp lệ
+                </span>
+              )
+            ) : null
+          )}
         </div>
-      )}
-      <div className="relative">
-        <input
-          id="reg_username"
-          name="username"
-          type="text"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
-        />
-        <label
-          htmlFor="reg_username"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-        >
-          Tên đăng nhập
-        </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-          account_circle
-        </span>
-        {username.trim() ? (
-          !usernameIsValid ? (
-            <p className="mt-1 text-xs text-rose-700">Tên đăng nhập chỉ được chứa chữ và số, tối thiểu 3 ký tự.</p>
-          ) : checking ? (
-            <p className="mt-1 text-xs text-on-surface-variant">Đang kiểm tra tên đăng nhập...</p>
-          ) : hasChecked ? (
-            check.usernameExists ? (
-              <p className="mt-1 text-xs text-rose-700">Tên đăng nhập đã tồn tại.</p>
-            ) : (
-              <p className="mt-1 text-xs text-emerald-700">Tên đăng nhập có thể sử dụng.</p>
-            )
-          ) : (
-            <p className="mt-1 text-xs text-amber-800">Không kiểm tra được tên đăng nhập lúc này.</p>
-          )
-        ) : null}
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+            <span className="material-symbols-outlined text-[20px]">account_circle</span>
+          </div>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            className="w-full rounded-2xl bg-slate-950/80 border border-slate-700/80 py-3.5 pl-14 pr-4 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+            placeholder="nguyenvana123 (viết liền không dấu)"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ""))}
+            spellCheck={false}
+          />
+        </div>
       </div>
-      
-      <div className="relative">
-        <input
-          id="reg_email"
-          name="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
-        />
-        <label
-          htmlFor="reg_email"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-        >
-          Email (chỉ Gmail)
-        </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-          mail
-        </span>
-        {email.trim() ? (
-          checking ? (
-            <p className="mt-1 text-xs text-on-surface-variant">Đang kiểm tra email...</p>
-          ) : hasChecked ? (
-            !emailIsGmail ? (
-              <p className="mt-1 text-xs text-rose-700">Chỉ hỗ trợ địa chỉ Gmail.</p>
-            ) : check.emailExists ? (
-              <p className="mt-1 text-xs text-rose-700">Email đã tồn tại.</p>
-            ) : (
-              <p className="mt-1 text-xs text-emerald-700">Email có thể sử dụng.</p>
-            )
-          ) : (
-            <p className="mt-1 text-xs text-amber-800">Không kiểm tra được email lúc này.</p>
-          )
-        ) : null}
+
+      {/* Email Field */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between ml-1">
+          <label htmlFor="email" className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+            Địa Chỉ Email (Gmail)
+          </label>
+          {isValidEmailFormat === false && (
+            <span className="text-[11px] font-bold text-amber-400">
+              ✕ Email chưa đúng định dạng
+            </span>
+          )}
+          {isValidEmailFormat === true && (
+            checkingEmail ? (
+              <span className="text-[11px] font-semibold text-cyan-400 animate-pulse flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" /> Kiểm tra...
+              </span>
+            ) : hasCheckedEmail ? (
+              emailExists ? (
+                <span className="text-[11px] font-bold text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">cancel</span> Đã được đăng ký
+                </span>
+              ) : (
+                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/60 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span> Email hợp lệ
+                </span>
+              )
+            ) : null
+          )}
+        </div>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+            <span className="material-symbols-outlined text-[20px]">mail</span>
+          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            className="w-full rounded-2xl bg-slate-950/80 border border-slate-700/80 py-3.5 pl-14 pr-4 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+            placeholder="nguyenvana@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value.trim())}
+          />
+        </div>
       </div>
-      
-      <div className="relative">
-        <input
-          id="reg_password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
-        />
-        <label
-          htmlFor="reg_password"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-        >
-          Mật khẩu (Tối thiểu 8 ký tự)
+
+      {/* Password Field */}
+      <div className="space-y-1.5">
+        <label htmlFor="password" className="text-xs font-bold text-slate-300 uppercase tracking-wider block ml-1">
+          Mật Khẩu (Ít nhất 8 ký tự)
         </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-          lock
-        </span>
-        <p className="absolute right-2 -bottom-6 text-xs font-bold text-blue-600 dark:text-blue-400">Bảo mật: {pwd.label}</p>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+            <span className="material-symbols-outlined text-[20px]">lock</span>
+          </div>
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            required
+            className="w-full rounded-2xl bg-slate-950/80 border border-slate-700/80 py-3.5 pl-14 pr-12 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-white transition-colors z-10"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {showPassword ? "visibility_off" : "visibility"}
+            </span>
+          </button>
+        </div>
+
+        {/* Password Strength Progress Bar */}
+        {password && (
+          <div className="pt-1 px-1 space-y-1">
+            <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+              <div className={`h-full ${pwdScore.color} ${pwdScore.width} transition-all duration-300 rounded-full`} />
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Độ bảo mật: <strong className="text-white">{pwdScore.label}</strong>
+            </p>
+          </div>
+        )}
       </div>
-      <div className="relative mt-4">
-        <input
-          id="reg_confirmPassword"
-          name="confirmPassword"
-          type="password"
-          required
-          minLength={8}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder=" "
-          className="peer w-full rounded-[1.25rem] border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 pb-4 pt-8 pl-5 pr-14 text-lg font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-600/10"
+
+      {/* Confirm Password Field */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between ml-1">
+          <label htmlFor="confirmPassword" className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+            Xác Nhận Mật Khẩu
+          </label>
+          {passwordsMatch !== null && (
+            <span className={`text-[11px] font-bold ${passwordsMatch ? "text-emerald-400" : "text-red-400"}`}>
+              {passwordsMatch ? "✓ Mật khẩu trùng khớp" : "✕ Chưa khớp mật khẩu"}
+            </span>
+          )}
+        </div>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
+            <span className="material-symbols-outlined text-[20px]">lock_reset</span>
+          </div>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            required
+            className="w-full rounded-2xl bg-slate-950/80 border border-slate-700/80 py-3.5 pl-14 pr-4 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+            placeholder="Nhập lại mật khẩu"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Terms & Conditions Toggle */}
+      <label className="flex items-start gap-3 cursor-pointer pt-2">
+        <input 
+          type="checkbox" 
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="h-4 w-4 mt-0.5 rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900" 
         />
-        <label
-          htmlFor="reg_confirmPassword"
-          className="pointer-events-none absolute left-5 top-6 origin-[0] -translate-y-4 scale-75 transform text-base font-bold text-slate-500 dark:text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:font-medium peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:font-bold peer-focus:text-blue-600 dark:peer-focus:text-blue-400"
-        >
-          Nhập lại mật khẩu
-        </label>
-        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-[24px] text-slate-400 dark:text-slate-500 transition-colors peer-focus:text-blue-600 dark:peer-focus:text-blue-400">
-          lock_reset
+        <span className="text-xs text-slate-300 leading-relaxed">
+          Tôi đồng ý với các <Link href="#" className="text-indigo-400 hover:underline font-semibold">Điều khoản sử dụng</Link> và <Link href="#" className="text-indigo-400 hover:underline font-semibold">Chính sách bảo mật</Link> của Kinetic Vault.
         </span>
-        {confirmMismatch && <p className="mt-1 text-xs text-rose-700">Mật khẩu xác nhận không khớp.</p>}
-      </div>
+      </label>
+
+      {/* Submit Button */}
       <button
         type="submit"
-        disabled={!canSubmit || isPending}
-        className="group relative flex w-full items-center justify-center gap-3 mt-10 overflow-hidden rounded-[1.25rem] bg-gradient-to-r from-blue-600 to-indigo-700 py-5 text-lg font-black text-white shadow-xl shadow-blue-600/30 transition-all hover:-translate-y-1 hover:shadow-blue-600/50 hover:shadow-2xl disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
+        disabled={
+          isPending ||
+          !username ||
+          !email ||
+          !password ||
+          !agreed ||
+          usernameExists === true ||
+          emailExists === true ||
+          isValidUsernameFormat === false ||
+          isValidEmailFormat === false ||
+          passwordsMatch === false
+        }
+        className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 py-4 font-black text-sm text-white shadow-xl shadow-indigo-600/25 transition-all hover:scale-[1.01] hover:shadow-indigo-500/40 active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none mt-4 flex items-center justify-center gap-2"
       >
-        <span className="relative z-10 uppercase tracking-wider">{isPending ? "Đang xử lý..." : "Tạo tài khoản & Nhận OTP"}</span>
-        <span className="material-symbols-outlined relative z-10 text-[24px] font-bold transition-transform group-hover:translate-x-2">
-          arrow_forward
-        </span>
-        <div className="absolute inset-0 z-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
+        {isPending ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <span>Đang tạo tài khoản...</span>
+          </>
+        ) : (
+          <>
+            <span className="uppercase tracking-wider">Đăng Ký Tài Khoản</span>
+            <span className="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">
+              arrow_forward
+            </span>
+          </>
+        )}
       </button>
     </form>
   );
